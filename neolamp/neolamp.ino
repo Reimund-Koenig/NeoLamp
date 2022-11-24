@@ -6,9 +6,10 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
-#define NEOPIXEL_PIN    15
+#define SWITCH_PIN      12
+#define NEOPIXEL_PIN    4
 #define NEOPIXEL_COUNT  16
-#define TESTMODE true
+#define TESTMODE false
 #define STEPS 32 // 2^x
 #define MULTIPLICATOR 256 / STEPS
 
@@ -49,8 +50,12 @@ void setup(){
 }
 
 void loop() {
+  if(digitalRead(SWITCH_PIN)==HIGH){
+    return;
+  } 
   timeClient.update();
   getBrightnessFromPoti();
+  strip.setBrightness(colorBrightness);
   if(TESTMODE) {
     doStuff();
   } else {
@@ -63,13 +68,21 @@ Functions
 */
 
 void doStuff() {
-  colorWipe(strip.Color(255,   0,   0)     , 50); // Red
+  colorWipe(strip.Color(  255,   0,   0)     , 50); // Red
+  colorWipe(strip.Color(  255,   128, 0)     , 50); // Orange
+  colorWipe(strip.Color(  255,   255, 0)     , 50); // Yellow
+  colorWipe(strip.Color(  128,   255, 0)     , 50); // Liht-Green
   colorWipe(strip.Color(  0, 255,   0)     , 50); // Green
+  colorWipe(strip.Color(  0,   255, 128)     , 50); // Türkis
+  colorWipe(strip.Color(  0,   255, 255)     , 50); // Light Blue
+  colorWipe(strip.Color(  0,   128, 255)     , 50); // Heaven-Blue
   colorWipe(strip.Color(  0,   0, 255)     , 50); // Blue
-  colorWipe(strip.Color(  0,   0,   0, 255), 50); // True white (not RGB white)
-  whiteOverRainbow(75, 5);
-  pulse(0,255,0,5);
-  rainbowFade(3, 3, 1);
+  colorWipe(strip.Color(  128,   0, 255)     , 50); // 
+  colorWipe(strip.Color(  255,   0, 255)     , 50); // Violet
+  colorWipe(strip.Color(  255,   0, 128)     , 50); // Pink
+  colorWipe(strip.Color(  128,   128, 128)     , 50); // Gray
+  //pulse(0,255,0,5);
+  //rainbowFade(3, 3);
 }
 
 void getBrightnessFromPoti() {
@@ -87,37 +100,38 @@ void dailyRoutine() {
   int h = timeClient.getHours();
   int m = timeClient.getMinutes();
   if(h >= 19) {     // Schlafen 19:00 - 24:00 Uhr
-    setColorRed(); 
+    setColor_Go2Sleep(); 
   }
   else if(h >= 18) {     // Bettgeh fertig machen 18:00 - 19:00 Uhr
-    setColorYellow(); 
+    setColor_Changeover(); 
   }
   else if(h >=10) { // Tag 10:00 - 18:00 Uhr
     doStuff();
   }
   else if(h >= 7) { // Zeit zum Aufstehen 07:00 - 10:00 Uhr
-    setColorGreen();
+    setColor_WakeUp();
   }
   else if(h >= 6 && m >= 45) { // Gleich Zeit zum Aufstehen 07:00 - 10:00 Uhr
-    setColorYellow();
+    setColor_Changeover();
   }
   else {     // Schlafen 0:00 - 6:45 Uhr
-    setColorRed(); 
+    setColor_Go2Sleep(); 
   }
+  delay(200);
 }
 
-void setColorGreen() {
+void setColor_WakeUp() {
   strip.fill(strip.Color(0, 255, 0, colorBrightness));
   strip.show();
 }
 
-void setColorRed() {
-  strip.fill(strip.Color(255, 0, 0, colorBrightness));
+void setColor_Go2Sleep() {
+  strip.fill(strip.Color(255, 150, 0, colorBrightness));
   strip.show();
 }
 
-void setColorYellow(){
-  strip.fill(strip.Color(255, 255, 0, colorBrightness));
+void setColor_Changeover(){
+  strip.fill(strip.Color(255, 0, 128, colorBrightness));
   strip.show();
 }
 
