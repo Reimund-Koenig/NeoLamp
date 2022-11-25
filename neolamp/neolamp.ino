@@ -6,12 +6,19 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
+#define TESTMODE false
+
+#define STATE_SLEEPING_TIME 0
+#define STATE_WAKEUP_TIME 1
+#define STATE_DAY_TIME 2
+#define STATE_LEARNING 3
+
 #define SWITCH_PIN      12
 #define NEOPIXEL_PIN    4
 #define NEOPIXEL_COUNT  16
-#define TESTMODE false
 #define STEPS 32 // 2^x
 #define MULTIPLICATOR 256 / STEPS
+#define ULONG_MAX (LONG_MAX * 2UL + 1UL)
 
 const char *ssid     = "KOENIG";
 const char *password = "Lachen*Lustig-Johanna";
@@ -27,9 +34,56 @@ Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
+unsigned long time_from_start = 0;
+unsigned long sleep_till_time = ULONG_MAX;
+
 uint8_t red = 0;
 uint8_t blue = 0;
 uint8_t green = 0;
+
+uint8_t state = 0;
+uint8_t last_state = 0;         // State which was choosen last
+bool state_first_run = true;
+uint8_t learning_mode_substate = 0;
+
+bool last_switch_state = false;
+
+
+
+/************************************************************************************************************
+/*
+/* Header 
+/*
+*************/
+void test();
+void handleInputs();
+void stateMachine();
+
+void run_dayTime_mode();
+void run_wakeupTime_mode();
+void run_sleepingTime_mode();
+void run_learning_mode();
+
+void handlePotiInput();
+void handleTimeFromStart();
+void handleSwitch();
+void handleDayTime();
+
+bool setNoneSleepingDelay(unsigned long  sleepTime);
+bool isNoneSleepingDelayOver();
+void changeState(int new_state);
+void setColor_Changeover();
+void getBrightnessFromPoti();
+void printTime();
+void printAnalog(int a0);
+
+void colorWipe(uint32_t color, int wait);
+
+/************************************************************************************************************
+/*
+/* Arduino Functions 
+/*
+*************/
 
 void setup(){
   // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
@@ -43,6 +97,7 @@ void setup(){
     delay ( 500 );
     Serial.print ( "." );
   }
+  pinMode(SWITCH_PIN, INPUT_PULLUP);
   timeClient.begin();
   // this resets all the neopixels to an off state
   strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
@@ -50,39 +105,205 @@ void setup(){
 }
 
 void loop() {
-  if(digitalRead(SWITCH_PIN)==HIGH){
-    return;
-  } 
-  timeClient.update();
-  getBrightnessFromPoti();
-  strip.setBrightness(colorBrightness);
+  handleInputs();
   if(TESTMODE) {
-    doStuff();
+    test();
   } else {
-    dailyRoutine();
+    stateMachine();
   }
 }
 
-/************************************************************************************************************
-Functions
-*/
 
-void doStuff() {
+/************************************************************************************************************
+/*
+/* Test
+/*
+*************/
+
+void test() { 
+  // ToDo: pulse(0,255,0,5);
+  // ToDo: rainbowFade(3, 3);
+  // ToDo: 
+  /*
+  if (digitalRead(SWITCH_PIN) == LOW) {
+    for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
+      if(i/3==0) {
+        strip.setPixelColor(i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
+      } else {
+        strip.setPixelColor(i, strip.Color(255, 0, 128, colorBrightness));  // Pink
+      }                          //  Pause for a moment
+    }
+    Serial.println("The switch: OFF -> ON");
+    strip.show();
+  } else {
+    Serial.println("The switch: ON -> OFF");
+    strip.fill(strip.Color(255, 0, 128, colorBrightness));
+    strip.show();
+  }
+  */
+}
+
+/************************************************************************************************************
+/*
+/* Modes
+/*
+*************/
+void run_dayTime_mode() {
+  // ToDo: make it none sleeping
   colorWipe(strip.Color(  255,   0,   0)     , 50); // Red
   colorWipe(strip.Color(  255,   128, 0)     , 50); // Orange
-  colorWipe(strip.Color(  255,   255, 0)     , 50); // Yellow
-  colorWipe(strip.Color(  128,   255, 0)     , 50); // Liht-Green
-  colorWipe(strip.Color(  0, 255,   0)     , 50); // Green
-  colorWipe(strip.Color(  0,   255, 128)     , 50); // Türkis
-  colorWipe(strip.Color(  0,   255, 255)     , 50); // Light Blue
-  colorWipe(strip.Color(  0,   128, 255)     , 50); // Heaven-Blue
-  colorWipe(strip.Color(  0,   0, 255)     , 50); // Blue
-  colorWipe(strip.Color(  128,   0, 255)     , 50); // 
-  colorWipe(strip.Color(  255,   0, 255)     , 50); // Violet
-  colorWipe(strip.Color(  255,   0, 128)     , 50); // Pink
-  colorWipe(strip.Color(  128,   128, 128)     , 50); // Gray
-  //pulse(0,255,0,5);
-  //rainbowFade(3, 3);
+  // colorWipe(strip.Color(  255,   255, 0)     , 50); // Yellow
+  // colorWipe(strip.Color(  128,   255, 0)     , 50); // Liht-Green
+  // colorWipe(strip.Color(  0, 255,   0)     , 50); // Green
+  // colorWipe(strip.Color(  0,   255, 128)     , 50); // Türkis
+  // colorWipe(strip.Color(  0,   255, 255)     , 50); // Light Blue
+  // colorWipe(strip.Color(  0,   128, 255)     , 50); // Heaven-Blue
+  // colorWipe(strip.Color(  0,   0, 255)     , 50); // Blue
+  // colorWipe(strip.Color(  128,   0, 255)     , 50); // 
+  // colorWipe(strip.Color(  255,   0, 255)     , 50); // Violet
+  // colorWipe(strip.Color(  255,   0, 128)     , 50); // Pink
+}
+
+void run_wakeupTime_mode() {
+  if(state_first_run) {
+    setNoneSleepingDelay(1000);
+    strip.fill(strip.Color(0, 255, 0, colorBrightness));
+    strip.show();
+  }
+}
+
+void run_sleepingTime_mode() {
+  if(state_first_run) {
+    setNoneSleepingDelay(1000);
+    strip.fill(strip.Color(255, 150, 0, colorBrightness));
+    strip.show();
+  }
+}
+
+void run_learning_mode() {
+  if(!isNoneSleepingDelayOver) { return; }
+  if(learning_mode_substate == 0) {
+    strip.fill(strip.Color(0, 0, 255, colorBrightness));
+    strip.show();
+    learning_mode_substate = 1;
+  } else if (learning_mode_substate == 1) {
+    strip.fill(strip.Color(0, 255, 0, colorBrightness));
+    strip.show();
+    learning_mode_substate = 0;
+  }
+  setNoneSleepingDelay(1000);
+}
+
+
+/************************************************************************************************************
+/*
+/* Main Functions
+/*
+*************/
+
+void handleInputs() {
+  handlePotiInput();
+  handleTimeFromStart();
+  handleSwitch();
+  if(state == STATE_LEARNING) {
+    return;
+  }
+  // Time is also an input which gets handled if we are not in STATE_LEARNING
+  handleDayTime();
+}
+
+void stateMachine() {
+  if(state == STATE_SLEEPING_TIME) {
+    run_sleepingTime_mode();
+  } else if(state == STATE_WAKEUP_TIME) {
+    run_wakeupTime_mode();    
+  } else if(state == STATE_DAY_TIME) {
+    run_dayTime_mode();
+  } else if(state == STATE_LEARNING) {
+    run_learning_mode();
+  } else {
+    changeState(STATE_DAY_TIME); 
+  }
+  state_first_run = false;
+}
+
+
+/************************************************************************************************************
+/*
+/* Inputs
+/*
+*************/
+void handlePotiInput() {
+  getBrightnessFromPoti();
+  strip.setBrightness(colorBrightness);
+}
+
+void handleTimeFromStart() {
+  time_from_start = millis();
+}
+
+void handleSwitch() {
+  bool switch_state = digitalRead(SWITCH_PIN);
+  if (last_switch_state == switch_state) {
+    return;
+  }
+  if (switch_state == LOW) {
+    changeState(STATE_LEARNING);
+  } else {
+    changeState(last_state);
+  }
+  last_switch_state = switch_state;
+}
+
+void handleDayTime(){
+  timeClient.update();  
+  int h = timeClient.getHours();
+  int m = timeClient.getMinutes();
+  if(h >= 19) {     // Schlafen 19:00 - 24:00 Uhr
+  changeState(STATE_SLEEPING_TIME); 
+  } else if(h >=10) { // Tag 10:00 - 18:00 Uhr
+    changeState(STATE_DAY_TIME); 
+  } else if(h >= 6 && m >= 45) { // Gleich Zeit zum Aufstehen 07:00 - 10:00 Uhr
+    changeState(STATE_WAKEUP_TIME); 
+  } else {     // Schlafen 0:00 - 6:45 Uhr
+    changeState(STATE_SLEEPING_TIME); 
+  }
+}
+
+
+/************************************************************************************************************
+/*
+/* HELPER
+/*
+*************/
+
+bool setNoneSleepingDelay(unsigned long sleepTime) {
+    sleep_till_time = time_from_start + sleepTime;
+}
+
+bool isNoneSleepingDelayOver() {
+  Serial.print(sleep_till_time);
+  Serial.print(" -- ");
+  Serial.print(time_from_start);
+  Serial.print(" -- ");
+  Serial.println(ULONG_MAX); 
+  if(time_from_start < sleep_till_time) {
+    return false;
+  }
+  return true;
+}
+
+void changeState(int new_state) {
+  if(last_state != STATE_LEARNING) {
+    last_state = state;
+  }
+  state = new_state;
+  state_first_run = true;
+}
+
+void setColor_Changeover() {
+  strip.fill(strip.Color(255, 0, 128, colorBrightness));
+  strip.show();
 }
 
 void getBrightnessFromPoti() {
@@ -94,45 +315,6 @@ void getBrightnessFromPoti() {
     colorBrightness = (int(a0 / STEPS) * MULTIPLICATOR) - 1;
   }
   // printAnalog(a0);
-}
-
-void dailyRoutine() {
-  int h = timeClient.getHours();
-  int m = timeClient.getMinutes();
-  if(h >= 19) {     // Schlafen 19:00 - 24:00 Uhr
-    setColor_Go2Sleep(); 
-  }
-  else if(h >= 18) {     // Bettgeh fertig machen 18:00 - 19:00 Uhr
-    setColor_Changeover(); 
-  }
-  else if(h >=10) { // Tag 10:00 - 18:00 Uhr
-    doStuff();
-  }
-  else if(h >= 7) { // Zeit zum Aufstehen 07:00 - 10:00 Uhr
-    setColor_WakeUp();
-  }
-  else if(h >= 6 && m >= 45) { // Gleich Zeit zum Aufstehen 07:00 - 10:00 Uhr
-    setColor_Changeover();
-  }
-  else {     // Schlafen 0:00 - 6:45 Uhr
-    setColor_Go2Sleep(); 
-  }
-  delay(200);
-}
-
-void setColor_WakeUp() {
-  strip.fill(strip.Color(0, 255, 0, colorBrightness));
-  strip.show();
-}
-
-void setColor_Go2Sleep() {
-  strip.fill(strip.Color(255, 150, 0, colorBrightness));
-  strip.show();
-}
-
-void setColor_Changeover(){
-  strip.fill(strip.Color(255, 0, 128, colorBrightness));
-  strip.show();
 }
 
 void printTime() {
@@ -151,12 +333,13 @@ void printAnalog(int a0) {
   Serial.print(a0);
   Serial.print("colorBrightness: ");
   Serial.println(colorBrightness);
-  delay(1000);
 }
 
 /************************************************************************************************************
-Adafruit NeoPixel Standard Functions
-*/
+/*
+/* Adafruit NeoPixel Standard Functions
+/*
+*************/
 
 void colorWipe(uint32_t color, int wait) {
   for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
