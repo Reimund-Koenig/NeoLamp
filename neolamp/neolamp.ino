@@ -6,13 +6,12 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
-#define TESTMODE false
+#define TESTMODE true
 
-#define STATE_SPLASHSCREEN 0
-#define STATE_SLEEPING_TIME 1
-#define STATE_WAKEUP_TIME 2
-#define STATE_DAY_TIME 3
-#define STATE_LEARNING 4
+#define STATE_SLEEPING_TIME 0
+#define STATE_WAKEUP_TIME 1
+#define STATE_DAY_TIME 2
+#define STATE_LEARNING 3
 
 #define BUTTON_PIN      12
 #define NEOPIXEL_PIN    4
@@ -26,7 +25,7 @@ const char *password = "Lachen*Lustig-Johanna";
 
 const long utcOffsetInSeconds = 3600;
 uint8_t colorBrightness = 64; // Set BRIGHTNESS to about 1/5 (max = 255)
-
+uint8_t lastColorBrightness = colorBrightness;
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
 Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
@@ -51,6 +50,10 @@ int buttonState = false;
 int lastButtonState = LOW;  
 int colorWipe_i = 0;
 uint8_t colorWipe_state = 0;
+
+int pulse_i_counter = 255;
+uint8_t pulse_state = 0;
+int bla_pulse_j = 0;
 
 
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
@@ -87,7 +90,7 @@ void printTime();
 void printAnalog(int a0);
 
 bool colorWipe(uint32_t color, int wait);
-
+bool pulse(uint32_t color, int wait);
 /************************************************************************************************************
 /*
 /* Arduino Functions 
@@ -129,35 +132,11 @@ void loop() {
 /*
 *************/
 
-void test() { 
+
   // ToDo: pulse(0,255,0,5);
   // ToDo: rainbowFade(3, 3);
-  // ToDo: 
-  /*
-  if (digitalRead(BUTTON_PIN) == LOW) {
-    for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
-      if(i/3==0) {
-        strip.setPixelColor(i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
-      } else {
-        strip.setPixelColor(i, strip.Color(255, 0, 128, colorBrightness));  // Pink
-      }                          //  Pause for a moment
-    }
-    Serial.println("The button: OFF -> ON");
-    strip.show();
-  } else {
-    Serial.println("The button: ON -> OFF");
-    strip.fill(strip.Color(255, 0, 128, colorBrightness));
-    strip.show();
-  }
-  */
-}
 
-/************************************************************************************************************
-/*
-/* Modes
-/*
-*************/
-void run_dayTime_mode() {
+  
   // ToDo: make it none sleeping
   // colorWipe(strip.Color(  255,   0,   0)     , 50); // Red
   // colorWipe(strip.Color(  255,   128, 0)     , 50); // Orange
@@ -169,6 +148,37 @@ void run_dayTime_mode() {
   // colorWipe(strip.Color(  0,   0, 255)     , 50); // Blue
   // colorWipe(strip.Color(  128,   0, 255)     , 50); // 
   // colorWipe(strip.Color(  255,   0, 255)     , 50); // Violet
+  // colorWipe(strip.Color(  255,   0, 128)     , 50); // Pink
+
+void test() { 
+  for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
+    if(i>10) {
+      strip.setPixelColor(i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
+    } else {
+      strip.setPixelColor(i, strip.Color(255, 0, 128, colorBrightness));  // Pink
+    }                          //  Pause for a moment
+  }
+  strip.show();
+    if(pulse_state == 0) {
+    if(pulse(0 , 50)){
+      pulse_state++;
+    } // Heaven-Blue
+  } else if(pulse_state == 1) {
+    if(pulse(strip.Color(  255,   150, 0)     , 50)) { // Pink
+        pulse_state= 0;
+      }
+  }
+   
+  state_first_run =  false;
+}
+
+
+/************************************************************************************************************
+/*
+/* Modes
+/*
+*************/
+void run_dayTime_mode() {
   if(colorWipe_state == 0) {
     if(colorWipe(strip.Color(  0,   128, 255)     , 50)){
       colorWipe_state++;
@@ -182,37 +192,44 @@ void run_dayTime_mode() {
 
 void run_wakeupTime_mode() {
   if(state_first_run) {
-    setNoneSleepingDelay(1000);
-    strip.fill(strip.Color(0, 255, 0, colorBrightness));
+    strip.fill(strip.Color(0, 75, 0, colorBrightness));
+    strip.setPixelColor(3, strip.Color(0, 255, 0, colorBrightness)); 
+    strip.setPixelColor(4, strip.Color(0, 255, 0, colorBrightness)); 
+    strip.setPixelColor(5, strip.Color(0, 255, 0, colorBrightness));
+    strip.setPixelColor(6, strip.Color(0, 255, 0, colorBrightness));
+    strip.setPixelColor(7, strip.Color(0, 255, 0, colorBrightness));
+    strip.setPixelColor(8, strip.Color(0, 255, 0, colorBrightness));
     strip.show();
+    state_first_run = false;
   }
 }
 
 void run_sleepingTime_mode() {
   if(state_first_run) {
-    setNoneSleepingDelay(1000);
-    strip.fill(strip.Color(255, 150, 0, colorBrightness));
+    strip.fill(strip.Color(255, 75, 0, colorBrightness));
+    strip.setPixelColor(3, strip.Color(255, 9, 0, colorBrightness)); 
+    strip.setPixelColor(4, strip.Color(255, 18, 0, colorBrightness)); 
+    strip.setPixelColor(5, strip.Color(255, 37, 0, colorBrightness));
+    strip.setPixelColor(6, strip.Color(255, 0, 0, colorBrightness));
+    strip.setPixelColor(7, strip.Color(255, 0, 0, colorBrightness));
+    strip.setPixelColor(8, strip.Color(255, 0, 0, colorBrightness));
     strip.show();
+    state_first_run = false;
   }
 }
 
 void run_learning_mode() {
   if(!isNoneSleepingDelayOver()) { return; }
   if(learning_mode_substate == 0) {
-    strip.fill(strip.Color(0, 0, 255, colorBrightness));
-    strip.show();
+    state_first_run = true;
+    run_wakeupTime_mode();
     learning_mode_substate = 1;
   } else if (learning_mode_substate == 1) {
-    strip.fill(strip.Color(0, 255, 0, colorBrightness));
-    strip.show();
+    state_first_run = true;
+    run_sleepingTime_mode();
     learning_mode_substate = 0;
   }
-  setNoneSleepingDelay(1000);
-}
-
-void run_splashscreen_mode() {
-  colorWipe(strip.Color(  255,   0,   0)     , 50); // Red
-  colorWipe(strip.Color(  255,   128, 0)     , 50); // Orange
+  setNoneSleepingDelay(3000);
 }
 
 /************************************************************************************************************
@@ -241,12 +258,9 @@ void stateMachine() {
     run_dayTime_mode();
   } else if(state == STATE_LEARNING) {
     run_learning_mode();
-  } else if(state == STATE_SPLASHSCREEN) {
-    run_splashscreen_mode();
   } else {
     changeState(STATE_DAY_TIME); 
   }
-  state_first_run = false;
 }
 
 
@@ -257,7 +271,11 @@ void stateMachine() {
 *************/
 void handlePotiInput() {
   getBrightnessFromPoti();
+  if(colorBrightness  < lastColorBrightness + 4 &&
+     colorBrightness > lastColorBrightness - 4) return;
   strip.setBrightness(colorBrightness);
+  strip.show();
+  lastColorBrightness = colorBrightness;
 }
 
 void handleTimeFromStart() {
@@ -287,13 +305,13 @@ void handleDayTime( ){
   timeClient.update();  
   int h = timeClient.getHours();
   int m = timeClient.getMinutes();
-  if(h >= 19) {     // Schlafen 19:00 - 24:00 Uhr
-  changeState(STATE_SLEEPING_TIME); 
-  } else if(h >=10) { // Tag 10:00 - 18:00 Uhr
+  if(h >= 19 && state != STATE_SLEEPING_TIME) {     // Schlafen 19:00 - 24:00 Uhr
+    changeState(STATE_SLEEPING_TIME); 
+  } else if(h >=10 && state != STATE_DAY_TIME) { // Tag 10:00 - 18:00 Uhr
     changeState(STATE_DAY_TIME); 
-  } else if(h >= 6 && m >= 45) { // Gleich Zeit zum Aufstehen 07:00 - 10:00 Uhr
+  } else if(h >= 6 && m >= 45 && state != STATE_WAKEUP_TIME) { // Gleich Zeit zum Aufstehen 07:00 - 10:00 Uhr
     changeState(STATE_WAKEUP_TIME); 
-  } else {     // Schlafen 0:00 - 6:45 Uhr
+  } else if (state != STATE_SLEEPING_TIME) {     // Schlafen 0:00 - 6:45 Uhr
     changeState(STATE_SLEEPING_TIME); 
   }
 }
@@ -377,20 +395,26 @@ bool colorWipe(uint32_t color, int wait) {
   return false;
 }
 
-void pulse(int red, int green, int blue, uint8_t wait) {
-    strip.fill(strip.Color(red, green, blue, 255));
-  for(int j=0; j<256; j++) { // Ramp up from 0 to 255
-    // Fill entire strip with white at gamma-corrected brightness level 'j':
-    strip.setBrightness(j);
-    strip.show();
-    delay(wait);
+bool pulse(uint32_t color, uint8_t wait) {
+  if(!isNoneSleepingDelayOver()) { return false; }
+  if(color != 0) {
+    strip.fill(color);
   }
-
-  for(int j=255; j>=0; j--) { // Ramp down from 255 to 0
-    strip.setBrightness(j);
-    strip.show();
-    delay(wait);
+  if(pulse_i_counter > 0) {
+    pulse_i_counter--;
+    strip.setBrightness(pulse_i_counter);
+  } else {
+    bla_pulse_j++;
+    strip.setBrightness(bla_pulse_j);
+    if(bla_pulse_j >= 255) {
+      pulse_i_counter = 255;
+      bla_pulse_j = 0;
+      return true;
+    }
   }
+  strip.show(); 
+  setNoneSleepingDelay(wait);
+  return false;
 }
 
 
