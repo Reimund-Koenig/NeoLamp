@@ -8,12 +8,13 @@
 
 #define TESTMODE false
 
-#define STATE_SLEEPING_TIME 0
-#define STATE_WAKEUP_TIME 1
-#define STATE_DAY_TIME 2
-#define STATE_LEARNING 3
+#define STATE_SPLASHSCREEN 0
+#define STATE_SLEEPING_TIME 1
+#define STATE_WAKEUP_TIME 2
+#define STATE_DAY_TIME 3
+#define STATE_LEARNING 4
 
-#define SWITCH_PIN      12
+#define BUTTON_PIN      12
 #define NEOPIXEL_PIN    4
 #define NEOPIXEL_COUNT  16
 #define STEPS 32 // 2^x
@@ -35,7 +36,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
 unsigned long time_from_start = 0;
-unsigned long sleep_till_time = ULONG_MAX;
+unsigned long sleep_till_time = 0;
 
 uint8_t red = 0;
 uint8_t blue = 0;
@@ -46,7 +47,14 @@ uint8_t last_state = 0;         // State which was choosen last
 bool state_first_run = true;
 uint8_t learning_mode_substate = 0;
 
-bool last_switch_state = false;
+int buttonState = false;
+int lastButtonState = LOW;  
+int colorWipe_i = 0;
+uint8_t colorWipe_state = 0;
+
+
+unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
+unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
 
 
@@ -63,10 +71,11 @@ void run_dayTime_mode();
 void run_wakeupTime_mode();
 void run_sleepingTime_mode();
 void run_learning_mode();
+void run_splashscreen_mode();
 
 void handlePotiInput();
 void handleTimeFromStart();
-void handleSwitch();
+void handleButton();
 void handleDayTime();
 
 bool setNoneSleepingDelay(unsigned long  sleepTime);
@@ -77,7 +86,7 @@ void getBrightnessFromPoti();
 void printTime();
 void printAnalog(int a0);
 
-void colorWipe(uint32_t color, int wait);
+bool colorWipe(uint32_t color, int wait);
 
 /************************************************************************************************************
 /*
@@ -97,7 +106,7 @@ void setup(){
     delay ( 500 );
     Serial.print ( "." );
   }
-  pinMode(SWITCH_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
   timeClient.begin();
   // this resets all the neopixels to an off state
   strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
@@ -125,7 +134,7 @@ void test() {
   // ToDo: rainbowFade(3, 3);
   // ToDo: 
   /*
-  if (digitalRead(SWITCH_PIN) == LOW) {
+  if (digitalRead(BUTTON_PIN) == LOW) {
     for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
       if(i/3==0) {
         strip.setPixelColor(i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
@@ -133,10 +142,10 @@ void test() {
         strip.setPixelColor(i, strip.Color(255, 0, 128, colorBrightness));  // Pink
       }                          //  Pause for a moment
     }
-    Serial.println("The switch: OFF -> ON");
+    Serial.println("The button: OFF -> ON");
     strip.show();
   } else {
-    Serial.println("The switch: ON -> OFF");
+    Serial.println("The button: ON -> OFF");
     strip.fill(strip.Color(255, 0, 128, colorBrightness));
     strip.show();
   }
@@ -150,18 +159,25 @@ void test() {
 *************/
 void run_dayTime_mode() {
   // ToDo: make it none sleeping
-  colorWipe(strip.Color(  255,   0,   0)     , 50); // Red
-  colorWipe(strip.Color(  255,   128, 0)     , 50); // Orange
+  // colorWipe(strip.Color(  255,   0,   0)     , 50); // Red
+  // colorWipe(strip.Color(  255,   128, 0)     , 50); // Orange
   // colorWipe(strip.Color(  255,   255, 0)     , 50); // Yellow
   // colorWipe(strip.Color(  128,   255, 0)     , 50); // Liht-Green
   // colorWipe(strip.Color(  0, 255,   0)     , 50); // Green
   // colorWipe(strip.Color(  0,   255, 128)     , 50); // Türkis
   // colorWipe(strip.Color(  0,   255, 255)     , 50); // Light Blue
-  // colorWipe(strip.Color(  0,   128, 255)     , 50); // Heaven-Blue
   // colorWipe(strip.Color(  0,   0, 255)     , 50); // Blue
   // colorWipe(strip.Color(  128,   0, 255)     , 50); // 
   // colorWipe(strip.Color(  255,   0, 255)     , 50); // Violet
-  // colorWipe(strip.Color(  255,   0, 128)     , 50); // Pink
+  if(colorWipe_state == 0) {
+    if(colorWipe(strip.Color(  0,   128, 255)     , 50)){
+      colorWipe_state++;
+    } // Heaven-Blue
+  } else if(colorWipe_state == 1) {
+    if(colorWipe(strip.Color(  255,   0, 128)     , 50)) { // Pink
+        colorWipe_state= 0;
+      }
+   }
 }
 
 void run_wakeupTime_mode() {
@@ -181,7 +197,7 @@ void run_sleepingTime_mode() {
 }
 
 void run_learning_mode() {
-  if(!isNoneSleepingDelayOver) { return; }
+  if(!isNoneSleepingDelayOver()) { return; }
   if(learning_mode_substate == 0) {
     strip.fill(strip.Color(0, 0, 255, colorBrightness));
     strip.show();
@@ -194,6 +210,10 @@ void run_learning_mode() {
   setNoneSleepingDelay(1000);
 }
 
+void run_splashscreen_mode() {
+  colorWipe(strip.Color(  255,   0,   0)     , 50); // Red
+  colorWipe(strip.Color(  255,   128, 0)     , 50); // Orange
+}
 
 /************************************************************************************************************
 /*
@@ -204,7 +224,7 @@ void run_learning_mode() {
 void handleInputs() {
   handlePotiInput();
   handleTimeFromStart();
-  handleSwitch();
+  handleButton();
   if(state == STATE_LEARNING) {
     return;
   }
@@ -221,6 +241,8 @@ void stateMachine() {
     run_dayTime_mode();
   } else if(state == STATE_LEARNING) {
     run_learning_mode();
+  } else if(state == STATE_SPLASHSCREEN) {
+    run_splashscreen_mode();
   } else {
     changeState(STATE_DAY_TIME); 
   }
@@ -242,20 +264,26 @@ void handleTimeFromStart() {
   time_from_start = millis();
 }
 
-void handleSwitch() {
-  bool switch_state = digitalRead(SWITCH_PIN);
-  if (last_switch_state == switch_state) {
-    return;
+void handleButton() {
+  int reading = digitalRead(BUTTON_PIN);
+  if (reading != lastButtonState) {
+    lastDebounceTime = millis();
   }
-  if (switch_state == LOW) {
-    changeState(STATE_LEARNING);
-  } else {
-    changeState(last_state);
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (reading != buttonState) {
+      buttonState = reading;
+      if (buttonState == HIGH) {
+        last_state = state;
+        state = STATE_LEARNING;
+      } else {
+        state = last_state;
+      }
+    }
   }
-  last_switch_state = switch_state;
+  lastButtonState = reading;
 }
 
-void handleDayTime(){
+void handleDayTime( ){
   timeClient.update();  
   int h = timeClient.getHours();
   int m = timeClient.getMinutes();
@@ -282,11 +310,6 @@ bool setNoneSleepingDelay(unsigned long sleepTime) {
 }
 
 bool isNoneSleepingDelayOver() {
-  Serial.print(sleep_till_time);
-  Serial.print(" -- ");
-  Serial.print(time_from_start);
-  Serial.print(" -- ");
-  Serial.println(ULONG_MAX); 
   if(time_from_start < sleep_till_time) {
     return false;
   }
@@ -341,12 +364,17 @@ void printAnalog(int a0) {
 /*
 *************/
 
-void colorWipe(uint32_t color, int wait) {
-  for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
-    strip.setPixelColor(i, color);         //  Set pixel's color (in RAM)
-    strip.show();                          //  Update strip to match
-    delay(wait);                           //  Pause for a moment
+bool colorWipe(uint32_t color, int wait) {
+  if(!isNoneSleepingDelayOver()) { return false; }
+  if(colorWipe_i >= strip.numPixels()) {
+    colorWipe_i = 0;
+    return true;
   }
+  strip.setPixelColor(colorWipe_i, color);         //  Set pixel's color (in RAM)
+  strip.show();                          //  Update strip to match
+  colorWipe_i++;
+  setNoneSleepingDelay(wait);
+  return false;
 }
 
 void pulse(int red, int green, int blue, uint8_t wait) {
