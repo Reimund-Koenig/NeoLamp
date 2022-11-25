@@ -51,15 +51,13 @@ int lastButtonState = LOW;
 int colorWipe_i = 0;
 uint8_t colorWipe_state = 0;
 
-int pulse_i_counter = 255;
-uint8_t pulse_state = 0;
-int bla_pulse_j = 0;
+int pulse_i = 255;
+int pulse_j = 12;
+int colorPulse_state = 0;
 
 
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
-
-
 
 /************************************************************************************************************
 /*
@@ -81,7 +79,7 @@ void handleTimeFromStart();
 void handleButton();
 void handleDayTime();
 
-bool setNoneSleepingDelay(unsigned long  sleepTime);
+void setNoneSleepingDelay(unsigned long  sleepTime);
 bool isNoneSleepingDelayOver();
 void changeState(int new_state);
 void setColor_Changeover();
@@ -89,8 +87,8 @@ void getBrightnessFromPoti();
 void printTime();
 void printAnalog(int a0);
 
-bool colorWipe(uint32_t color, int wait);
-bool pulse(uint32_t color, int wait);
+bool colorWipe(uint32_t color, unsigned long wait);
+bool colorPulse(uint32_t color, unsigned long wait);
 /************************************************************************************************************
 /*
 /* Arduino Functions 
@@ -151,25 +149,22 @@ void loop() {
   // colorWipe(strip.Color(  255,   0, 128)     , 50); // Pink
 
 void test() { 
-  for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
-    if(i>10) {
-      strip.setPixelColor(i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
-    } else {
-      strip.setPixelColor(i, strip.Color(255, 0, 128, colorBrightness));  // Pink
-    }                          //  Pause for a moment
-  }
-  strip.show();
-    if(pulse_state == 0) {
-    if(pulse(0 , 50)){
-      pulse_state++;
-    } // Heaven-Blue
-  } else if(pulse_state == 1) {
-    if(pulse(strip.Color(  255,   150, 0)     , 50)) { // Pink
-        pulse_state= 0;
+  if(colorPulse_state == 0) {
+    if(colorPulse(strip.Color(255, 0, 0) , 5)) {
+        colorPulse_state = 1;
+    }
+  } else if(colorPulse_state == 1) {
+    for(int i=0; i<strip.numPixels(); i++) {
+      if(i>10) {
+        strip.setPixelColor(i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
+      } else {
+        strip.setPixelColor(i, strip.Color(255, 0, 128, colorBrightness));  // Pink
       }
+    }
+    if(colorPulse(0 , 5)){
+      colorPulse_state = 0;
+    }
   }
-   
-  state_first_run =  false;
 }
 
 
@@ -323,7 +318,7 @@ void handleDayTime( ){
 /*
 *************/
 
-bool setNoneSleepingDelay(unsigned long sleepTime) {
+void setNoneSleepingDelay(unsigned long sleepTime) {
     sleep_till_time = time_from_start + sleepTime;
 }
 
@@ -395,20 +390,21 @@ bool colorWipe(uint32_t color, int wait) {
   return false;
 }
 
-bool pulse(uint32_t color, uint8_t wait) {
+bool colorPulse(uint32_t color, unsigned long wait) {
   if(!isNoneSleepingDelayOver()) { return false; }
-  if(color != 0) {
+  if(color > 0) {
     strip.fill(color);
+    strip.show();
   }
-  if(pulse_i_counter > 0) {
-    pulse_i_counter--;
-    strip.setBrightness(pulse_i_counter);
+  if(pulse_i > 12) {
+    pulse_i = pulse_i - 1;
+    strip.setBrightness(pulse_i);
   } else {
-    bla_pulse_j++;
-    strip.setBrightness(bla_pulse_j);
-    if(bla_pulse_j >= 255) {
-      pulse_i_counter = 255;
-      bla_pulse_j = 0;
+    pulse_j = pulse_j + 1;
+    strip.setBrightness(pulse_j);
+    if(pulse_j >= 255) {
+      pulse_i = 255;
+      pulse_j = 12;
       return true;
     }
   }
@@ -417,6 +413,8 @@ bool pulse(uint32_t color, uint8_t wait) {
   return false;
 }
 
+
+/*
 
 void rainbowFade(int wait, int rainbowLoops) {
   int fadeVal=0, fadeMax=100;
@@ -456,4 +454,5 @@ void rainbowFade(int wait, int rainbowLoops) {
   }
   delay(500); // Pause 1/2 second
 }
+*/
 
