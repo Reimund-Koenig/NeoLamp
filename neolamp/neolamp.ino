@@ -340,20 +340,41 @@ void handleDayTime( ){
   timeClient.update();  
   int h = timeClient.getHours();
   int m = timeClient.getMinutes();
-  if(h >= 19 && state != STATE_SLEEPING_TIME) {     // Schlafen 19:00 - 24:00 Uhr
+  Serial.println(h);
+  if(h >= 19) {     // Schlafen 19:00 - 24:00 Uhr
+    if(state == STATE_SLEEPING_TIME) {
+      return;
+    }
     changeState(STATE_SLEEPING_TIME);
-  } else if(h >=10 && state != STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE
-            && state != STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR
-            && state != STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR
-            && state != STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR
-            && state != STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR
-            && state != STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR
-            && state != STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) { // Tag 10:00 - 18:00 Uhr
-    changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE); 
-  } else if((h > 6 || h == 6 && m >= 45) && state != STATE_WAKEUP_TIME) { // Gleich Zeit zum Aufstehen 06:45 - 10:00 Uhr
-    changeState(STATE_WAKEUP_TIME); 
-  } else if ((h < 6 || h == 6 && m < 45) && state != STATE_SLEEPING_TIME) {     // Schlafen 0:00 - 6:45 Uhr
+    return;
+  } 
+  if(h >=10) {
+    if(state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE
+          || state == STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR
+          || state == STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR
+          || state == STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR
+          || state == STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR
+          || state == STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR
+          || state == STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR
+          ) { 
+      return;
+    }
+    changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+    return;
+  }
+  if(h > 6 || (h == 6 && m >= 45)) { // Gleich Zeit zum Aufstehen 06:45 - 10:00 Uhr
+    if(state == STATE_WAKEUP_TIME) { 
+      return; 
+    }
+    changeState(STATE_WAKEUP_TIME);
+    return;
+  } 
+  if (h < 6 || (h == 6 && m < 45)) {     // Schlafen 0:00 - 6:45 Uhr
+    if(state == STATE_SLEEPING_TIME) {
+      return;
+    }
     changeState(STATE_SLEEPING_TIME); 
+    return;
   }
 }
 
