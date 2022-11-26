@@ -48,11 +48,11 @@ uint8_t learning_mode_substate = 0;
 int buttonState = false;
 int lastButtonState = LOW;  
 
-int colorWipe_i = 0;
-int pulse_i = 255;
-int pulse_j = 12;
-int pulse_k = 255;
-int pulse_l = 12;
+int colorWipe_helper_i = 0;
+int colorPulse_helper_i = 255;
+int colorPulse_helper_j = 12;
+int colorPulse_helper_k = 255;
+int colorPulse_helper_l = 12;
 uint32_t random_color;
 uint32_t choose_pulse_wipe_counter = 0;
 int createRandomColor_helper;
@@ -449,13 +449,13 @@ void printAnalog(int a0) {
 
 bool colorWipe(uint32_t color, int wait) {
   if(!isNoneSleepingDelayOver()) { return false; }
-  if(colorWipe_i >= strip.numPixels()) {
-    colorWipe_i = 0;
+  if(colorWipe_helper_i >= strip.numPixels()) {
+    colorWipe_helper_i = 0;
     return true;
   }
-  strip.setPixelColor(colorWipe_i, color);         //  Set pixel's color (in RAM)
+  strip.setPixelColor(colorWipe_helper_i, color);         //  Set pixel's color (in RAM)
   strip.show();                          //  Update strip to match
-  colorWipe_i++;
+  colorWipe_helper_i++;
   setNoneSleepingDelay(wait);
   return false;
 }
@@ -466,26 +466,26 @@ bool colorPulse(uint32_t color, unsigned long wait) {
     strip.fill(color);
     strip.show();
   }
-  if(pulse_i > 12) {
-    pulse_i--;
-    strip.setBrightness(pulse_i);
-  } else if (pulse_j < 255) {
-    pulse_j++;
-    strip.setBrightness(pulse_j);
-  } else if(pulse_k > 12) {
-    pulse_k--;
-    strip.setBrightness(pulse_k);
-    if(pulse_k == 13) {
+  if(colorPulse_helper_i > 12) {
+    colorPulse_helper_i--;
+    strip.setBrightness(colorPulse_helper_i);
+  } else if (colorPulse_helper_j < 255) {
+    colorPulse_helper_j++;
+    strip.setBrightness(colorPulse_helper_j);
+  } else if(colorPulse_helper_k > 12) {
+    colorPulse_helper_k--;
+    strip.setBrightness(colorPulse_helper_k);
+    if(colorPulse_helper_k == 13) {
       return true;
     }
   } else {
-    pulse_l++;
-    strip.setBrightness(pulse_l);
-    if(pulse_l >= 255) {
-      pulse_i = 255;
-      pulse_j = 12;
-      pulse_k = 255;
-      pulse_l = 12;
+    colorPulse_helper_l++;
+    strip.setBrightness(colorPulse_helper_l);
+    if(colorPulse_helper_l >= 255) {
+      colorPulse_helper_i = 255;
+      colorPulse_helper_j = 12;
+      colorPulse_helper_k = 255;
+      colorPulse_helper_l = 12;
     }
   }
   strip.show(); 
