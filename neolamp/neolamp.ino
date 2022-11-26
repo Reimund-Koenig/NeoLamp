@@ -24,26 +24,21 @@
 #define MULTIPLICATOR 256 / STEPS
 #define ULONG_MAX (LONG_MAX * 2UL + 1UL)
 
-const char *ssid     = "KOENIG";
-const char *password = "Lachen*Lustig-Johanna";
 
-const long utcOffsetInSeconds = 3600;
 uint8_t colorBrightness = 64; // Set BRIGHTNESS to about 1/5 (max = 255)
 uint8_t lastColorBrightness = colorBrightness;
-char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
 Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 // Define NTP Client to get time
+const char *ssid     = "KOENIG";
+const char *password = "Lachen*Lustig-Johanna";
 WiFiUDP ntpUDP;
+const long utcOffsetInSeconds = 3600;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 
 unsigned long time_from_start = 0;
 unsigned long sleep_till_time = 0;
-
-uint8_t red = 0;
-uint8_t blue = 0;
-uint8_t green = 0;
 
 uint8_t state = 0;
 uint8_t last_state = 0;         // State which was choosen last
@@ -52,17 +47,15 @@ uint8_t learning_mode_substate = 0;
 
 int buttonState = false;
 int lastButtonState = LOW;  
-int colorWipe_i = 0;
-uint8_t colorWipe_state = 0;
 
+int colorWipe_i = 0;
 int pulse_i = 255;
 int pulse_j = 12;
 int pulse_k = 255;
 int pulse_l = 12;
 uint32_t random_color;
 uint32_t choose_pulse_wipe_counter = 0;
-int createRandomColor_helper1;
-int createRandomColor_helper2;
+int createRandomColor_helper;
 
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
@@ -75,7 +68,6 @@ unsigned long debounceDelay = 50;    // the debounce time; increase if the outpu
 void test();
 void handleInputs();
 void stateMachine();
-
 
 void run_wakeupTime_mode();
 void run_sleepingTime_mode();
@@ -403,26 +395,26 @@ void getBrightnessFromPoti() {
 
 
 void createRandomColor(){
-    createRandomColor_helper1 = random(0,4);
+    int r1 = random(0,4);
     int r2 = random(0,2);
-    while(r2 == createRandomColor_helper2) {
+    while(r2 == createRandomColor_helper) {
       r2 = random(0,2);
     }
-    createRandomColor_helper2 = r2;
-    if(createRandomColor_helper1 == 0) {
-      if(createRandomColor_helper2== 0) {
+    createRandomColor_helper = r2;
+    if(r1 == 0) {
+      if(createRandomColor_helper== 0) {
         random_color = strip.Color(random(150,256), random(0,150), 0);
       } else {
         random_color = strip.Color(random(150,256), 0, random(0,150));
       }
-    } else if (createRandomColor_helper1 == 1) {
-      if(createRandomColor_helper2== 0) {
+    } else if (r1 == 1) {
+      if(createRandomColor_helper== 0) {
         random_color = strip.Color(0, random(150,256), random(0,150));
       } else {
         random_color = strip.Color(random(0,150), random(150,256), 0);
       }
     } else {
-      if(createRandomColor_helper2 == 0) {
+      if(createRandomColor_helper == 0) {
         random_color = strip.Color(0, random(0,150), random(30,256));
       } else {
         random_color = strip.Color(random(0,150), 0, random(30,256));
@@ -431,6 +423,7 @@ void createRandomColor(){
 }
 
 void printTime() {
+  char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
   Serial.print(daysOfTheWeek[timeClient.getDay()]);
   Serial.print(", ");
   Serial.print(timeClient.getHours());
