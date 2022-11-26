@@ -6,12 +6,16 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
-#define TESTMODE true
-
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
-#define STATE_DAY_TIME 2
-#define STATE_LEARNING 3
+#define STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE 2
+#define STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR 3
+#define STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR 4
+#define STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR 5
+#define STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR 6
+#define STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR 7
+#define STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR 8
+#define STATE_LEARNING 9
 
 #define BUTTON_PIN      12
 #define NEOPIXEL_PIN    4
@@ -53,8 +57,12 @@ uint8_t colorWipe_state = 0;
 
 int pulse_i = 255;
 int pulse_j = 12;
-int colorPulse_state = 0;
-
+int pulse_k = 255;
+int pulse_l = 12;
+uint32_t random_color;
+uint32_t choose_pulse_wipe_counter = 0;
+int createRandomColor_helper1;
+int createRandomColor_helper2;
 
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
 unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
@@ -68,11 +76,18 @@ void test();
 void handleInputs();
 void stateMachine();
 
-void run_dayTime_mode();
+
 void run_wakeupTime_mode();
 void run_sleepingTime_mode();
 void run_learning_mode();
-void run_splashscreen_mode();
+
+void run_dayTime_mode_1_choosePulseOrWipe();
+void run_dayTime_mode_2_Pulse_choose_mixed_or_single_color();
+void run_dayTime_mode_2a_Pulse_mixed_color();
+void run_dayTime_mode_2b_Pulse_single_color();
+void run_dayTime_mode_3_Wipe_choose_mixed_or_single_color();
+void run_dayTime_mode_3a_Wipe_mixed_color();
+void run_dayTime_mode_3b_Wipe_single_color();
 
 void handlePotiInput();
 void handleTimeFromStart();
@@ -84,6 +99,7 @@ bool isNoneSleepingDelayOver();
 void changeState(int new_state);
 void setColor_Changeover();
 void getBrightnessFromPoti();
+void createRandomColor();
 void printTime();
 void printAnalog(int a0);
 
@@ -116,11 +132,7 @@ void setup(){
 
 void loop() {
   handleInputs();
-  if(TESTMODE) {
-    test();
-  } else {
-    stateMachine();
-  }
+  stateMachine();
 }
 
 
@@ -129,41 +141,18 @@ void loop() {
 /* Test
 /*
 *************/
-
-
-  // ToDo: pulse(0,255,0,5);
-  // ToDo: rainbowFade(3, 3);
-
   
-  // ToDo: make it none sleeping
-  // colorWipe(strip.Color(  255,   0,   0)     , 50); // Red
-  // colorWipe(strip.Color(  255,   128, 0)     , 50); // Orange
-  // colorWipe(strip.Color(  255,   255, 0)     , 50); // Yellow
-  // colorWipe(strip.Color(  128,   255, 0)     , 50); // Liht-Green
-  // colorWipe(strip.Color(  0, 255,   0)     , 50); // Green
-  // colorWipe(strip.Color(  0,   255, 128)     , 50); // Türkis
-  // colorWipe(strip.Color(  0,   255, 255)     , 50); // Light Blue
-  // colorWipe(strip.Color(  0,   0, 255)     , 50); // Blue
-  // colorWipe(strip.Color(  128,   0, 255)     , 50); // 
-  // colorWipe(strip.Color(  255,   0, 255)     , 50); // Violet
-  // colorWipe(strip.Color(  255,   0, 128)     , 50); // Pink
-
+// ToDo: rainbowFade(3, 3);
 void test() { 
-  if(colorPulse_state == 0) {
-    if(colorPulse(strip.Color(255, 0, 0) , 5)) {
-        colorPulse_state = 1;
+  for(int i=0; i<strip.numPixels(); i++) {
+    if(i>10) {
+      strip.setPixelColor(i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
+    } else {
+      strip.setPixelColor(i, strip.Color(255, 0, 128, colorBrightness));  // Pink
     }
-  } else if(colorPulse_state == 1) {
-    for(int i=0; i<strip.numPixels(); i++) {
-      if(i>10) {
-        strip.setPixelColor(i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
-      } else {
-        strip.setPixelColor(i, strip.Color(255, 0, 128, colorBrightness));  // Pink
-      }
-    }
-    if(colorPulse(0 , 5)){
-      colorPulse_state = 0;
-    }
+  }
+  if(colorPulse(0 , 5)){
+    // Back to start
   }
 }
 
@@ -173,16 +162,63 @@ void test() {
 /* Modes
 /*
 *************/
-void run_dayTime_mode() {
-  if(colorWipe_state == 0) {
-    if(colorWipe(strip.Color(  0,   128, 255)     , 50)){
-      colorWipe_state++;
-    } // Heaven-Blue
-  } else if(colorWipe_state == 1) {
-    if(colorWipe(strip.Color(  255,   0, 128)     , 50)) { // Pink
-        colorWipe_state= 0;
-      }
-   }
+void run_dayTime_mode_1_choosePulseOrWipe() {
+  if(choose_pulse_wipe_counter < 100) {
+    changeState(STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR);
+  } else {
+   changeState(STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR);
+  }
+  if(choose_pulse_wipe_counter > 110) { choose_pulse_wipe_counter = 0; }
+  choose_pulse_wipe_counter++;
+}
+
+void run_dayTime_mode_2_Pulse_choose_mixed_or_single_color() {
+  if(random(0,2)==0) {
+    changeState(STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR);
+  } else {
+    changeState(STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR);
+  }
+}
+
+void run_dayTime_mode_2a_Pulse_mixed_color() {
+  // ToDo
+  changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+}
+
+void run_dayTime_mode_2b_Pulse_single_color() {
+  if(state_first_run) {
+    createRandomColor();
+    state_first_run = false;
+  }
+  if(colorPulse(random_color , 17)) {
+      changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+  }
+}
+
+void run_dayTime_mode_3_Wipe_choose_mixed_or_single_color() {
+    getBrightnessFromPoti();
+    strip.setBrightness(colorBrightness);
+    strip.show();
+    if(random(0,2)==0) {
+    changeState(STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR);
+  } else {
+    changeState(STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR);
+  }
+}
+
+void run_dayTime_mode_3a_Wipe_mixed_color() {
+  // ToDo
+  changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+}
+
+void run_dayTime_mode_3b_Wipe_single_color() {
+  if(state_first_run) {
+    createRandomColor();
+    state_first_run = false;
+  }
+  if(colorWipe(random_color , 100)) {
+      changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+  }
 }
 
 void run_wakeupTime_mode() {
@@ -249,12 +285,25 @@ void stateMachine() {
     run_sleepingTime_mode();
   } else if(state == STATE_WAKEUP_TIME) {
     run_wakeupTime_mode();    
-  } else if(state == STATE_DAY_TIME) {
-    run_dayTime_mode();
+  } else if(state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE) {
+    run_dayTime_mode_1_choosePulseOrWipe();
+  } else if(state == STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR) {
+    run_dayTime_mode_2_Pulse_choose_mixed_or_single_color();
+  } else if(state == STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR) {
+    run_dayTime_mode_2a_Pulse_mixed_color();
+  } else if(state == STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR) {
+    run_dayTime_mode_2b_Pulse_single_color();
+  } else if(state == STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR) {
+    run_dayTime_mode_3_Wipe_choose_mixed_or_single_color();
+  } else if(state == STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR) {
+    run_dayTime_mode_3a_Wipe_mixed_color();
+  } else if(state == STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) {
+    run_dayTime_mode_3b_Wipe_single_color();
   } else if(state == STATE_LEARNING) {
     run_learning_mode();
   } else {
-    changeState(STATE_DAY_TIME); 
+    strip.fill(strip.Color(255, 0, 0, 255));
+    strip.show();
   }
 }
 
@@ -301,9 +350,15 @@ void handleDayTime( ){
   int h = timeClient.getHours();
   int m = timeClient.getMinutes();
   if(h >= 19 && state != STATE_SLEEPING_TIME) {     // Schlafen 19:00 - 24:00 Uhr
-    changeState(STATE_SLEEPING_TIME); 
-  } else if(h >=10 && state != STATE_DAY_TIME) { // Tag 10:00 - 18:00 Uhr
-    changeState(STATE_DAY_TIME); 
+    changeState(STATE_SLEEPING_TIME);
+  } else if(h >=10 && state != STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE
+            && state != STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR
+            && state != STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR
+            && state != STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR
+            && state != STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR
+            && state != STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR
+            && state != STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) { // Tag 10:00 - 18:00 Uhr
+    changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE); 
   } else if(h >= 6 && m >= 45 && state != STATE_WAKEUP_TIME) { // Gleich Zeit zum Aufstehen 07:00 - 10:00 Uhr
     changeState(STATE_WAKEUP_TIME); 
   } else if (state != STATE_SLEEPING_TIME) {     // Schlafen 0:00 - 6:45 Uhr
@@ -353,6 +408,35 @@ void getBrightnessFromPoti() {
   // printAnalog(a0);
 }
 
+
+void createRandomColor(){
+    createRandomColor_helper1 = random(0,4);
+    int r2 = random(0,2);
+    while(r2 == createRandomColor_helper2) {
+      r2 = random(0,2);
+    }
+    createRandomColor_helper2 = r2;
+    if(createRandomColor_helper1 == 0) {
+      if(createRandomColor_helper2== 0) {
+        random_color = strip.Color(random(150,256), random(0,150), 0);
+      } else {
+        random_color = strip.Color(random(150,256), 0, random(0,150));
+      }
+    } else if (createRandomColor_helper1 == 1) {
+      if(createRandomColor_helper2== 0) {
+        random_color = strip.Color(0, random(150,256), random(0,150));
+      } else {
+        random_color = strip.Color(random(0,150), random(150,256), 0);
+      }
+    } else {
+      if(createRandomColor_helper2 == 0) {
+        random_color = strip.Color(0, random(0,150), random(30,256));
+      } else {
+        random_color = strip.Color(random(0,150), 0, random(30,256));
+      }
+    }
+}
+
 void printTime() {
   Serial.print(daysOfTheWeek[timeClient.getDay()]);
   Serial.print(", ");
@@ -397,15 +481,25 @@ bool colorPulse(uint32_t color, unsigned long wait) {
     strip.show();
   }
   if(pulse_i > 12) {
-    pulse_i = pulse_i - 1;
+    pulse_i--;
     strip.setBrightness(pulse_i);
-  } else {
-    pulse_j = pulse_j + 1;
+  } else if (pulse_j < 255) {
+    pulse_j++;
     strip.setBrightness(pulse_j);
-    if(pulse_j >= 255) {
+  } else if(pulse_k > 12) {
+    pulse_k--;
+    strip.setBrightness(pulse_k);
+    if(pulse_k == 13) {
+      return true;
+    }
+  } else {
+    pulse_l++;
+    strip.setBrightness(pulse_l);
+    if(pulse_l >= 255) {
       pulse_i = 255;
       pulse_j = 12;
-      return true;
+      pulse_k = 255;
+      pulse_l = 12;
     }
   }
   strip.show(); 
