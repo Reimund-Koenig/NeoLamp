@@ -97,7 +97,6 @@ void handleDayTime();
 void setNoneSleepingDelay(unsigned long  sleepTime);
 bool isNoneSleepingDelayOver();
 void changeState(int new_state);
-void setColor_Changeover();
 void getBrightnessFromPoti();
 void createRandomColor();
 void printTime();
@@ -166,7 +165,7 @@ void run_dayTime_mode_1_choosePulseOrWipe() {
   if(choose_pulse_wipe_counter < 100) {
     changeState(STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR);
   } else {
-   changeState(STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR);
+    changeState(STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR);
   }
   if(choose_pulse_wipe_counter > 110) { choose_pulse_wipe_counter = 0; }
   choose_pulse_wipe_counter++;
@@ -196,10 +195,10 @@ void run_dayTime_mode_2b_Pulse_single_color() {
 }
 
 void run_dayTime_mode_3_Wipe_choose_mixed_or_single_color() {
-    getBrightnessFromPoti();
-    strip.setBrightness(colorBrightness);
-    strip.show();
-    if(random(0,2)==0) {
+  getBrightnessFromPoti();
+  strip.setBrightness(colorBrightness);
+  strip.show();
+  if(random(0,2)==0) {
     changeState(STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR);
   } else {
     changeState(STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR);
@@ -359,9 +358,9 @@ void handleDayTime( ){
             && state != STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR
             && state != STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) { // Tag 10:00 - 18:00 Uhr
     changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE); 
-  } else if(h >= 6 && m >= 45 && state != STATE_WAKEUP_TIME) { // Gleich Zeit zum Aufstehen 07:00 - 10:00 Uhr
+  } else if((h > 6 || h == 6 && m >= 45) && state != STATE_WAKEUP_TIME) { // Gleich Zeit zum Aufstehen 06:45 - 10:00 Uhr
     changeState(STATE_WAKEUP_TIME); 
-  } else if (state != STATE_SLEEPING_TIME) {     // Schlafen 0:00 - 6:45 Uhr
+  } else if ((h < 6 || h == 6 && m < 45) && state != STATE_SLEEPING_TIME) {     // Schlafen 0:00 - 6:45 Uhr
     changeState(STATE_SLEEPING_TIME); 
   }
 }
@@ -391,12 +390,6 @@ void changeState(int new_state) {
   state = new_state;
   state_first_run = true;
 }
-
-void setColor_Changeover() {
-  strip.fill(strip.Color(255, 0, 128, colorBrightness));
-  strip.show();
-}
-
 void getBrightnessFromPoti() {
   // Values from 0-255
   int a0 = analogRead(A0); 
