@@ -337,18 +337,13 @@ void handleButton() {
 }
 
 void handleDayTime( ){
+  if(!isNoneSleepingDelayOver()) { return; }  
   timeClient.update();  
   int h = timeClient.getHours();
   int m = timeClient.getMinutes();
-  Serial.println(h);
   if(h >= 19) {     // Schlafen 19:00 - 24:00 Uhr
-    if(state == STATE_SLEEPING_TIME) {
-      return;
-    }
     changeState(STATE_SLEEPING_TIME);
-    return;
-  } 
-  if(h >=10) {
+  } else if(h >=10) {
     if(state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE
           || state == STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR
           || state == STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR
@@ -357,25 +352,15 @@ void handleDayTime( ){
           || state == STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR
           || state == STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR
           ) { 
-      return;
+      return; // only start mode once
     }
     changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
-    return;
-  }
-  if(h > 6 || (h == 6 && m >= 45)) { // Gleich Zeit zum Aufstehen 06:45 - 10:00 Uhr
-    if(state == STATE_WAKEUP_TIME) { 
-      return; 
-    }
+  } else if(h > 6 || (h == 6 && m >= 45)) { // Gleich Zeit zum Aufstehen 06:45 - 10:00 Uhr
     changeState(STATE_WAKEUP_TIME);
-    return;
-  } 
-  if (h < 6 || (h == 6 && m < 45)) {     // Schlafen 0:00 - 6:45 Uhr
-    if(state == STATE_SLEEPING_TIME) {
-      return;
-    }
+  } else if (h < 6 || (h == 6 && m < 45)) {     // Schlafen 0:00 - 6:45 Uhr
     changeState(STATE_SLEEPING_TIME); 
-    return;
   }
+  setNoneSleepingDelay(1000);
 }
 
 
