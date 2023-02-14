@@ -31,8 +31,8 @@ uint8_t lastColorBrightness = colorBrightness;
 Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 // Define NTP Client to get time
-const char *ssid     = "KOENIG";
-const char *password = "Lachen*Lustig-Johanna";
+const char *ssid     = "YOUR_SSID";
+const char *password = "YOUR_WLAN_PASSWORD";
 WiFiUDP ntpUDP;
 const long utcOffsetInSeconds = 3600;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
