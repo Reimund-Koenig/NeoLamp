@@ -32,8 +32,8 @@ uint8_t lastColorBrightness = colorBrightness;
 Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 // Define NTP Client to get time
-const char *ssid = "KOENIG";
-const char *password = "Lachen*Lustig-Johanna";
+const char *ssid     = "YOUR_SSID";
+const char *password = "YOUR_WLAN_PASSWORD";
 WiFiUDP ntpUDP;
 const long utcOffsetInSeconds = 2*3600;
 
@@ -62,7 +62,7 @@ unsigned long debounceDelay = 50;    // the debounce time; increase if the outpu
 
 /************************************************************************************************************
 /*
-/* Header 
+/* Header
 /*
 *************/
 void test();
@@ -100,7 +100,7 @@ bool colorPulse(uint32_t color, unsigned long wait);
 void initTime();
 /************************************************************************************************************
 /*
-/* Arduino Functions 
+/* Arduino Functions
 /*
 *************/
 void setup() {
@@ -386,9 +386,9 @@ void initTime(){
   }
   Serial.println("Got the time from NTP");
   // Now we can set the real timezone
-  //https://randomnerdtutorials.com/esp32-ntp-timezones-daylight-saving/ 
+  //https://randomnerdtutorials.com/esp32-ntp-timezones-daylight-saving/
   //https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
-  setenv("TZ","CET-1CEST,M3.5.0,M10.5.0/3",1); 
+  setenv("TZ","CET-1CEST,M3.5.0,M10.5.0/3",1);
   tzset();
 }
 
