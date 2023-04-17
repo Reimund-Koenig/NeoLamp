@@ -22,13 +22,11 @@ BearSSL::PrivateKey key(privkey);
 
 PubSubClient client(net);
 
-void messageReceived(char *topic, byte *payload, unsigned int length)
-{
+void messageReceived(char *topic, byte *payload, unsigned int length) {
   Serial.print("Received [");
   Serial.print(topic);
   Serial.print("]: ");
-  for (int i = 0; i < length; i++)
-  {
+  for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
@@ -46,8 +44,7 @@ void publishMessage() {
 }
 
 
-void connectAWS()
-{
+void connectAWS() {
   net.setTrustAnchors(&cert);
   net.setClientRSACert(&client_crt, &key);
 
@@ -73,8 +70,7 @@ void connectAWS()
 }
 
 
-void aws_pubsub()
-{
+void aws_pubsub() {
   if (!client.connected())  {
     connectAWS();
   }  else  {
