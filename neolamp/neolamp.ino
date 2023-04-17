@@ -6,6 +6,7 @@
 #include <WiFiUdp.h>
 #include "secrets.h"
 #include "time.h"
+#include "aws_mqtt.h"
 
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
@@ -120,8 +121,9 @@ void setup() {
 }
 
 void loop() {
-  handleInputs();
-  stateMachine();
+  aws_pubsub();
+  //handleInputs();
+  //stateMachine();
 }
 
 /************************************************************************************************************
