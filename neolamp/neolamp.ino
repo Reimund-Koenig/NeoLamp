@@ -5,6 +5,7 @@
 #include <NTPClient.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
+#include "secrets.h"
 
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
@@ -30,9 +31,6 @@ uint8_t lastColorBrightness = colorBrightness;
 
 Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
-// Define NTP Client to get time
-const char *ssid     = "YOUR_SSID";
-const char *password = "YOUR_WLAN_PASSWORD";
 WiFiUDP ntpUDP;
 const long utcOffsetInSeconds = 3600;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
