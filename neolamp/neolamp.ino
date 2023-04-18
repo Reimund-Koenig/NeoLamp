@@ -33,8 +33,6 @@ uint8_t lastColorBrightness = colorBrightness;
 
 Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
-WiFiUDP ntpUDP;
-
 unsigned long time_from_start = 0;
 unsigned long sleep_till_time = 0;
 
@@ -121,9 +119,9 @@ void setup() {
 }
 
 void loop() {
-  aws_pubsub();
-  //handleInputs();
-  //stateMachine();
+  //aws_pubsub();
+  handleInputs();
+  stateMachine();
 }
 
 /************************************************************************************************************
@@ -342,7 +340,7 @@ void handleDayTime() {
   Serial.print(h);
   Serial.print(":");
   Serial.println(m);
-  if (h >= 19) {  // Schlafen 19:00 - 24:00 Uhr
+  if (h >= 18) {  // Schlafen 19:00 - 24:00 Uhr
     changeState(STATE_SLEEPING_TIME);
   } else if (h >= 10) {
     if (state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE
