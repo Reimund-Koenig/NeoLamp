@@ -3,10 +3,14 @@
 #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 #include <WiFiUdp.h>
 #include "secrets.h"
 #include "time.h"
 #include "aws_mqtt.h"
+#include "wifi_manager.h"
+
+#define TESTMODE 1
 
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
@@ -106,20 +110,24 @@ void setup() {
   clock_prescale_set(clock_div_1);
 #endif
   Serial.begin(115200);
+
+#if defined(TESTMODE)
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
+#endif
+
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   // this resets all the neopixels to an off state
   strip.begin();  // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();   // Turn OFF all pixels ASAP
   initTime();
+  wlan_setup();
 }
 
 void loop() {
-  //aws_pubsub();
   handleInputs();
   stateMachine();
 }
