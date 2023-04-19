@@ -59,6 +59,35 @@ uint32_t random_color;
 uint32_t choose_pulse_wipe_counter = 0;
 int createRandomColor_helper;
 
+const char* input_parameter1 = "input_string";
+const char* input_parameter2 = "input_integer";
+const char* input_parameter3 = "input_float";
+
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html><head>
+  <title>HTML Form to Input Data</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html {font-family: Times New Roman; display: inline-block; text-align: center;}
+    h2 {font-size: 3.0rem; color: #FFAA00;}
+  </style>
+  </head><body>
+  <h2>HTML Form to Input Data</h2> 
+  <form action="/input1" method="POST">
+    Enter value: <input type="text" name="input1">
+    <input type="submit" value="Submit">
+  </form><br>
+  <form action="/input2" method="POST">
+    Enter value: <input type="text" name="input2">
+    <input type="submit" value="Submit">
+  </form><br>
+  <form action="/input3" method="POST">
+    Enter value: <input type="text" name="input3">
+    <input type="submit" value="Submit">
+  </form>
+</body></html>)rawliteral";
+
+
 /************************************************************************************************************
 /*
 /* Header
@@ -93,8 +122,14 @@ bool colorWipe(uint32_t color, unsigned long wait);
 bool colorPulse(uint32_t color, unsigned long wait);
 
 void initTime();
-void handleRoot();              // function prototypes for HTTP handlers
-void handleNotFound();
+//void handleRoot();              // function prototypes for HTTP handlers
+//void handleNotFound();
+
+void handle_server_root();
+void handle_server_input1();
+void handle_server_input2();
+void handle_server_input3();
+void handle_server_notFound();
 /************************************************************************************************************
 /*
 /* Arduino Functions
@@ -129,11 +164,12 @@ void setup() {
   } else {
     Serial.println("Error setting up MDNS responder!");
   }
-
-  server.on("/", handleRoot);               // Call the 'handleRoot' function when a client requests URI "/"
-  server.onNotFound(handleNotFound);        // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
-
-  server.begin();                           // Actually start the server
+server.on("/", HTTP_GET, handle_server_root);               // Call the 'handleRoot' function when a client requests URI "/"
+server.onNotFound(handle_server_notFound);        // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
+server.on("/input1", HTTP_POST, handle_server_input1);
+server.on("/input2", HTTP_POST, handle_server_input2);
+server.on("/input3", HTTP_POST, handle_server_input3);
+server.begin();                           // Actually start the server
   Serial.println("HTTP server started");
   //Get Current Hostname
   Serial.print("Default hostname: ");
@@ -146,6 +182,7 @@ void setup() {
 }
 
 void loop() {
+ server.handleClient();
   if (!isNoneSleepingDelayOver()) { return; }
   //handleDayTime();
   //stateMachine();  
@@ -155,8 +192,7 @@ void loop() {
   Serial.print(h);
   Serial.print(":");
   Serial.println(m);
-  setNoneSleepingDelay(1000);
-  server.handleClient();
+  setNoneSleepingDelay(30000);
 }
 
 /************************************************************************************************************
@@ -164,8 +200,8 @@ void loop() {
 /* Test
 /*
 *************/
-void handleRoot() {
-  server.send(200, "text/plain", "Hello world!");   // Send HTTP status 200 (Ok) and send some text to the browser/client
+void handle_server_root() {
+    server.send(200, "text/html", index_html);
   // Timezone - default: Berlin
   // Go to bed time - default: 19:00 Uhr
   // Wakeup time - default: 8:00 Uhr
@@ -173,8 +209,30 @@ void handleRoot() {
   // modes: off, green, Farbkreise, Pulsieren, Farbkeise und Pulsieren
 }
 
-void handleNotFound(){
-  server.send(404, "text/plain", "404: Not found"); // Send HTTP status 404 (Not Found) when there's no handler for the URI in the request
+void handle_server_notFound(){
+    server.send(404, "text/plain", "Not found");
+}
+
+void handle_server_input1 () {
+  Serial.println("Input 1");
+   if(!server.hasArg("input1") || server.arg("input1") == NULL) {
+      Serial.println(server.arg("ERR: No input1 or NULL"));
+      server.send(400, "text/plain", "400: Invalid Request");         // The request is invalid, so send HTTP status 400
+      return;
+  }
+  Serial.println(server.arg("input1"));
+  server.sendHeader("Location","/");        // Add a header to respond with a new location for the browser to go to the home page again
+  server.send(303);                         // Send it back to the browser with an HTTP status 303 (See Other) to redirect
+}
+void handle_server_input2 () {
+  Serial.println("Input 2");
+  server.sendHeader("Location","/");        // Add a header to respond with a new location for the browser to go to the home page again
+  server.send(303);                         // Send it back to the browser with an HTTP status 303 (See Other) to redirect
+}
+void handle_server_input3 () {
+  Serial.println("Input 3");
+  server.sendHeader("Location","/");        // Add a header to respond with a new location for the browser to go to the home page again
+  server.send(303);                         // Send it back to the browser with an HTTP status 303 (See Other) to redirect
 }
 
 // ToDo: rainbowFade(3, 3);
