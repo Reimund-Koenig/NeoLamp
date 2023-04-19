@@ -3,14 +3,15 @@
 #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 #include <ESP8266WiFi.h>
+#include <ESPAsyncTCP.h>
+#include <Hash.h>
+#include <FS.h>
 #include <ESP8266mDNS.h>
-#include <ESP8266WebServer.h>
+#include <ESPAsyncWebServer.h>
+#include <ESPAsyncWiFiManager.h>  //https://github.com/tzapu/WiFiManager
 #include <WiFiUdp.h>
 #include "secrets.h"
 #include "time.h"
-#include "wifi_manager.h"
-
-#define TESTMODE 1
 
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
@@ -23,14 +24,15 @@
 #define STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR 8
 #define STATE_LEARNING 9
 
-#define BUTTON_PIN 12
 #define NEOPIXEL_PIN 4
 #define NEOPIXEL_COUNT 16
 #define STEPS 32  // 2^x
 #define MULTIPLICATOR 256 / STEPS
 #define ULONG_MAX (LONG_MAX * 2UL + 1UL)
 
-ESP8266WebServer server(80);
+AsyncWebServer server(80);
+DNSServer dns;
+
 Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 struct tm timeinfo;
@@ -59,34 +61,93 @@ uint32_t random_color;
 uint32_t choose_pulse_wipe_counter = 0;
 int createRandomColor_helper;
 
-const char* input_parameter1 = "input_string";
-const char* input_parameter2 = "input_integer";
-const char* input_parameter3 = "input_float";
+const char* parameter_string = "input_string";
+const char* parameter_integer = "input_int";
+const char* parameter_float = "input_float";
 
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html><head>
   <title>HTML Form to Input Data</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
   <style>
     html {font-family: Times New Roman; display: inline-block; text-align: center;}
     h2 {font-size: 3.0rem; color: #FFAA00;}
   </style>
+  
+  <script>
+    function message_popup() {
+      alert("Saved value to ESP SPIFFS");
+      setTimeout(function(){ document.location.reload(false); }, 500);   
+    }
+  </script>
   </head><body>
-  <h2>HTML Form to Input Data</h2> 
-  <form action="/input1" method="POST">
-    Enter value: <input type="text" name="input1">
-    <input type="submit" value="Submit">
+    <h2>HTML Form to Input Data</h2> 
+    
+  <form action="/get" target="hidden-form">
+    Enter string (current value %input_string%): <input type="text" name="input_string">
+    <input type="submit" value="Submit" onclick="message_popup()">
   </form><br>
-  <form action="/input2" method="POST">
-    Enter value: <input type="text" name="input2">
-    <input type="submit" value="Submit">
+  <form action="/get" target="hidden-form">
+    Enter Integer (current value %input_int%): <input type="number " name="input_int">
+    <input type="submit" value="Submit" onclick="message_popup()">
   </form><br>
-  <form action="/input3" method="POST">
-    Enter value: <input type="text" name="input3">
-    <input type="submit" value="Submit">
+  <form action="/get" target="hidden-form">
+    Enter Floating value (current value %input_float%): <input type="number " name="input_float">
+    <input type="submit" value="Submit" onclick="message_popup()">
   </form>
+  <iframe style="display:none" name="hidden-form"></iframe>
 </body></html>)rawliteral";
 
+
+
+
+
+
+String read_file(fs::FS &fs, const char * path){
+  Serial.printf("Reading file: %s\r\n", path);
+  File file = fs.open(path, "r");
+  if(!file || file.isDirectory()){
+    Serial.println("Empty file/Failed to open file");
+    return String();
+  }
+  Serial.println("- read from file:");
+  String fileContent;
+  while(file.available()){
+    fileContent+=String((char)file.read());
+  }
+  file.close();
+  Serial.println(fileContent);
+  return fileContent;
+}
+
+void write_file(fs::FS &fs, const char * path, const char * message){
+  Serial.printf("Writing file: %s\r\n", path);
+  File file = fs.open(path, "w");
+  if(!file){
+    Serial.println("Failed to open file for writing");
+    return;
+  }
+  if(file.print(message)){
+    Serial.println("SUCCESS in writing file");
+  } else {
+    Serial.println("FAILED to write file");
+  }
+  file.close();
+}
+
+String processor(const String& var){
+  if(var == "input_string"){
+    return read_file(SPIFFS, "/input_string.txt");
+  }
+  else if(var == "input_int"){
+    return read_file(SPIFFS, "/input_int.txt");
+  }
+  else if(var == "input_float"){
+    return read_file(SPIFFS, "/input_float.txt");
+  }
+  return String();
+}
 
 /************************************************************************************************************
 /*
@@ -125,11 +186,13 @@ void initTime();
 //void handleRoot();              // function prototypes for HTTP handlers
 //void handleNotFound();
 
-void handle_server_root();
-void handle_server_input1();
-void handle_server_input2();
-void handle_server_input3();
-void handle_server_notFound();
+void async_wlan_setup();
+
+//void handle_server_root();
+//void handle_server_input1();
+//void handle_server_input2();
+//void handle_server_input3();
+void handle_server_notFound(AsyncWebServerRequest *request);
 /************************************************************************************************************
 /*
 /* Arduino Functions
@@ -142,34 +205,52 @@ void setup() {
   clock_prescale_set(clock_div_1);
 #endif
   Serial.begin(115200);
-  WiFi.mode(WIFI_STA);
-  WiFi.hostname("NeoLamp");
-#if defined(TESTMODE)
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  if(!SPIFFS.begin()){
+      Serial.println("An Error has occurred while mounting SPIFFS");
+      return;
   }
-#endif
+  WiFi.mode(WIFI_STA);
+  WiFi.hostname("kinderlampe");
+  async_wlan_setup();
 
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
   // this resets all the neopixels to an off state
   strip.begin();  // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();   // Turn OFF all pixels ASAP
   initTime();
-  wlan_setup();
 
-  if (MDNS.begin("esp8266")) {              // Start the mDNS responder for esp8266.local
+  if (MDNS.begin("kinderlampe")) {              // Start the mDNS responder for kinderlampe.local
     Serial.println("mDNS responder started");
   } else {
     Serial.println("Error setting up MDNS responder!");
   }
-server.on("/", HTTP_GET, handle_server_root);               // Call the 'handleRoot' function when a client requests URI "/"
-server.onNotFound(handle_server_notFound);        // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
-server.on("/input1", HTTP_POST, handle_server_input1);
-server.on("/input2", HTTP_POST, handle_server_input2);
-server.on("/input3", HTTP_POST, handle_server_input3);
-server.begin();                           // Actually start the server
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/html", index_html, processor);
+  });
+
+  server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    String inputMessage;
+
+    if (request->hasParam(parameter_string)) {
+      inputMessage = request->getParam(parameter_string)->value();
+      write_file(SPIFFS, "/input_string.txt", inputMessage.c_str());
+    }
+
+    else if (request->hasParam(parameter_integer)) {
+      inputMessage = request->getParam(parameter_integer)->value();
+      write_file(SPIFFS, "/input_int.txt", inputMessage.c_str());
+    }
+    else if (request->hasParam(parameter_float)) {
+      inputMessage = request->getParam(parameter_float)->value();
+      write_file(SPIFFS, "/input_float.txt", inputMessage.c_str());
+    }
+    else {
+      inputMessage = "No message sent";
+    }
+    Serial.println(inputMessage);
+    request->send(200, "text/text", inputMessage);
+  });
+  server.onNotFound(handle_server_notFound);
+  server.begin();                      // Actually start the server
   Serial.println("HTTP server started");
   //Get Current Hostname
   Serial.print("Default hostname: ");
@@ -182,8 +263,19 @@ server.begin();                           // Actually start the server
 }
 
 void loop() {
- server.handleClient();
   if (!isNoneSleepingDelayOver()) { return; }
+  String myString = read_file(SPIFFS, "/input_string.txt");
+  Serial.print("string entered: ");
+  Serial.println(myString);
+  
+  int myInteger = read_file(SPIFFS, "/input_int.txt").toInt();
+  Serial.print("integer entered: ");
+  Serial.println(myInteger);
+  
+  float myFloat = read_file(SPIFFS, "/input_float.txt").toFloat();
+  Serial.print("floating number entered: ");
+  Serial.println(myFloat);
+
   //handleDayTime();
   //stateMachine();  
   updateTime();
@@ -192,7 +284,7 @@ void loop() {
   Serial.print(h);
   Serial.print(":");
   Serial.println(m);
-  setNoneSleepingDelay(30000);
+  setNoneSleepingDelay(5000);
 }
 
 /************************************************************************************************************
@@ -200,6 +292,12 @@ void loop() {
 /* Test
 /*
 *************/
+
+void handle_server_notFound(AsyncWebServerRequest *request) {
+  request->send(404, "text/plain", "Not found");
+}
+
+/*
 void handle_server_root() {
     server.send(200, "text/html", index_html);
   // Timezone - default: Berlin
@@ -209,9 +307,7 @@ void handle_server_root() {
   // modes: off, green, Farbkreise, Pulsieren, Farbkeise und Pulsieren
 }
 
-void handle_server_notFound(){
-    server.send(404, "text/plain", "Not found");
-}
+
 
 void handle_server_input1 () {
   Serial.println("Input 1");
@@ -234,6 +330,7 @@ void handle_server_input3 () {
   server.sendHeader("Location","/");        // Add a header to respond with a new location for the browser to go to the home page again
   server.send(303);                         // Send it back to the browser with an HTTP status 303 (See Other) to redirect
 }
+*/ 
 
 // ToDo: rainbowFade(3, 3);
 void test() {
@@ -431,6 +528,16 @@ void handleDayTime() {
 /* HELPER
 /*
 *************/
+
+void async_wlan_setup() {
+  Serial.begin(115200);
+  //Local intialization. Once its business is done, there is no need to keep it around
+  AsyncWiFiManager wifiManager(&server, &dns);
+  //reset saved settings >> USED TO TEST
+  // wifiManager.resetSettings();
+  wifiManager.autoConnect("Kinder Lampe");
+}
+
 
 void updateTime(){
   if(!getLocalTime(&timeinfo)){
