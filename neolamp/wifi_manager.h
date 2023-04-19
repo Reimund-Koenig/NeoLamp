@@ -13,6 +13,7 @@ void saveConfigCallback () {
 }
  
 void wlan_setup() {  
+  if (WiFi.status() == WL_CONNECTED) { return; }
   // WiFiManager
   // Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
@@ -37,7 +38,7 @@ void wlan_setup() {
   //sets timeout until configuration portal gets turned off
   //useful to make it all retry or go to sleep
   //in seconds
-  wifiManager.setTimeout(300);
+  //wifiManager.setTimeout(300);
  
   // fetches ssid and pass from eeprom and tries to connect
   // if it does not connect it starts an access point with the specified name

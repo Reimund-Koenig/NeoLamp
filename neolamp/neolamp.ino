@@ -3,11 +3,11 @@
 #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <WiFiUdp.h>
 #include "secrets.h"
 #include "time.h"
-#include "aws_mqtt.h"
 #include "wifi_manager.h"
 
 #define TESTMODE 1
@@ -30,12 +30,14 @@
 #define MULTIPLICATOR 256 / STEPS
 #define ULONG_MAX (LONG_MAX * 2UL + 1UL)
 
+ESP8266WebServer server(80);
+Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
+
 struct tm timeinfo;
 
 uint8_t colorBrightness = 64;  // Set BRIGHTNESS to about 1/5 (max = 255)
 uint8_t lastColorBrightness = colorBrightness;
 
-Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 unsigned long time_from_start = 0;
 unsigned long sleep_till_time = 0;
@@ -57,16 +59,12 @@ uint32_t random_color;
 uint32_t choose_pulse_wipe_counter = 0;
 int createRandomColor_helper;
 
-unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
-unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
-
 /************************************************************************************************************
 /*
 /* Header
 /*
 *************/
 void test();
-void handleInputs();
 void stateMachine();
 
 void run_wakeupTime_mode();
@@ -81,9 +79,6 @@ void run_dayTime_mode_3_Wipe_choose_mixed_or_single_color();
 void run_dayTime_mode_3a_Wipe_mixed_color();
 void run_dayTime_mode_3b_Wipe_single_color();
 
-void handlePotiInput();
-void handleTimeFromStart();
-void handleButton();
 void handleDayTime();
 
 void setNoneSleepingDelay(unsigned long sleepTime);
@@ -98,6 +93,8 @@ bool colorWipe(uint32_t color, unsigned long wait);
 bool colorPulse(uint32_t color, unsigned long wait);
 
 void initTime();
+void handleRoot();              // function prototypes for HTTP handlers
+void handleNotFound();
 /************************************************************************************************************
 /*
 /* Arduino Functions
@@ -110,7 +107,8 @@ void setup() {
   clock_prescale_set(clock_div_1);
 #endif
   Serial.begin(115200);
-
+  WiFi.mode(WIFI_STA);
+  WiFi.hostname("NeoLamp");
 #if defined(TESTMODE)
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -125,11 +123,40 @@ void setup() {
   strip.show();   // Turn OFF all pixels ASAP
   initTime();
   wlan_setup();
+
+  if (MDNS.begin("esp8266")) {              // Start the mDNS responder for esp8266.local
+    Serial.println("mDNS responder started");
+  } else {
+    Serial.println("Error setting up MDNS responder!");
+  }
+
+  server.on("/", handleRoot);               // Call the 'handleRoot' function when a client requests URI "/"
+  server.onNotFound(handleNotFound);        // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
+
+  server.begin();                           // Actually start the server
+  Serial.println("HTTP server started");
+  //Get Current Hostname
+  Serial.print("Default hostname: ");
+  Serial.println(WiFi.hostname().c_str());
+  
+  Serial.print("Connected to ");
+  Serial.println(WiFi.SSID());              // Tell us what network we're connected to
+  Serial.print("IP address:\t");
+  Serial.println(WiFi.localIP());           // Send the IP address of the ESP8266 to the computer
 }
 
 void loop() {
-  handleInputs();
-  stateMachine();
+  if (!isNoneSleepingDelayOver()) { return; }
+  //handleDayTime();
+  //stateMachine();  
+  updateTime();
+  int h = timeinfo.tm_hour;
+  int m = timeinfo.tm_min;
+  Serial.print(h);
+  Serial.print(":");
+  Serial.println(m);
+  setNoneSleepingDelay(1000);
+  server.handleClient();
 }
 
 /************************************************************************************************************
@@ -137,6 +164,18 @@ void loop() {
 /* Test
 /*
 *************/
+void handleRoot() {
+  server.send(200, "text/plain", "Hello world!");   // Send HTTP status 200 (Ok) and send some text to the browser/client
+  // Timezone - default: Berlin
+  // Go to bed time - default: 19:00 Uhr
+  // Wakeup time - default: 8:00 Uhr
+  // Daymode: default: Farbkeise und Pulsieren
+  // modes: off, green, Farbkreise, Pulsieren, Farbkeise und Pulsieren
+}
+
+void handleNotFound(){
+  server.send(404, "text/plain", "404: Not found"); // Send HTTP status 404 (Not Found) when there's no handler for the URI in the request
+}
 
 // ToDo: rainbowFade(3, 3);
 void test() {
@@ -265,17 +304,6 @@ void run_learning_mode() {
 /*
 *************/
 
-void handleInputs() {
-  handlePotiInput();
-  handleTimeFromStart();
-  handleButton();
-  if (state == STATE_LEARNING) {
-    return;
-  }
-  // Time is also an input which gets handled if we are not in STATE_LEARNING
-  handleDayTime();
-}
-
 void stateMachine() {
   if (state == STATE_SLEEPING_TIME) {
     run_sleepingTime_mode();
@@ -309,36 +337,6 @@ void stateMachine() {
 /* Inputs
 /*
 *************/
-void handlePotiInput() {
-  getBrightnessFromPoti();
-  if (colorBrightness < lastColorBrightness + 4 && colorBrightness > lastColorBrightness - 4) return;
-  strip.setBrightness(colorBrightness);
-  strip.show();
-  lastColorBrightness = colorBrightness;
-}
-
-void handleTimeFromStart() {
-  time_from_start = millis();
-}
-
-void handleButton() {
-  int reading = digitalRead(BUTTON_PIN);
-  if (reading != lastButtonState) {
-    lastDebounceTime = millis();
-  }
-  if ((millis() - lastDebounceTime) > debounceDelay) {
-    if (reading != buttonState) {
-      buttonState = reading;
-      if (buttonState == HIGH) {
-        last_state = state;
-        state = STATE_LEARNING;
-      } else {
-        state = last_state;
-      }
-    }
-  }
-  lastButtonState = reading;
-}
 
 void handleDayTime() {
   if (!isNoneSleepingDelayOver()) { return; }
@@ -401,7 +399,8 @@ void setNoneSleepingDelay(unsigned long sleepTime) {
   sleep_till_time = time_from_start + sleepTime;
 }
 
-bool isNoneSleepingDelayOver() {
+bool isNoneSleepingDelayOver() {  
+  time_from_start = millis();
   if (time_from_start < sleep_till_time) {
     return false;
   }
