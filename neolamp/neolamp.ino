@@ -9,7 +9,7 @@
 #include <ESP8266mDNS.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPAsyncWiFiManager.h>  //https://github.com/tzapu/WiFiManager
-#include <WiFiUdp.h>
+//#include <WiFiUdp.h>
 #include "secrets.h"
 #include "time.h"
 
@@ -217,12 +217,18 @@ void setup() {
   strip.begin();  // INITIALIZE NeoPixel strip object (REQUIRED)
   strip.show();   // Turn OFF all pixels ASAP
   initTime();
-
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi..");
+  }
+  delay(10000);
   if (MDNS.begin("kinderlampe")) {              // Start the mDNS responder for kinderlampe.local
     Serial.println("mDNS responder started");
   } else {
     Serial.println("Error setting up MDNS responder!");
   }
+
+  MDNS.addService("http", "tcp", 80);
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", index_html, processor);
   });
@@ -263,18 +269,19 @@ void setup() {
 }
 
 void loop() {
+  MDNS.update();
   if (!isNoneSleepingDelayOver()) { return; }
   String myString = read_file(SPIFFS, "/input_string.txt");
-  Serial.print("string entered: ");
-  Serial.println(myString);
+  //Serial.print("string entered: ");
+  //Serial.println(myString);
   
   int myInteger = read_file(SPIFFS, "/input_int.txt").toInt();
-  Serial.print("integer entered: ");
-  Serial.println(myInteger);
+  //Serial.print("integer entered: ");
+  //Serial.println(myInteger);
   
   float myFloat = read_file(SPIFFS, "/input_float.txt").toFloat();
-  Serial.print("floating number entered: ");
-  Serial.println(myFloat);
+  //Serial.print("floating number entered: ");
+  //Serial.println(myFloat);
 
   //handleDayTime();
   //stateMachine();  
