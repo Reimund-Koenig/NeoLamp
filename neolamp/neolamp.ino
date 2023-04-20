@@ -62,9 +62,9 @@ uint32_t random_color;
 uint32_t choose_pulse_wipe_counter = 0;
 int createRandomColor_helper;
 
-const char *parameter_string = "input_sleep_time";
-const char *parameter_integer = "input_wakeup_time";
-const char *parameter_float = "input_animation_time";
+const char *input_sleep_time = "input_sleep_time";
+const char *input_wakeup_time = "input_wakeup_time";
+const char *input_animation_time = "input_animation_time";
 
 String read_file(fs::FS &fs, const char *path) {
     Serial.printf("Reading file: %s\r\n", path);
@@ -197,16 +197,16 @@ void setup() {
     server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
         String inputMessage;
 
-        if(request->hasParam(parameter_string)) {
-            inputMessage = request->getParam(parameter_string)->value();
+        if(request->hasParam(input_sleep_time)) {
+            inputMessage = request->getParam(input_sleep_time)->value();
             write_file(SPIFFS, "/input_sleep_time.txt", inputMessage.c_str());
         }
 
-        else if(request->hasParam(parameter_integer)) {
-            inputMessage = request->getParam(parameter_integer)->value();
+        else if(request->hasParam(input_wakeup_time)) {
+            inputMessage = request->getParam(input_wakeup_time)->value();
             write_file(SPIFFS, "/input_wakeup_time.txt", inputMessage.c_str());
-        } else if(request->hasParam(parameter_float)) {
-            inputMessage = request->getParam(parameter_float)->value();
+        } else if(request->hasParam(input_animation_time)) {
+            inputMessage = request->getParam(input_animation_time)->value();
             write_file(SPIFFS, "/input_animation_time.txt",
                        inputMessage.c_str());
         } else {
@@ -233,17 +233,9 @@ void loop() {
     if(!isNoneSleepingDelayOver()) {
         return;
     }
-    String myString = read_file(SPIFFS, "/input_sleep_time.txt");
-    // Serial.print("string entered: ");
-    // Serial.println(myString);
-
-    int myInteger = read_file(SPIFFS, "/input_wakeup_time.txt").toInt();
-    // Serial.print("integer entered: ");
-    // Serial.println(myInteger);
-
-    float myFloat = read_file(SPIFFS, "/input_animation_time.txt").toFloat();
-    // Serial.print("floating number entered: ");
-    // Serial.println(myFloat);
+    String str_sleep_time = read_file(SPIFFS, "/input_sleep_time.txt");
+    String str_wakeup_time = read_file(SPIFFS, "/input_wakeup_time.txt");
+    String str_animation_time = read_file(SPIFFS, "/input_animation_time.txt");
 
     // handleDayTime();
     // stateMachine();
