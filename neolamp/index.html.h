@@ -30,17 +30,10 @@ const char index_html[] PROGMEM = R"rawliteral("
     <form action="/get" target="hidden-form">
       <table style="margin-left: auto; margin-right: auto">
         <tr>
-          <td style="text-align: right; padding-right: 1em">
-            Aktuelle Uhrzeit der Lampe:
-          </td>
-          <td style="width: 15em">XX:XX</td>
-        </tr>
-        <tr>
           <td style="text-align: right; padding-right: 1em">Schlafenszeit:</td>
           <td>
             <input
               type="text"
-              tooltip="text"
               name="input_sleep_time"
               value="%input_sleep_time%"
               style="width: 15em"
@@ -75,7 +68,7 @@ const char index_html[] PROGMEM = R"rawliteral("
         <tr>
           <td style="text-align: right; padding-right: 1em">Zeitzone:</td>
           <td>
-            <select name="timezone" id="timezone" style="width: 15em">
+            <select name="timezone" style="width: 15em">
               <option value="berlin">Berlin</option>
               <option value="usa">USA</option>
               <option value="bla">bla</option>
@@ -88,7 +81,7 @@ const char index_html[] PROGMEM = R"rawliteral("
             Animation am Tag:
           </td>
           <td>
-            <select name="animation" id="animation" style="width: 15em">
+            <select name="animation" style="width: 15em">
               <option value="mix">Farbkeise und Pulsieren</option>
               <option value="circle">Farbkeise</option>
               <option value="pulse">Pulsieren</option>
@@ -109,6 +102,18 @@ const char index_html[] PROGMEM = R"rawliteral("
               max="100"
               style="width: 15em"
             />
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: right; padding-right: 1em">
+            <br />Uhrzeit:<br />
+            <label style="font-size: 0.75em"> (beim Laden der Seite)</label>
+          </td>
+          <td style="width: 15em">
+            <br />
+            XX:XX
+            <br />
+            <label style="font-size: 0.75em"> (beim Laden der Seite)</label>
           </td>
         </tr>
       </table>

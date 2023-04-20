@@ -195,25 +195,20 @@ void setup() {
     });
 
     server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
-        String inputMessage;
-
+        String tmp;
         if(request->hasParam(input_sleep_time)) {
-            inputMessage = request->getParam(input_sleep_time)->value();
-            write_file(SPIFFS, "/input_sleep_time.txt", inputMessage.c_str());
+            tmp = request->getParam(input_sleep_time)->value();
+            write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
         }
-
-        else if(request->hasParam(input_wakeup_time)) {
-            inputMessage = request->getParam(input_wakeup_time)->value();
-            write_file(SPIFFS, "/input_wakeup_time.txt", inputMessage.c_str());
-        } else if(request->hasParam(input_animation_time)) {
-            inputMessage = request->getParam(input_animation_time)->value();
-            write_file(SPIFFS, "/input_animation_time.txt",
-                       inputMessage.c_str());
-        } else {
-            inputMessage = "No message sent";
+        if(request->hasParam(input_wakeup_time)) {
+            tmp = request->getParam(input_wakeup_time)->value();
+            write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
         }
-        Serial.println(inputMessage);
-        request->send(200, "text/text", inputMessage);
+        if(request->hasParam(input_animation_time)) {
+            tmp = request->getParam(input_animation_time)->value();
+            write_file(SPIFFS, "/input_animation_time.txt", tmp.c_str());
+        }
+        request->send(200, "text/text", "ok");
     });
     server.onNotFound(handle_server_notFound);
     server.begin(); // Actually start the server
