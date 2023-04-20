@@ -1,4 +1,4 @@
-const char index_html[] PROGMEM = R"rawliteral(
+const char index_html[] PROGMEM = R"rawliteral("
 <!DOCTYPE html>
 <html>
   <head>
@@ -18,8 +18,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     </style>
 
     <script>
-      function message_popup() {
-        alert("Saved value to ESP SPIFFS");
+      function handle_new_input() {
         setTimeout(function () {
           document.location.reload(false);
         }, 500);
@@ -27,24 +26,47 @@ const char index_html[] PROGMEM = R"rawliteral(
     </script>
   </head>
   <body>
-    <h2>HTML Form to Input Data</h2>
+    <h2>Lampe - Einstellungen</h2>
+    Aktuelle Uhrzeit der Lampe: XX:XX
+    <br />
+    <br />
     <form action="/get" target="hidden-form">
-      Enter string (current value %input_string%):
+      Schlafenszeit (%input_string%):
       <input type="text" name="input_string" />
-      <input type="submit" value="Submit" onclick="message_popup()" />
+      <input type="submit" value="Submit" onclick="handle_new_input()" />
     </form>
     <br />
     <form action="/get" target="hidden-form">
-      Enter Integer (current value %input_int%):
+      Aufstehzeit (%input_int%):
       <input type="number " name="input_int" />
-      <input type="submit" value="Submit" onclick="message_popup()" />
+      <input type="submit" value="Submit" onclick="handle_new_input()" />
     </form>
     <br />
     <form action="/get" target="hidden-form">
-      Enter Floating value (current value %input_float%):
+      Animationszeit (%input_float%):
       <input type="number " name="input_float" />
-      <input type="submit" value="Submit" onclick="message_popup()" />
+      <input type="submit" value="Submit" onclick="handle_new_input()" />
     </form>
+    <br />
+    Zeitzone:
+    <select name="timezone" id="timezone">
+      <option value="berlin">Berlin</option>
+      <option value="usa">USA</option>
+      <option value="bla">bla</option>
+      <option value="blubb">blubb</option>
+    </select>
+    <br />
+
+    <br />
+    Animation am Tag:
+    <select name="animation" id="animation">
+      <option value="mix">Farbkeise und Pulsieren</option>
+      <option value="circle">Farbkeise</option>
+      <option value="pulse">Pulsieren</option>
+      <option value="green">Gruen</option>
+      <option value="off">Lampe Ausgeschaltet</option>
+    </select>
+    <br />
     <iframe style="display: none" name="hidden-form"></iframe>
   </body>
 </html>
