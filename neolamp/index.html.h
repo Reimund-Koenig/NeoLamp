@@ -30,6 +30,20 @@ const char index_html[] PROGMEM = R"rawliteral("
     <form action="/get" target="hidden-form">
       <table style="margin-left: auto; margin-right: auto; width: 20em">
         <tr>
+          <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
+          <td>
+            <input
+              name="input_brightness"
+              value="%input_brightness%"
+              type="range"
+              orient="vertical"
+              min="0"
+              max="100"
+              style="width: 15em"
+            />
+          </td>
+        </tr>
+        <tr>
           <td><hr /></td>
           <td><hr /></td>
         </tr>
@@ -89,20 +103,6 @@ const char index_html[] PROGMEM = R"rawliteral("
             <select name="input_timezone" style="width: 15em">
               %input_timezone%
             </select>
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
-          <td>
-            <input
-              name="input_brightness"
-              value="%input_brightness%"
-              type="range"
-              orient="vertical"
-              min="0"
-              max="100"
-              style="width: 15em"
-            />
           </td>
         </tr>
         <tr>
