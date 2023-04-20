@@ -11,6 +11,7 @@
 #include <Hash.h>
 // #include <WiFiUdp.h>
 #include "index.html.h"
+#include "modes.h"
 #include "secrets.h"
 #include "time.h"
 #include "timezones.h"
@@ -109,7 +110,32 @@ String processor(const String &var) {
     } else if(var == "input_animation_time") {
         return read_file(SPIFFS, "/input_animation_time.txt");
     } else if(var == "input_animation") {
-        return read_file(SPIFFS, "/input_animation.txt");
+        String tmp = "";
+        String value = read_file(SPIFFS, "/input_animation.txt");
+        if(value == "" || value == NULL) {
+            value = "mix";
+        };
+        Serial.print("Size of Array: ");
+        Serial.println(sizeof(array_of_modes) / sizeof(array_of_modes[0]));
+        Serial.print("Value ");
+        Serial.println(value);
+        for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
+            i++) {
+            tmp += "<option value = '";
+            tmp += array_of_modes[i][1];
+            Serial.print("Value: ");
+            Serial.print(value);
+            Serial.print("Array: ");
+            Serial.println(array_of_modes[i][1]);
+            if(value == array_of_modes[i][1]) {
+                tmp += "' selected>";
+            } else {
+                tmp += "'>";
+            }
+            tmp += array_of_modes[i][0];
+            tmp += "</ option>";
+        }
+        return tmp;
     } else if(var == "input_timezone") {
         return read_file(SPIFFS, "/input_timezone.txt");
     } else if(var == "input_brightness") {

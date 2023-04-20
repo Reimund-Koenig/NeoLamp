@@ -74,16 +74,8 @@ const char index_html[] PROGMEM = R"rawliteral("
             Animation am Tag:
           </td>
           <td>
-            <select
-              name="input_animation"
-              style="width: 15em"
-              value="%input_animation%"
-            >
-              <option value="mix">Farbkeise und Pulsieren</option>
-              <option value="circle">Farbkeise</option>
-              <option value="pulse">Pulsieren</option>
-              <option value="green">Gruen</option>
-              <option value="off">Lampe Ausgeschaltet</option>
+            <select name="input_animation" style="width: 15em">
+              %input_animation%
             </select>
           </td>
         </tr>
@@ -94,15 +86,8 @@ const char index_html[] PROGMEM = R"rawliteral("
         <tr>
           <td style="text-align: right; padding-right: 1em">Zeitzone:</td>
           <td>
-            <select
-              name="input_timezone"
-              style="width: 15em"
-              value="%input_timezone%"
-            >
-              <option value="berlin">Berlin</option>
-              <option value="usa">USA</option>
-              <option value="bla">bla</option>
-              <option value="blubb">blubb</option>
+            <select name="input_timezone" style="width: 15em">
+              %input_timezone%
             </select>
           </td>
         </tr>

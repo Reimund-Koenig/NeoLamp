@@ -1,4 +1,4 @@
-const char *array[][2] = {
+const char *array_of_timezones[][2] = {
     {"Africa/Abidjan", "GMT0"},
     {"Africa/Accra", "GMT0"},
     {"Africa/Addis_Ababa", "EAT-3"},
