@@ -28,7 +28,7 @@ const char index_html[] PROGMEM = R"rawliteral("
   <body>
     <h2>Lampe - Einstellungen</h2>
     <form action="/get" target="hidden-form">
-      <table style="margin-left: auto; margin-right: auto; width: 30em">
+      <table style="margin-left: auto; margin-right: auto; width: 20em">
         <tr>
           <td><hr /></td>
           <td><hr /></td>
@@ -145,7 +145,7 @@ const char index_html[] PROGMEM = R"rawliteral("
         type="submit"
         value="Einstellungen speichern"
         onclick="handle_new_input()"
-        style="width: 30em"
+        style="width: 20em; height: 2.5em"
       />
     </form>
     <br />
