@@ -119,10 +119,6 @@ String processor(const String &var) {
             i++) {
             tmp += "<option value = '";
             tmp += array_of_modes[i][1];
-            Serial.print("Value: ");
-            Serial.print(value);
-            Serial.print("Array: ");
-            Serial.println(array_of_modes[i][1]);
             if(value == array_of_modes[i][1]) {
                 tmp += "' selected>";
             } else {
@@ -133,7 +129,24 @@ String processor(const String &var) {
         }
         return tmp;
     } else if(var == "input_timezone") {
-        return read_file(SPIFFS, "/input_timezone.txt");
+        String tmp = "";
+        String value = read_file(SPIFFS, "/input_timezone.txt");
+        if(value == "" || value == NULL) {
+            value = "Europe_Berlin";
+        };
+        for(int i = 0; i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]);
+            i++) {
+            tmp += "<option value = '";
+            tmp += array_of_timezones[i][0];
+            if(value == array_of_timezones[i][0]) {
+                tmp += "' selected>";
+            } else {
+                tmp += "'>";
+            }
+            tmp += array_of_timezones[i][0];
+            tmp += "</ option>";
+        }
+        return tmp;
     } else if(var == "input_brightness") {
         return read_file(SPIFFS, "/input_brightness.txt");
     }
