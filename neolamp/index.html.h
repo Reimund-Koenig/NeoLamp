@@ -31,20 +31,28 @@ const char index_html[] PROGMEM = R"rawliteral("
     <br />
     <br />
     <form action="/get" target="hidden-form">
-      Schlafenszeit (%input_string%):
-      <input type="text" name="input_string" />
+      Schlafenszeit:
+      <input type="text" name="input_sleep_time" value="%input_sleep_time%" />
       <input type="submit" value="Submit" onclick="handle_new_input()" />
     </form>
     <br />
     <form action="/get" target="hidden-form">
-      Aufstehzeit (%input_int%):
-      <input type="number " name="input_int" />
+      Aufstehzeit:
+      <input
+        type="number "
+        name="input_wakeup_time"
+        value="%input_wakeup_time%"
+      />
       <input type="submit" value="Submit" onclick="handle_new_input()" />
     </form>
     <br />
     <form action="/get" target="hidden-form">
-      Animationszeit (%input_float%):
-      <input type="number " name="input_float" />
+      Animationszeit:
+      <input
+        type="number "
+        name="input_animation_time"
+        value="%input_animation_time%"
+      />
       <input type="submit" value="Submit" onclick="handle_new_input()" />
     </form>
     <br />

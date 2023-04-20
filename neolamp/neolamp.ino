@@ -62,9 +62,9 @@ uint32_t random_color;
 uint32_t choose_pulse_wipe_counter = 0;
 int createRandomColor_helper;
 
-const char *parameter_string = "input_string";
-const char *parameter_integer = "input_int";
-const char *parameter_float = "input_float";
+const char *parameter_string = "input_sleep_time";
+const char *parameter_integer = "input_wakeup_time";
+const char *parameter_float = "input_animation_time";
 
 String read_file(fs::FS &fs, const char *path) {
     Serial.printf("Reading file: %s\r\n", path);
@@ -99,12 +99,12 @@ void write_file(fs::FS &fs, const char *path, const char *message) {
 }
 
 String processor(const String &var) {
-    if(var == "input_string") {
-        return read_file(SPIFFS, "/input_string.txt");
-    } else if(var == "input_int") {
-        return read_file(SPIFFS, "/input_int.txt");
-    } else if(var == "input_float") {
-        return read_file(SPIFFS, "/input_float.txt");
+    if(var == "input_sleep_time") {
+        return read_file(SPIFFS, "/input_sleep_time.txt");
+    } else if(var == "input_wakeup_time") {
+        return read_file(SPIFFS, "/input_wakeup_time.txt");
+    } else if(var == "input_animation_time") {
+        return read_file(SPIFFS, "/input_animation_time.txt");
     }
     return String();
 }
@@ -199,15 +199,16 @@ void setup() {
 
         if(request->hasParam(parameter_string)) {
             inputMessage = request->getParam(parameter_string)->value();
-            write_file(SPIFFS, "/input_string.txt", inputMessage.c_str());
+            write_file(SPIFFS, "/input_sleep_time.txt", inputMessage.c_str());
         }
 
         else if(request->hasParam(parameter_integer)) {
             inputMessage = request->getParam(parameter_integer)->value();
-            write_file(SPIFFS, "/input_int.txt", inputMessage.c_str());
+            write_file(SPIFFS, "/input_wakeup_time.txt", inputMessage.c_str());
         } else if(request->hasParam(parameter_float)) {
             inputMessage = request->getParam(parameter_float)->value();
-            write_file(SPIFFS, "/input_float.txt", inputMessage.c_str());
+            write_file(SPIFFS, "/input_animation_time.txt",
+                       inputMessage.c_str());
         } else {
             inputMessage = "No message sent";
         }
@@ -232,15 +233,15 @@ void loop() {
     if(!isNoneSleepingDelayOver()) {
         return;
     }
-    String myString = read_file(SPIFFS, "/input_string.txt");
+    String myString = read_file(SPIFFS, "/input_sleep_time.txt");
     // Serial.print("string entered: ");
     // Serial.println(myString);
 
-    int myInteger = read_file(SPIFFS, "/input_int.txt").toInt();
+    int myInteger = read_file(SPIFFS, "/input_wakeup_time.txt").toInt();
     // Serial.print("integer entered: ");
     // Serial.println(myInteger);
 
-    float myFloat = read_file(SPIFFS, "/input_float.txt").toFloat();
+    float myFloat = read_file(SPIFFS, "/input_animation_time.txt").toFloat();
     // Serial.print("floating number entered: ");
     // Serial.println(myFloat);
 
