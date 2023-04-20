@@ -2,7 +2,7 @@ const char index_html[] PROGMEM = R"rawliteral("
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Nachtlampe</title>
+    <title>Nachtlicht</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <style>
@@ -26,7 +26,8 @@ const char index_html[] PROGMEM = R"rawliteral("
     </script>
   </head>
   <body>
-    <h2>Lampe - Einstellungen</h2>
+    <h2>Nachtlicht</h2>
+    <h2>Einstellungen</h2>
     <form action="/get" target="hidden-form">
       <table style="margin-left: auto; margin-right: auto; width: 20em">
         <tr>
