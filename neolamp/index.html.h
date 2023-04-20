@@ -113,7 +113,7 @@ const char index_html[] PROGMEM = R"rawliteral("
             <br />
             XX:XX
             <br />
-            <label style="font-size: 0.75em"> (beim Laden der Seite)</label>
+            <label style="font-size: 0.75em"> (wird nicht aktualisiert)</label>
           </td>
         </tr>
       </table>
