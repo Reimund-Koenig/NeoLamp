@@ -3,13 +3,13 @@
 #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 #include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
-#include <Hash.h>
-#include <FS.h>
 #include <ESP8266mDNS.h>
+#include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <ESPAsyncWiFiManager.h>  //https://github.com/tzapu/WiFiManager
-//#include <WiFiUdp.h>
+#include <ESPAsyncWiFiManager.h> //https://github.com/tzapu/WiFiManager
+#include <FS.h>
+#include <Hash.h>
+// #include <WiFiUdp.h>
 #include "secrets.h"
 #include "time.h"
 
@@ -26,7 +26,7 @@
 
 #define NEOPIXEL_PIN 4
 #define NEOPIXEL_COUNT 16
-#define STEPS 32  // 2^x
+#define STEPS 32 // 2^x
 #define MULTIPLICATOR 256 / STEPS
 #define ULONG_MAX (LONG_MAX * 2UL + 1UL)
 
@@ -37,15 +37,14 @@ Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 struct tm timeinfo;
 
-uint8_t colorBrightness = 64;  // Set BRIGHTNESS to about 1/5 (max = 255)
+uint8_t colorBrightness = 64; // Set BRIGHTNESS to about 1/5 (max = 255)
 uint8_t lastColorBrightness = colorBrightness;
-
 
 unsigned long time_from_start = 0;
 unsigned long sleep_till_time = 0;
 
 uint8_t state = 0;
-uint8_t last_state = 0;  // State which was choosen last
+uint8_t last_state = 0; // State which was choosen last
 bool state_first_run = true;
 uint8_t learning_mode_substate = 0;
 
@@ -61,29 +60,29 @@ uint32_t random_color;
 uint32_t choose_pulse_wipe_counter = 0;
 int createRandomColor_helper;
 
-const char* parameter_string = "input_string";
-const char* parameter_integer = "input_int";
-const char* parameter_float = "input_float";
+const char *parameter_string = "input_string";
+const char *parameter_integer = "input_int";
+const char *parameter_float = "input_float";
 
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html><head>
   <title>HTML Form to Input Data</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  
+
   <style>
     html {font-family: Times New Roman; display: inline-block; text-align: center;}
     h2 {font-size: 3.0rem; color: #FFAA00;}
   </style>
-  
+
   <script>
     function message_popup() {
       alert("Saved value to ESP SPIFFS");
-      setTimeout(function(){ document.location.reload(false); }, 500);   
+      setTimeout(function(){ document.location.reload(false); }, 500);
     }
   </script>
   </head><body>
-    <h2>HTML Form to Input Data</h2> 
-    
+    <h2>HTML Form to Input Data</h2>
+
   <form action="/get" target="hidden-form">
     Enter string (current value %input_string%): <input type="text" name="input_string">
     <input type="submit" value="Submit" onclick="message_popup()">
@@ -99,54 +98,53 @@ const char index_html[] PROGMEM = R"rawliteral(
   <iframe style="display:none" name="hidden-form"></iframe>
 </body></html>)rawliteral";
 
+String read_file(fs::FS &fs, const char *path)
+{
+    Serial.printf("Reading file: %s\r\n", path);
+    File file = fs.open(path, "r");
+    if(!file || file.isDirectory()) {
+        Serial.println("Empty file/Failed to open file");
+        return String();
+    }
+    Serial.println("- read from file:");
+    String fileContent;
+    while(file.available()) {
+        fileContent += String((char)file.read());
+    }
+    file.close();
+    Serial.println(fileContent);
+    return fileContent;
+}
 
+void write_file(fs::FS &fs, const char *path, const char *message)
+{
+    Serial.printf("Writing file: %s\r\n", path);
+    File file = fs.open(path, "w");
+    if(!file) {
+        Serial.println("Failed to open file for writing");
+        return;
+    }
+    if(file.print(message)) {
+        Serial.println("SUCCESS in writing file");
+    }
+    else {
+        Serial.println("FAILED to write file");
+    }
+    file.close();
+}
 
-
-
-
-String read_file(fs::FS &fs, const char * path){
-  Serial.printf("Reading file: %s\r\n", path);
-  File file = fs.open(path, "r");
-  if(!file || file.isDirectory()){
-    Serial.println("Empty file/Failed to open file");
+String processor(const String &var)
+{
+    if(var == "input_string") {
+        return read_file(SPIFFS, "/input_string.txt");
+    }
+    else if(var == "input_int") {
+        return read_file(SPIFFS, "/input_int.txt");
+    }
+    else if(var == "input_float") {
+        return read_file(SPIFFS, "/input_float.txt");
+    }
     return String();
-  }
-  Serial.println("- read from file:");
-  String fileContent;
-  while(file.available()){
-    fileContent+=String((char)file.read());
-  }
-  file.close();
-  Serial.println(fileContent);
-  return fileContent;
-}
-
-void write_file(fs::FS &fs, const char * path, const char * message){
-  Serial.printf("Writing file: %s\r\n", path);
-  File file = fs.open(path, "w");
-  if(!file){
-    Serial.println("Failed to open file for writing");
-    return;
-  }
-  if(file.print(message)){
-    Serial.println("SUCCESS in writing file");
-  } else {
-    Serial.println("FAILED to write file");
-  }
-  file.close();
-}
-
-String processor(const String& var){
-  if(var == "input_string"){
-    return read_file(SPIFFS, "/input_string.txt");
-  }
-  else if(var == "input_int"){
-    return read_file(SPIFFS, "/input_int.txt");
-  }
-  else if(var == "input_float"){
-    return read_file(SPIFFS, "/input_float.txt");
-  }
-  return String();
 }
 
 /************************************************************************************************************
@@ -183,115 +181,122 @@ bool colorWipe(uint32_t color, unsigned long wait);
 bool colorPulse(uint32_t color, unsigned long wait);
 
 void initTime();
-//void handleRoot();              // function prototypes for HTTP handlers
-//void handleNotFound();
+// void handleRoot();              // function prototypes for HTTP handlers
+// void handleNotFound();
 
 void async_wlan_setup();
 
-//void handle_server_root();
-//void handle_server_input1();
-//void handle_server_input2();
-//void handle_server_input3();
+// void handle_server_root();
+// void handle_server_input1();
+// void handle_server_input2();
+// void handle_server_input3();
 void handle_server_notFound(AsyncWebServerRequest *request);
 /************************************************************************************************************
 /*
 /* Arduino Functions
 /*
 *************/
-void setup() {
-  // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
-  // Any other board, you can remove this part (but no harm leaving it):
+void setup()
+{
+    // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
+    // Any other board, you can remove this part (but no harm leaving it):
 #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
-  clock_prescale_set(clock_div_1);
+    clock_prescale_set(clock_div_1);
 #endif
-  Serial.begin(115200);
-  if(!SPIFFS.begin()){
-      Serial.println("An Error has occurred while mounting SPIFFS");
-      return;
-  }
-  WiFi.mode(WIFI_STA);
-  WiFi.hostname("kinderlampe");
-  async_wlan_setup();
-
-  // this resets all the neopixels to an off state
-  strip.begin();  // INITIALIZE NeoPixel strip object (REQUIRED)
-  strip.show();   // Turn OFF all pixels ASAP
-  initTime();
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi..");
-  }
-  delay(10000);
-  if (MDNS.begin("kinderlampe")) {              // Start the mDNS responder for kinderlampe.local
-    Serial.println("mDNS responder started");
-  } else {
-    Serial.println("Error setting up MDNS responder!");
-  }
-
-  MDNS.addService("http", "tcp", 80);
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html, processor);
-  });
-
-  server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    String inputMessage;
-
-    if (request->hasParam(parameter_string)) {
-      inputMessage = request->getParam(parameter_string)->value();
-      write_file(SPIFFS, "/input_string.txt", inputMessage.c_str());
+    Serial.begin(115200);
+    if(!SPIFFS.begin()) {
+        Serial.println("An Error has occurred while mounting SPIFFS");
+        return;
     }
+    WiFi.mode(WIFI_STA);
+    WiFi.hostname("kinderlampe");
+    async_wlan_setup();
 
-    else if (request->hasParam(parameter_integer)) {
-      inputMessage = request->getParam(parameter_integer)->value();
-      write_file(SPIFFS, "/input_int.txt", inputMessage.c_str());
+    // this resets all the neopixels to an off state
+    strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+    strip.show();  // Turn OFF all pixels ASAP
+    initTime();
+    while(WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+        Serial.println("Connecting to WiFi..");
     }
-    else if (request->hasParam(parameter_float)) {
-      inputMessage = request->getParam(parameter_float)->value();
-      write_file(SPIFFS, "/input_float.txt", inputMessage.c_str());
+    delay(10000);
+    if(MDNS.begin(
+           "kinderlampe")) { // Start the mDNS responder for kinderlampe.local
+        Serial.println("mDNS responder started");
     }
     else {
-      inputMessage = "No message sent";
+        Serial.println("Error setting up MDNS responder!");
     }
-    Serial.println(inputMessage);
-    request->send(200, "text/text", inputMessage);
-  });
-  server.onNotFound(handle_server_notFound);
-  server.begin();                      // Actually start the server
-  Serial.println("HTTP server started");
-  //Get Current Hostname
-  Serial.print("Default hostname: ");
-  Serial.println(WiFi.hostname().c_str());
-  
-  Serial.print("Connected to ");
-  Serial.println(WiFi.SSID());              // Tell us what network we're connected to
-  Serial.print("IP address:\t");
-  Serial.println(WiFi.localIP());           // Send the IP address of the ESP8266 to the computer
+
+    MDNS.addService("http", "tcp", 80);
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send_P(200, "text/html", index_html, processor);
+    });
+
+    server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
+        String inputMessage;
+
+        if(request->hasParam(parameter_string)) {
+            inputMessage = request->getParam(parameter_string)->value();
+            write_file(SPIFFS, "/input_string.txt", inputMessage.c_str());
+        }
+
+        else if(request->hasParam(parameter_integer)) {
+            inputMessage = request->getParam(parameter_integer)->value();
+            write_file(SPIFFS, "/input_int.txt", inputMessage.c_str());
+        }
+        else if(request->hasParam(parameter_float)) {
+            inputMessage = request->getParam(parameter_float)->value();
+            write_file(SPIFFS, "/input_float.txt", inputMessage.c_str());
+        }
+        else {
+            inputMessage = "No message sent";
+        }
+        Serial.println(inputMessage);
+        request->send(200, "text/text", inputMessage);
+    });
+    server.onNotFound(handle_server_notFound);
+    server.begin(); // Actually start the server
+    Serial.println("HTTP server started");
+    // Get Current Hostname
+    Serial.print("Default hostname: ");
+    Serial.println(WiFi.hostname().c_str());
+
+    Serial.print("Connected to ");
+    Serial.println(WiFi.SSID()); // Tell us what network we're connected to
+    Serial.print("IP address:\t");
+    Serial.println(
+        WiFi.localIP()); // Send the IP address of the ESP8266 to the computer
 }
 
-void loop() {
-  MDNS.update();
-  if (!isNoneSleepingDelayOver()) { return; }
-  String myString = read_file(SPIFFS, "/input_string.txt");
-  //Serial.print("string entered: ");
-  //Serial.println(myString);
-  
-  int myInteger = read_file(SPIFFS, "/input_int.txt").toInt();
-  //Serial.print("integer entered: ");
-  //Serial.println(myInteger);
-  
-  float myFloat = read_file(SPIFFS, "/input_float.txt").toFloat();
-  //Serial.print("floating number entered: ");
-  //Serial.println(myFloat);
+void loop()
+{
+    MDNS.update();
+    if(!isNoneSleepingDelayOver()) {
+        return;
+    }
+    String myString = read_file(SPIFFS, "/input_string.txt");
+    // Serial.print("string entered: ");
+    // Serial.println(myString);
 
-  //handleDayTime();
-  //stateMachine();  
-  updateTime();
-  int h = timeinfo.tm_hour;
-  int m = timeinfo.tm_min;
-  Serial.print(h);
-  Serial.print(":");
-  Serial.println(m);
-  setNoneSleepingDelay(5000);
+    int myInteger = read_file(SPIFFS, "/input_int.txt").toInt();
+    // Serial.print("integer entered: ");
+    // Serial.println(myInteger);
+
+    float myFloat = read_file(SPIFFS, "/input_float.txt").toFloat();
+    // Serial.print("floating number entered: ");
+    // Serial.println(myFloat);
+
+    // handleDayTime();
+    // stateMachine();
+    updateTime();
+    int h = timeinfo.tm_hour;
+    int m = timeinfo.tm_min;
+    Serial.print(h);
+    Serial.print(":");
+    Serial.println(m);
+    setNoneSleepingDelay(5000);
 }
 
 /************************************************************************************************************
@@ -300,8 +305,9 @@ void loop() {
 /*
 *************/
 
-void handle_server_notFound(AsyncWebServerRequest *request) {
-  request->send(404, "text/plain", "Not found");
+void handle_server_notFound(AsyncWebServerRequest *request)
+{
+    request->send(404, "text/plain", "Not found");
 }
 
 /*
@@ -320,144 +326,168 @@ void handle_server_input1 () {
   Serial.println("Input 1");
    if(!server.hasArg("input1") || server.arg("input1") == NULL) {
       Serial.println(server.arg("ERR: No input1 or NULL"));
-      server.send(400, "text/plain", "400: Invalid Request");         // The request is invalid, so send HTTP status 400
-      return;
+      server.send(400, "text/plain", "400: Invalid Request");         // The
+request is invalid, so send HTTP status 400 return;
   }
   Serial.println(server.arg("input1"));
-  server.sendHeader("Location","/");        // Add a header to respond with a new location for the browser to go to the home page again
-  server.send(303);                         // Send it back to the browser with an HTTP status 303 (See Other) to redirect
+  server.sendHeader("Location","/");        // Add a header to respond with a
+new location for the browser to go to the home page again server.send(303); //
+Send it back to the browser with an HTTP status 303 (See Other) to redirect
 }
 void handle_server_input2 () {
   Serial.println("Input 2");
-  server.sendHeader("Location","/");        // Add a header to respond with a new location for the browser to go to the home page again
-  server.send(303);                         // Send it back to the browser with an HTTP status 303 (See Other) to redirect
+  server.sendHeader("Location","/");        // Add a header to respond with a
+new location for the browser to go to the home page again server.send(303); //
+Send it back to the browser with an HTTP status 303 (See Other) to redirect
 }
 void handle_server_input3 () {
   Serial.println("Input 3");
-  server.sendHeader("Location","/");        // Add a header to respond with a new location for the browser to go to the home page again
-  server.send(303);                         // Send it back to the browser with an HTTP status 303 (See Other) to redirect
+  server.sendHeader("Location","/");        // Add a header to respond with a
+new location for the browser to go to the home page again server.send(303); //
+Send it back to the browser with an HTTP status 303 (See Other) to redirect
 }
-*/ 
+*/
 
 // ToDo: rainbowFade(3, 3);
-void test() {
-  for (int i = 0; i < strip.numPixels(); i++) {
-    if (i > 10) {
-      strip.setPixelColor(i, strip.Color(0, 128, 255, colorBrightness));  // Heaven_Blue
-    } else {
-      strip.setPixelColor(i, strip.Color(255, 0, 128, colorBrightness));  // Pink
+void test()
+{
+    for(int i = 0; i < strip.numPixels(); i++) {
+        if(i > 10) {
+            strip.setPixelColor(
+                i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
+        }
+        else {
+            strip.setPixelColor(
+                i, strip.Color(255, 0, 128, colorBrightness)); // Pink
+        }
     }
-  }
-  if (colorPulse(0, 5)) {
-    // Back to start
-  }
+    if(colorPulse(0, 5)) {
+        // Back to start
+    }
 }
-
 
 /************************************************************************************************************
 /*
 /* Modes
 /*
 *************/
-void run_dayTime_mode_1_choosePulseOrWipe() {
-  if (choose_pulse_wipe_counter < 100) {
-    changeState(STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR);
-  } else {
-    changeState(STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR);
-  }
-  if (choose_pulse_wipe_counter > 110) { choose_pulse_wipe_counter = 0; }
-  choose_pulse_wipe_counter++;
+void run_dayTime_mode_1_choosePulseOrWipe()
+{
+    if(choose_pulse_wipe_counter < 100) {
+        changeState(STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR);
+    }
+    else {
+        changeState(STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR);
+    }
+    if(choose_pulse_wipe_counter > 110) {
+        choose_pulse_wipe_counter = 0;
+    }
+    choose_pulse_wipe_counter++;
 }
 
-void run_dayTime_mode_2_Pulse_choose_mixed_or_single_color() {
-  if (random(0, 2) == 0) {
-    changeState(STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR);
-  } else {
-    changeState(STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR);
-  }
+void run_dayTime_mode_2_Pulse_choose_mixed_or_single_color()
+{
+    if(random(0, 2) == 0) {
+        changeState(STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR);
+    }
+    else {
+        changeState(STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR);
+    }
 }
 
-void run_dayTime_mode_2a_Pulse_mixed_color() {
-  // ToDo
-  changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
-}
-
-void run_dayTime_mode_2b_Pulse_single_color() {
-  if (state_first_run) {
-    createRandomColor();
-    state_first_run = false;
-  }
-  if (colorPulse(random_color, 17)) {
+void run_dayTime_mode_2a_Pulse_mixed_color()
+{
+    // ToDo
     changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
-  }
 }
 
-void run_dayTime_mode_3_Wipe_choose_mixed_or_single_color() {
-  getBrightnessFromPoti();
-  strip.setBrightness(colorBrightness);
-  strip.show();
-  if (random(0, 2) == 0) {
-    changeState(STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR);
-  } else {
-    changeState(STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR);
-  }
+void run_dayTime_mode_2b_Pulse_single_color()
+{
+    if(state_first_run) {
+        createRandomColor();
+        state_first_run = false;
+    }
+    if(colorPulse(random_color, 17)) {
+        changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+    }
 }
 
-void run_dayTime_mode_3a_Wipe_mixed_color() {
-  // ToDo
-  changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+void run_dayTime_mode_3_Wipe_choose_mixed_or_single_color()
+{
+    getBrightnessFromPoti();
+    strip.setBrightness(colorBrightness);
+    strip.show();
+    if(random(0, 2) == 0) {
+        changeState(STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR);
+    }
+    else {
+        changeState(STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR);
+    }
 }
 
-void run_dayTime_mode_3b_Wipe_single_color() {
-  if (state_first_run) {
-    createRandomColor();
-    state_first_run = false;
-  }
-  if (colorWipe(random_color, 100)) {
+void run_dayTime_mode_3a_Wipe_mixed_color()
+{
+    // ToDo
     changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
-  }
 }
 
-void run_wakeupTime_mode() {
-  if (state_first_run) {
-    strip.fill(strip.Color(0, 75, 0, colorBrightness));
-    strip.setPixelColor(3, strip.Color(0, 255, 0, colorBrightness));
-    strip.setPixelColor(4, strip.Color(0, 255, 0, colorBrightness));
-    strip.setPixelColor(5, strip.Color(0, 255, 0, colorBrightness));
-    strip.setPixelColor(6, strip.Color(0, 255, 0, colorBrightness));
-    strip.setPixelColor(7, strip.Color(0, 255, 0, colorBrightness));
-    strip.setPixelColor(8, strip.Color(0, 255, 0, colorBrightness));
-    strip.show();
-    state_first_run = false;
-  }
+void run_dayTime_mode_3b_Wipe_single_color()
+{
+    if(state_first_run) {
+        createRandomColor();
+        state_first_run = false;
+    }
+    if(colorWipe(random_color, 100)) {
+        changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+    }
 }
 
-void run_sleepingTime_mode() {
-  if (state_first_run) {
-    strip.fill(strip.Color(255, 75, 0, colorBrightness));
-    strip.setPixelColor(3, strip.Color(255, 9, 0, colorBrightness));
-    strip.setPixelColor(4, strip.Color(255, 18, 0, colorBrightness));
-    strip.setPixelColor(5, strip.Color(255, 37, 0, colorBrightness));
-    strip.setPixelColor(6, strip.Color(255, 0, 0, colorBrightness));
-    strip.setPixelColor(7, strip.Color(255, 0, 0, colorBrightness));
-    strip.setPixelColor(8, strip.Color(255, 0, 0, colorBrightness));
-    strip.show();
-    state_first_run = false;
-  }
+void run_wakeupTime_mode()
+{
+    if(state_first_run) {
+        strip.fill(strip.Color(0, 75, 0, colorBrightness));
+        strip.setPixelColor(3, strip.Color(0, 255, 0, colorBrightness));
+        strip.setPixelColor(4, strip.Color(0, 255, 0, colorBrightness));
+        strip.setPixelColor(5, strip.Color(0, 255, 0, colorBrightness));
+        strip.setPixelColor(6, strip.Color(0, 255, 0, colorBrightness));
+        strip.setPixelColor(7, strip.Color(0, 255, 0, colorBrightness));
+        strip.setPixelColor(8, strip.Color(0, 255, 0, colorBrightness));
+        strip.show();
+        state_first_run = false;
+    }
 }
 
-void run_learning_mode() {
-  if (!isNoneSleepingDelayOver()) { return; }
-  if (learning_mode_substate == 0) {
-    state_first_run = true;
-    run_wakeupTime_mode();
-    learning_mode_substate = 1;
-  } else if (learning_mode_substate == 1) {
-    state_first_run = true;
-    run_sleepingTime_mode();
-    learning_mode_substate = 0;
-  }
-  setNoneSleepingDelay(3000);
+void run_sleepingTime_mode()
+{
+    if(state_first_run) {
+        strip.fill(strip.Color(255, 75, 0, colorBrightness));
+        strip.setPixelColor(3, strip.Color(255, 9, 0, colorBrightness));
+        strip.setPixelColor(4, strip.Color(255, 18, 0, colorBrightness));
+        strip.setPixelColor(5, strip.Color(255, 37, 0, colorBrightness));
+        strip.setPixelColor(6, strip.Color(255, 0, 0, colorBrightness));
+        strip.setPixelColor(7, strip.Color(255, 0, 0, colorBrightness));
+        strip.setPixelColor(8, strip.Color(255, 0, 0, colorBrightness));
+        strip.show();
+        state_first_run = false;
+    }
+}
+
+void run_learning_mode()
+{
+    if(!isNoneSleepingDelayOver()) {
+        return;
+    }
+    if(learning_mode_substate == 0) {
+        state_first_run = true;
+        run_wakeupTime_mode();
+        learning_mode_substate = 1;
+    }
+    else if(learning_mode_substate == 1) {
+        state_first_run = true;
+        run_sleepingTime_mode();
+        learning_mode_substate = 0;
+    }
+    setNoneSleepingDelay(3000);
 }
 
 /************************************************************************************************************
@@ -466,33 +496,43 @@ void run_learning_mode() {
 /*
 *************/
 
-void stateMachine() {
-  if (state == STATE_SLEEPING_TIME) {
-    run_sleepingTime_mode();
-  } else if (state == STATE_WAKEUP_TIME) {
-    run_wakeupTime_mode();
-  } else if (state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE) {
-    run_dayTime_mode_1_choosePulseOrWipe();
-  } else if (state == STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR) {
-    run_dayTime_mode_2_Pulse_choose_mixed_or_single_color();
-  } else if (state == STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR) {
-    run_dayTime_mode_2a_Pulse_mixed_color();
-  } else if (state == STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR) {
-    run_dayTime_mode_2b_Pulse_single_color();
-  } else if (state == STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR) {
-    run_dayTime_mode_3_Wipe_choose_mixed_or_single_color();
-  } else if (state == STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR) {
-    run_dayTime_mode_3a_Wipe_mixed_color();
-  } else if (state == STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) {
-    run_dayTime_mode_3b_Wipe_single_color();
-  } else if (state == STATE_LEARNING) {
-    run_learning_mode();
-  } else {
-    strip.fill(strip.Color(255, 0, 0, 255));
-    strip.show();
-  }
+void stateMachine()
+{
+    if(state == STATE_SLEEPING_TIME) {
+        run_sleepingTime_mode();
+    }
+    else if(state == STATE_WAKEUP_TIME) {
+        run_wakeupTime_mode();
+    }
+    else if(state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE) {
+        run_dayTime_mode_1_choosePulseOrWipe();
+    }
+    else if(state == STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR) {
+        run_dayTime_mode_2_Pulse_choose_mixed_or_single_color();
+    }
+    else if(state == STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR) {
+        run_dayTime_mode_2a_Pulse_mixed_color();
+    }
+    else if(state == STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR) {
+        run_dayTime_mode_2b_Pulse_single_color();
+    }
+    else if(state == STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR) {
+        run_dayTime_mode_3_Wipe_choose_mixed_or_single_color();
+    }
+    else if(state == STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR) {
+        run_dayTime_mode_3a_Wipe_mixed_color();
+    }
+    else if(state == STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) {
+        run_dayTime_mode_3b_Wipe_single_color();
+    }
+    else if(state == STATE_LEARNING) {
+        run_learning_mode();
+    }
+    else {
+        strip.fill(strip.Color(255, 0, 0, 255));
+        strip.show();
+    }
 }
-
 
 /************************************************************************************************************
 /*
@@ -500,35 +540,41 @@ void stateMachine() {
 /*
 *************/
 
-void handleDayTime() {
-  if (!isNoneSleepingDelayOver()) { return; }
-  updateTime();
-  int h = timeinfo.tm_hour;
-  int m = timeinfo.tm_min;
-  Serial.print(h);
-  Serial.print(":");
-  Serial.println(m);
-  if (h >= 18) {  // Schlafen 19:00 - 24:00 Uhr
-    changeState(STATE_SLEEPING_TIME);
-  } else if (h >= 10) {
-    if (state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE
-        || state == STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR
-        || state == STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR
-        || state == STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR
-        || state == STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR
-        || state == STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR
-        || state == STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) {
-      return;  // only start mode once
+void handleDayTime()
+{
+    if(!isNoneSleepingDelayOver()) {
+        return;
     }
-    changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
-  } else if (h > 6 || (h == 6 && m >= 45)) {  // Gleich Zeit zum Aufstehen 06:45 - 10:00 Uhr
-    changeState(STATE_WAKEUP_TIME);
-  } else if (h < 6 || (h == 6 && m < 45)) {  // Schlafen 0:00 - 6:45 Uhr
-    changeState(STATE_SLEEPING_TIME);
-  }
-  setNoneSleepingDelay(1000);
+    updateTime();
+    int h = timeinfo.tm_hour;
+    int m = timeinfo.tm_min;
+    Serial.print(h);
+    Serial.print(":");
+    Serial.println(m);
+    if(h >= 18) { // Schlafen 19:00 - 24:00 Uhr
+        changeState(STATE_SLEEPING_TIME);
+    }
+    else if(h >= 10) {
+        if(state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE ||
+           state == STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR ||
+           state == STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR ||
+           state == STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR ||
+           state == STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR ||
+           state == STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR ||
+           state == STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) {
+            return; // only start mode once
+        }
+        changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+    }
+    else if(h > 6 || (h == 6 &&
+                      m >= 45)) { // Gleich Zeit zum Aufstehen 06:45 - 10:00 Uhr
+        changeState(STATE_WAKEUP_TIME);
+    }
+    else if(h < 6 || (h == 6 && m < 45)) { // Schlafen 0:00 - 6:45 Uhr
+        changeState(STATE_SLEEPING_TIME);
+    }
+    setNoneSleepingDelay(1000);
 }
-
 
 /************************************************************************************************************
 /*
@@ -536,101 +582,116 @@ void handleDayTime() {
 /*
 *************/
 
-void async_wlan_setup() {
-  Serial.begin(115200);
-  //Local intialization. Once its business is done, there is no need to keep it around
-  AsyncWiFiManager wifiManager(&server, &dns);
-  //reset saved settings >> USED TO TEST
-  // wifiManager.resetSettings();
-  wifiManager.autoConnect("Kinder Lampe");
+void async_wlan_setup()
+{
+    Serial.begin(115200);
+    // Local intialization. Once its business is done, there is no need to keep
+    // it around
+    AsyncWiFiManager wifiManager(&server, &dns);
+    // reset saved settings >> USED TO TEST
+    //  wifiManager.resetSettings();
+    wifiManager.autoConnect("Kinder Lampe");
 }
 
-
-void updateTime(){
-  if(!getLocalTime(&timeinfo)){
-    Serial.println("Failed to obtain time 1");
-    return;
-  }
-}
-
-void initTime(){
-  configTime(0, 0, "pool.ntp.org");    // First connect to NTP server, with 0 TZ offset
-  if(!getLocalTime(&timeinfo)){
-    Serial.println("Failed to obtain time");
-    return;
-  }
-  Serial.println("Got the time from NTP");
-  // Now we can set the real timezone
-  //https://randomnerdtutorials.com/esp32-ntp-timezones-daylight-saving/
-  //https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
-  setenv("TZ","CET-1CEST,M3.5.0,M10.5.0/3",1);
-  tzset();
-}
-
-void setNoneSleepingDelay(unsigned long sleepTime) {
-  sleep_till_time = time_from_start + sleepTime;
-}
-
-bool isNoneSleepingDelayOver() {  
-  time_from_start = millis();
-  if (time_from_start < sleep_till_time) {
-    return false;
-  }
-  return true;
-}
-
-void changeState(int new_state) {
-  if (last_state != STATE_LEARNING) {
-    last_state = state;
-  }
-  state = new_state;
-  state_first_run = true;
-}
-void getBrightnessFromPoti() {
-  // Values from 0-255
-  int a0 = analogRead(A0);
-  if (a0 < STEPS) {
-    colorBrightness = 1;
-  } else {
-    colorBrightness = (int(a0 / STEPS) * MULTIPLICATOR) - 1;
-  }
-  // printAnalog(a0);
-}
-
-
-void createRandomColor() {
-  int r1 = random(0, 4);
-  int r2 = random(0, 2);
-  while (r2 == createRandomColor_helper) {
-    r2 = random(0, 2);
-  }
-  createRandomColor_helper = r2;
-  if (r1 == 0) {
-    if (createRandomColor_helper == 0) {
-      random_color = strip.Color(random(150, 256), random(0, 150), 0);
-    } else {
-      random_color = strip.Color(random(150, 256), 0, random(0, 150));
+void updateTime()
+{
+    if(!getLocalTime(&timeinfo)) {
+        Serial.println("Failed to obtain time 1");
+        return;
     }
-  } else if (r1 == 1) {
-    if (createRandomColor_helper == 0) {
-      random_color = strip.Color(0, random(150, 256), random(0, 150));
-    } else {
-      random_color = strip.Color(random(0, 150), random(150, 256), 0);
-    }
-  } else {
-    if (createRandomColor_helper == 0) {
-      random_color = strip.Color(0, random(0, 150), random(30, 256));
-    } else {
-      random_color = strip.Color(random(0, 150), 0, random(30, 256));
-    }
-  }
 }
 
-void printAnalog(int a0) {
-  Serial.print("Analog Read: ");
-  Serial.print(a0);
-  Serial.print("colorBrightness: ");
-  Serial.println(colorBrightness);
+void initTime()
+{
+    configTime(0, 0,
+               "pool.ntp.org"); // First connect to NTP server, with 0 TZ offset
+    if(!getLocalTime(&timeinfo)) {
+        Serial.println("Failed to obtain time");
+        return;
+    }
+    Serial.println("Got the time from NTP");
+    // Now we can set the real timezone
+    // https://randomnerdtutorials.com/esp32-ntp-timezones-daylight-saving/
+    // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+    tzset();
+}
+
+void setNoneSleepingDelay(unsigned long sleepTime)
+{
+    sleep_till_time = time_from_start + sleepTime;
+}
+
+bool isNoneSleepingDelayOver()
+{
+    time_from_start = millis();
+    if(time_from_start < sleep_till_time) {
+        return false;
+    }
+    return true;
+}
+
+void changeState(int new_state)
+{
+    if(last_state != STATE_LEARNING) {
+        last_state = state;
+    }
+    state = new_state;
+    state_first_run = true;
+}
+void getBrightnessFromPoti()
+{
+    // Values from 0-255
+    int a0 = analogRead(A0);
+    if(a0 < STEPS) {
+        colorBrightness = 1;
+    }
+    else {
+        colorBrightness = (int(a0 / STEPS) * MULTIPLICATOR) - 1;
+    }
+    // printAnalog(a0);
+}
+
+void createRandomColor()
+{
+    int r1 = random(0, 4);
+    int r2 = random(0, 2);
+    while(r2 == createRandomColor_helper) {
+        r2 = random(0, 2);
+    }
+    createRandomColor_helper = r2;
+    if(r1 == 0) {
+        if(createRandomColor_helper == 0) {
+            random_color = strip.Color(random(150, 256), random(0, 150), 0);
+        }
+        else {
+            random_color = strip.Color(random(150, 256), 0, random(0, 150));
+        }
+    }
+    else if(r1 == 1) {
+        if(createRandomColor_helper == 0) {
+            random_color = strip.Color(0, random(150, 256), random(0, 150));
+        }
+        else {
+            random_color = strip.Color(random(0, 150), random(150, 256), 0);
+        }
+    }
+    else {
+        if(createRandomColor_helper == 0) {
+            random_color = strip.Color(0, random(0, 150), random(30, 256));
+        }
+        else {
+            random_color = strip.Color(random(0, 150), 0, random(30, 256));
+        }
+    }
+}
+
+void printAnalog(int a0)
+{
+    Serial.print("Analog Read: ");
+    Serial.print(a0);
+    Serial.print("colorBrightness: ");
+    Serial.println(colorBrightness);
 }
 
 /************************************************************************************************************
@@ -639,52 +700,61 @@ void printAnalog(int a0) {
 /*
 *************/
 
-bool colorWipe(uint32_t color, int wait) {
-  if (!isNoneSleepingDelayOver()) { return false; }
-  if (colorWipe_helper_i >= strip.numPixels()) {
-    colorWipe_helper_i = 0;
-    return true;
-  }
-  strip.setPixelColor(colorWipe_helper_i, color);  //  Set pixel's color (in RAM)
-  strip.show();                                    //  Update strip to match
-  colorWipe_helper_i++;
-  setNoneSleepingDelay(wait);
-  return false;
+bool colorWipe(uint32_t color, int wait)
+{
+    if(!isNoneSleepingDelayOver()) {
+        return false;
+    }
+    if(colorWipe_helper_i >= strip.numPixels()) {
+        colorWipe_helper_i = 0;
+        return true;
+    }
+    strip.setPixelColor(colorWipe_helper_i,
+                        color); //  Set pixel's color (in RAM)
+    strip.show();               //  Update strip to match
+    colorWipe_helper_i++;
+    setNoneSleepingDelay(wait);
+    return false;
 }
 
-bool colorPulse(uint32_t color, unsigned long wait) {
-  if (!isNoneSleepingDelayOver()) { return false; }
-  if (color > 0) {
-    strip.fill(color);
+bool colorPulse(uint32_t color, unsigned long wait)
+{
+    if(!isNoneSleepingDelayOver()) {
+        return false;
+    }
+    if(color > 0) {
+        strip.fill(color);
+        strip.show();
+    }
+    if(colorPulse_helper_i > 12) {
+        colorPulse_helper_i--;
+        strip.setBrightness(colorPulse_helper_i);
+    }
+    else if(colorPulse_helper_j < 255) {
+        colorPulse_helper_j++;
+        strip.setBrightness(colorPulse_helper_j);
+    }
+    else if(colorPulse_helper_k > 12) {
+        colorPulse_helper_k--;
+        strip.setBrightness(colorPulse_helper_k);
+        if(colorPulse_helper_k == 13) {
+            return true;
+        }
+    }
+    else {
+        colorPulse_helper_l++;
+        strip.setBrightness(colorPulse_helper_l);
+        if(colorPulse_helper_l >= 255) {
+            colorPulse_helper_i = 255;
+            colorPulse_helper_j = 12;
+            colorPulse_helper_k = 255;
+            colorPulse_helper_l = 12;
+        }
+    }
     strip.show();
-  }
-  if (colorPulse_helper_i > 12) {
-    colorPulse_helper_i--;
-    strip.setBrightness(colorPulse_helper_i);
-  } else if (colorPulse_helper_j < 255) {
-    colorPulse_helper_j++;
-    strip.setBrightness(colorPulse_helper_j);
-  } else if (colorPulse_helper_k > 12) {
-    colorPulse_helper_k--;
-    strip.setBrightness(colorPulse_helper_k);
-    if (colorPulse_helper_k == 13) {
-      return true;
-    }
-  } else {
-    colorPulse_helper_l++;
-    strip.setBrightness(colorPulse_helper_l);
-    if (colorPulse_helper_l >= 255) {
-      colorPulse_helper_i = 255;
-      colorPulse_helper_j = 12;
-      colorPulse_helper_k = 255;
-      colorPulse_helper_l = 12;
-    }
-  }
-  strip.show();
-  setNoneSleepingDelay(wait);
-  return false;
+    setNoneSleepingDelay(wait);
+    return false;
 }
-
 
 /*
 
