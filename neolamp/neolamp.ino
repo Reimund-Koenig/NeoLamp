@@ -65,6 +65,9 @@ int createRandomColor_helper;
 const char *input_sleep_time = "input_sleep_time";
 const char *input_wakeup_time = "input_wakeup_time";
 const char *input_animation_time = "input_animation_time";
+const char *input_animation = "input_animation";
+const char *input_timezone = "input_timezone";
+const char *input_brightness = "input_brightness";
 
 String read_file(fs::FS &fs, const char *path) {
     Serial.printf("Reading file: %s\r\n", path);
@@ -105,6 +108,12 @@ String processor(const String &var) {
         return read_file(SPIFFS, "/input_wakeup_time.txt");
     } else if(var == "input_animation_time") {
         return read_file(SPIFFS, "/input_animation_time.txt");
+    } else if(var == "input_animation") {
+        return read_file(SPIFFS, "/input_animation.txt");
+    } else if(var == "input_timezone") {
+        return read_file(SPIFFS, "/input_timezone.txt");
+    } else if(var == "input_brightness") {
+        return read_file(SPIFFS, "/input_brightness.txt");
     }
     return String();
 }
@@ -208,6 +217,18 @@ void setup() {
             tmp = request->getParam(input_animation_time)->value();
             write_file(SPIFFS, "/input_animation_time.txt", tmp.c_str());
         }
+        if(request->hasParam(input_animation)) {
+            tmp = request->getParam(input_animation)->value();
+            write_file(SPIFFS, "/input_animation.txt", tmp.c_str());
+        }
+        if(request->hasParam(input_timezone)) {
+            tmp = request->getParam(input_timezone)->value();
+            write_file(SPIFFS, "/input_timezone.txt", tmp.c_str());
+        }
+        if(request->hasParam(input_brightness)) {
+            tmp = request->getParam(input_brightness)->value();
+            write_file(SPIFFS, "/input_brightness.txt", tmp.c_str());
+        }
         request->send(200, "text/text", "ok");
     });
     server.onNotFound(handle_server_notFound);
@@ -231,6 +252,22 @@ void loop() {
     String str_sleep_time = read_file(SPIFFS, "/input_sleep_time.txt");
     String str_wakeup_time = read_file(SPIFFS, "/input_wakeup_time.txt");
     String str_animation_time = read_file(SPIFFS, "/input_animation_time.txt");
+    String input_animation = read_file(SPIFFS, "/input_animation.txt");
+    String input_timezone = read_file(SPIFFS, "/input_timezone.txt");
+    String input_brightness = read_file(SPIFFS, "/input_brightness.txt");
+    Serial.print("str_sleep_time: ");
+    Serial.print(str_sleep_time);
+    Serial.print(", str_wakeup_time: ");
+    Serial.print(str_wakeup_time);
+    Serial.print(", str_animation_time: ");
+    Serial.print(str_animation_time);
+    Serial.print(", input_animation: ");
+    Serial.print(input_animation);
+    Serial.print(", input_timezone: ");
+    Serial.print(input_timezone);
+    Serial.print(", input_brightness: ");
+    Serial.print(input_brightness);
+    Serial.println("....");
 
     // handleDayTime();
     // stateMachine();
