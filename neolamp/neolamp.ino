@@ -115,10 +115,6 @@ String processor(const String &var) {
         if(value == "" || value == NULL) {
             value = "mix";
         };
-        Serial.print("Size of Array: ");
-        Serial.println(sizeof(array_of_modes) / sizeof(array_of_modes[0]));
-        Serial.print("Value ");
-        Serial.println(value);
         for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
             i++) {
             tmp += "<option value = '";
@@ -141,7 +137,7 @@ String processor(const String &var) {
     } else if(var == "input_brightness") {
         return read_file(SPIFFS, "/input_brightness.txt");
     }
-    return String();
+    return "";
 }
 
 /************************************************************************************************************
