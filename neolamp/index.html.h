@@ -2,7 +2,7 @@ const char index_html[] PROGMEM = R"rawliteral("
 <!DOCTYPE html>
 <html>
   <head>
-    <title>HTML Form to Input Data</title>
+    <title>Nachtlampe</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <style>
