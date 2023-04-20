@@ -13,6 +13,7 @@
 #include "index.html.h"
 #include "secrets.h"
 #include "time.h"
+#include "timezones.h"
 
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
@@ -223,8 +224,7 @@ void setup() {
     Serial.print("Connected to ");
     Serial.println(WiFi.SSID()); // Tell us what network we're connected to
     Serial.print("IP address:\t");
-    Serial.println(
-        WiFi.localIP()); // Send the IP address of the ESP8266 to the computer
+    Serial.println(WiFi.localIP());
 }
 
 void loop() {
@@ -525,8 +525,7 @@ void updateTime() {
 }
 
 void initTime() {
-    configTime(0, 0,
-               "pool.ntp.org"); // First connect to NTP server, with 0 TZ offset
+    configTime(0, 0, "pool.ntp.org");
     if(!getLocalTime(&timeinfo)) {
         Serial.println("Failed to obtain time");
         return;
