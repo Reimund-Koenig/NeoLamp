@@ -108,6 +108,8 @@ void initTime();
 void updateTimeZone();
 void async_wlan_setup();
 
+void handle_server_root(AsyncWebServerRequest *request);
+void handle_server_get(AsyncWebServerRequest *request);
 void handle_server_notFound(AsyncWebServerRequest *request);
 String processor(const String &var);
 String read_file(fs::FS &fs, const char *path);
@@ -150,39 +152,8 @@ void setup() {
     }
 
     MDNS.addService("http", "tcp", 80);
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send_P(200, "text/html", index_html, processor);
-    });
-
-    server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
-        String tmp;
-        if(request->hasParam(input_sleep_time)) {
-            tmp = request->getParam(input_sleep_time)->value();
-            write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
-        }
-        if(request->hasParam(input_wakeup_time)) {
-            tmp = request->getParam(input_wakeup_time)->value();
-            write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
-        }
-        if(request->hasParam(input_animation_time)) {
-            tmp = request->getParam(input_animation_time)->value();
-            write_file(SPIFFS, "/input_animation_time.txt", tmp.c_str());
-        }
-        if(request->hasParam(input_animation)) {
-            tmp = request->getParam(input_animation)->value();
-            write_file(SPIFFS, "/input_animation.txt", tmp.c_str());
-        }
-        if(request->hasParam(input_timezone)) {
-            tmp = request->getParam(input_timezone)->value();
-            write_file(SPIFFS, "/input_timezone.txt", tmp.c_str());
-            updateTimeZone();
-        }
-        if(request->hasParam(input_brightness)) {
-            tmp = request->getParam(input_brightness)->value();
-            write_file(SPIFFS, "/input_brightness.txt", tmp.c_str());
-        }
-        request->send(200, "text/text", "ok");
-    });
+    server.on("/", HTTP_GET, handle_server_root);
+    server.on("/get", HTTP_GET, handle_server_get);
     server.onNotFound(handle_server_notFound);
     server.begin(); // Actually start the server
     Serial.println("HTTP server started");
@@ -220,10 +191,6 @@ void loop() {
 /* Test
 /*
 *************/
-
-void handle_server_notFound(AsyncWebServerRequest *request) {
-    request->send(404, "text/plain", "Not found");
-}
 
 // ToDo: rainbowFade(3, 3);
 void test() {
@@ -598,6 +565,50 @@ void createRandomColor() {
             random_color = strip.Color(random(0, 150), 0, random(30, 256));
         }
     }
+}
+
+/************************************************************************************************************
+/*
+/* Server Handler
+/*
+*************/
+
+void handle_server_root(AsyncWebServerRequest *request) {
+    request->send_P(200, "text/html", index_html, processor);
+}
+
+void handle_server_get(AsyncWebServerRequest *request) {
+    String tmp;
+    if(request->hasParam(input_sleep_time)) {
+        tmp = request->getParam(input_sleep_time)->value();
+        write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
+    }
+    if(request->hasParam(input_wakeup_time)) {
+        tmp = request->getParam(input_wakeup_time)->value();
+        write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
+    }
+    if(request->hasParam(input_animation_time)) {
+        tmp = request->getParam(input_animation_time)->value();
+        write_file(SPIFFS, "/input_animation_time.txt", tmp.c_str());
+    }
+    if(request->hasParam(input_animation)) {
+        tmp = request->getParam(input_animation)->value();
+        write_file(SPIFFS, "/input_animation.txt", tmp.c_str());
+    }
+    if(request->hasParam(input_timezone)) {
+        tmp = request->getParam(input_timezone)->value();
+        write_file(SPIFFS, "/input_timezone.txt", tmp.c_str());
+        updateTimeZone();
+    }
+    if(request->hasParam(input_brightness)) {
+        tmp = request->getParam(input_brightness)->value();
+        write_file(SPIFFS, "/input_brightness.txt", tmp.c_str());
+    }
+    request->send(200, "text/text", "ok");
+}
+
+void handle_server_notFound(AsyncWebServerRequest *request) {
+    request->send(404, "text/plain", "Not found");
 }
 
 /************************************************************************************************************
