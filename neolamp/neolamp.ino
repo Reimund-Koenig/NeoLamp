@@ -68,9 +68,9 @@ const char *input_animation = "input_animation";
 const char *input_timezone = "input_timezone";
 const char *input_brightness = "input_brightness";
 
-Clocktime wakeup_time;
-Clocktime bed_time;
-Clocktime animation_time;
+Clocktime user_wakeup_time;
+Clocktime user_sleep_time;
+Clocktime user_animation_time;
 Clocktime current_time;
 
 /************************************************************************************************************
@@ -583,7 +583,9 @@ void handle_server_get(AsyncWebServerRequest *request) {
     }
     if(request->hasParam(input_wakeup_time)) {
         tmp = request->getParam(input_wakeup_time)->value();
-        write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
+        if(user_wakeup_time.setTime(tmp.c_str())) {
+            write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
+        }
     }
     if(request->hasParam(input_animation_time)) {
         tmp = request->getParam(input_animation_time)->value();
