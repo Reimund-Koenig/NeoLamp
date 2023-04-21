@@ -95,7 +95,11 @@ const char index_html[] PROGMEM = R"rawliteral("
             Animation am Tag:
           </td>
           <td>
-            <select name="input_animation" style="width: 15em">
+            <select
+              name="input_animation"
+              style="width: 15em"
+              onchange="handle_select_on_change()"
+            >
               %input_animation%
             </select>
           </td>

@@ -15,5 +15,6 @@ class Clocktime {
   private:
     int minutes;
     int hours;
+    boolean isValidNumber(String str);
 };
 #endif // CLOCKTIME

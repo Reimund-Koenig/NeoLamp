@@ -27,19 +27,31 @@ String getValue(String data, char separator, int index) {
     return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
+boolean Clocktime::isValidNumber(String str) {
+    for(byte i = 0; i < str.length(); i++) {
+        if(!isDigit(str.charAt(i)))
+            return false;
+    }
+    return true;
+}
+
 bool Clocktime::setTime(String timestring) {
+    if(timestring.length() < 3 || timestring.length() > 5) {
+        return false;
+    }
     String timestring_minutes = getValue(timestring, ':', 1);
     String timestring_hours = getValue(timestring, ':', 0);
-    Serial.print("Value Minutes: ");
-    Serial.print(timestring_minutes);
-    Serial.print("Value Hours: ");
-    Serial.println(timestring_hours);
+    if(timestring_hours == "" || timestring_minutes == "") {
+        return false;
+    }
+    if(!isValidNumber(timestring_minutes)) {
+        return false;
+    }
+    if(!isValidNumber(timestring_hours)) {
+        return false;
+    }
     int tmp_min = timestring_minutes.toInt();
     int tmp_hour = timestring_hours.toInt();
-    Serial.print("INT Minutes: ");
-    Serial.print(tmp_min);
-    Serial.print("INT Hours: ");
-    Serial.println(tmp_hour);
     if(tmp_hour < 0 || tmp_hour > 24) {
         return false;
     }
