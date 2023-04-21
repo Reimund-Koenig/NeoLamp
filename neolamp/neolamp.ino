@@ -10,6 +10,7 @@
 #include <FS.h>
 #include <Hash.h>
 // #include <WiFiUdp.h>
+#include "clocktime.h"
 #include "index.html.h"
 #include "modes.h"
 #include "secrets.h"
@@ -69,6 +70,11 @@ const char *input_animation_time = "input_animation_time";
 const char *input_animation = "input_animation";
 const char *input_timezone = "input_timezone";
 const char *input_brightness = "input_brightness";
+
+Clocktime wakeup_time;
+Clocktime bed_time;
+Clocktime animation_time;
+Clocktime current_time;
 
 String read_file(fs::FS &fs, const char *path) {
     Serial.printf("Reading file: %s\r\n", path);
@@ -168,20 +174,7 @@ String processor(const String &var) {
         return read_file(SPIFFS, "/input_brightness.txt");
     } else if(var == "input_time_on_load") {
         updateTime();
-        int h = timeinfo.tm_hour;
-        int m = timeinfo.tm_min;
-        String tmp = "";
-        if(h < 10) {
-            tmp += "0";
-        }
-        tmp += String(h);
-        tmp += ":";
-        if(m < 10) {
-            tmp += "0";
-        }
-        tmp += String(m);
-        tmp += " Uhr";
-        return tmp;
+        return current_time.getTimeString();
     }
     return "";
 }
@@ -616,15 +609,12 @@ void updateTime() {
         Serial.println("Failed to obtain time 1");
         return;
     }
+    current_time.setTime(timeinfo.tm_hour, timeinfo.tm_min);
 }
 
 void initTime() {
     configTime(0, 0, "pool.ntp.org");
-    if(!getLocalTime(&timeinfo)) {
-        Serial.println("Failed to obtain time");
-        return;
-    }
-    Serial.println("Got the time from NTP");
+    updateTime();
     // Now we can set the real timezone
     // https://randomnerdtutorials.com/esp32-ntp-timezones-daylight-saving/
     // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
