@@ -28,8 +28,8 @@ String getValue(String data, char separator, int index) {
 }
 
 bool Clocktime::setTime(String timestring) {
-    String timestring_minutes = getValue(timestring, ':', 0);
-    String timestring_hours = getValue(timestring, ':', 1);
+    String timestring_minutes = getValue(timestring, ':', 1);
+    String timestring_hours = getValue(timestring, ':', 0);
     Serial.print("Value Minutes: ");
     Serial.print(timestring_minutes);
     Serial.print("Value Hours: ");
