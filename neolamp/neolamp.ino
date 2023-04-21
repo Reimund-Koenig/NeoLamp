@@ -101,7 +101,23 @@ void write_file(fs::FS &fs, const char *path, const char *message) {
     }
     file.close();
 }
-
+void updateTimeZone() {
+    String value = read_file(SPIFFS, "/input_timezone.txt");
+    if(value == "" || value == NULL) {
+        value = "Berlin";
+    };
+    for(int i = 0;
+        i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]); i++) {
+        if(value == array_of_timezones[i][0]) {
+            Serial.print("Set Timezone to: ");
+            Serial.println(array_of_timezones[i][1]);
+            setenv("TZ", array_of_timezones[i][1], 1);
+            tzset();
+            updateTime();
+            return;
+        }
+    }
+}
 String processor(const String &var) {
     if(var == "input_sleep_time") {
         return read_file(SPIFFS, "/input_sleep_time.txt");
@@ -134,7 +150,8 @@ String processor(const String &var) {
         if(value == "" || value == NULL) {
             value = "Europe_Berlin";
         };
-        for(int i = 0; i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]);
+        for(int i = 0;
+            i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]);
             i++) {
             tmp += "<option value = '";
             tmp += array_of_timezones[i][0];
@@ -149,6 +166,22 @@ String processor(const String &var) {
         return tmp;
     } else if(var == "input_brightness") {
         return read_file(SPIFFS, "/input_brightness.txt");
+    } else if(var == "input_time_on_load") {
+        updateTime();
+        int h = timeinfo.tm_hour;
+        int m = timeinfo.tm_min;
+        String tmp = "";
+        if(h < 10) {
+            tmp += "0";
+        }
+        tmp += String(h);
+        tmp += ":";
+        if(m < 10) {
+            tmp += "0";
+        }
+        tmp += String(m);
+        tmp += " Uhr";
+        return tmp;
     }
     return "";
 }
@@ -259,6 +292,7 @@ void setup() {
         if(request->hasParam(input_timezone)) {
             tmp = request->getParam(input_timezone)->value();
             write_file(SPIFFS, "/input_timezone.txt", tmp.c_str());
+            updateTimeZone();
         }
         if(request->hasParam(input_brightness)) {
             tmp = request->getParam(input_brightness)->value();
@@ -594,8 +628,7 @@ void initTime() {
     // Now we can set the real timezone
     // https://randomnerdtutorials.com/esp32-ntp-timezones-daylight-saving/
     // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
-    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
-    tzset();
+    updateTimeZone();
 }
 
 void setNoneSleepingDelay(unsigned long sleepTime) {
