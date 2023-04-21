@@ -19,6 +19,14 @@
 
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
+#define STATE_ANIMATION_TIME 2
+
+#define STATE_ANIMATION_CIRCLE_PULSE 3
+#define STATE_ANIMATION_PULSE 4
+#define STATE_ANIMATION_CIRCLE 5
+#define STATE_ANIMATION_GREEN 6
+#define STATE_ANIMATION_OFF 7
+
 #define STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE 2
 #define STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR 3
 #define STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR 4
@@ -26,6 +34,7 @@
 #define STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR 6
 #define STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR 7
 #define STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR 8
+
 #define STATE_LEARNING 9
 
 #define NEOPIXEL_PIN 4
@@ -48,17 +57,18 @@ unsigned long time_from_start = 0;
 unsigned long sleep_till_time = 0;
 
 uint8_t state = 0;
+uint8_t animation_state = 0;
 uint8_t last_state = 0; // State which was choosen last
 bool state_first_run = true;
 uint8_t learning_mode_substate = 0;
 
-int colorWipe_helper_i = 0;
+int colorCircle_helper_i = 0;
 int colorPulse_helper_i = 255;
 int colorPulse_helper_j = 12;
 int colorPulse_helper_k = 255;
 int colorPulse_helper_l = 12;
 uint32_t random_color;
-uint32_t choose_pulse_wipe_counter = 0;
+uint32_t choose_pulse_circle_counter = 0;
 int createRandomColor_helper;
 
 const char *input_sleep_time = "input_sleep_time";
@@ -85,13 +95,14 @@ void run_wakeupTime_mode();
 void run_sleepingTime_mode();
 void run_learning_mode();
 
-void run_dayTime_mode_1_choosePulseOrWipe();
+void run_dayTime_mode_1_choosePulseOrCircle();
 void run_dayTime_mode_2_Pulse_choose_mixed_or_single_color();
+void run_animation_circle_pulse();
 void run_dayTime_mode_2a_Pulse_mixed_color();
 void run_dayTime_mode_2b_Pulse_single_color();
-void run_dayTime_mode_3_Wipe_choose_mixed_or_single_color();
-void run_dayTime_mode_3a_Wipe_mixed_color();
-void run_dayTime_mode_3b_Wipe_single_color();
+void run_dayTime_mode_3_Circle_choose_mixed_or_single_color();
+void run_dayTime_mode_3a_Circle_mixed_color();
+void run_dayTime_mode_3b_Circle_single_color();
 
 void handleDayTime();
 
@@ -101,7 +112,7 @@ void changeState(int new_state);
 void getBrightnessFromPoti();
 void createRandomColor();
 
-bool colorWipe(uint32_t color, unsigned long wait);
+bool colorCircle(uint32_t color, unsigned long wait);
 bool colorPulse(uint32_t color, unsigned long wait);
 
 void initTime();
@@ -173,7 +184,7 @@ void loop() {
     // stateMachine();
     updateTime();
     current_time.print();
-    setNoneSleepingDelay(5000);
+    setNoneSleepingDelay(1000);
 }
 
 /************************************************************************************************************
@@ -203,29 +214,16 @@ void test() {
 /* Modes
 /*
 *************/
-void run_dayTime_mode_1_choosePulseOrWipe() {
-    if(choose_pulse_wipe_counter < 100) {
+void run_dayTime_mode_1_choosePulseOrCircle() {
+    if(choose_pulse_circle_counter < 100) {
         changeState(STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR);
     } else {
         changeState(STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR);
     }
-    if(choose_pulse_wipe_counter > 110) {
-        choose_pulse_wipe_counter = 0;
+    if(choose_pulse_circle_counter > 110) {
+        choose_pulse_circle_counter = 0;
     }
-    choose_pulse_wipe_counter++;
-}
-
-void run_dayTime_mode_2_Pulse_choose_mixed_or_single_color() {
-    if(random(0, 2) == 0) {
-        changeState(STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR);
-    } else {
-        changeState(STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR);
-    }
-}
-
-void run_dayTime_mode_2a_Pulse_mixed_color() {
-    // ToDo
-    changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+    choose_pulse_circle_counter++;
 }
 
 void run_dayTime_mode_2b_Pulse_single_color() {
@@ -238,7 +236,7 @@ void run_dayTime_mode_2b_Pulse_single_color() {
     }
 }
 
-void run_dayTime_mode_3_Wipe_choose_mixed_or_single_color() {
+void run_dayTime_mode_3_Circle_choose_mixed_or_single_color() {
     getBrightnessFromPoti();
     strip.setBrightness(colorBrightness);
     strip.show();
@@ -249,17 +247,17 @@ void run_dayTime_mode_3_Wipe_choose_mixed_or_single_color() {
     }
 }
 
-void run_dayTime_mode_3a_Wipe_mixed_color() {
+void run_dayTime_mode_3a_Circle_mixed_color() {
     // ToDo
     changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
 }
 
-void run_dayTime_mode_3b_Wipe_single_color() {
+void run_dayTime_mode_3b_Circle_single_color() {
     if(state_first_run) {
         createRandomColor();
         state_first_run = false;
     }
-    if(colorWipe(random_color, 100)) {
+    if(colorCircle(random_color, 100)) {
         changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
     }
 }
@@ -319,25 +317,27 @@ void stateMachine() {
         run_sleepingTime_mode();
     } else if(state == STATE_WAKEUP_TIME) {
         run_wakeupTime_mode();
-    } else if(state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE) {
-        run_dayTime_mode_1_choosePulseOrWipe();
-    } else if(state == STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR) {
-        run_dayTime_mode_2_Pulse_choose_mixed_or_single_color();
-    } else if(state == STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR) {
-        run_dayTime_mode_2a_Pulse_mixed_color();
-    } else if(state == STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR) {
-        run_dayTime_mode_2b_Pulse_single_color();
-    } else if(state == STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR) {
-        run_dayTime_mode_3_Wipe_choose_mixed_or_single_color();
-    } else if(state == STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR) {
-        run_dayTime_mode_3a_Wipe_mixed_color();
-    } else if(state == STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) {
-        run_dayTime_mode_3b_Wipe_single_color();
-    } else if(state == STATE_LEARNING) {
-        run_learning_mode();
+    } else if(state == STATE_ANIMATION_TIME) {
+        animationStateMachine();
     } else {
         strip.fill(strip.Color(255, 0, 0, 255));
         strip.show();
+    }
+}
+
+void animationStateMachine() {
+    if(animation_state == STATE_ANIMATION_CIRCLE_PULSE) {
+        run_animation_circle_pulse();
+    } else if(animation_state == STATE_ANIMATION_PULSE) {
+        run_dayTime_mode_2a_Pulse_mixed_color();
+    } else if(animation_state == STATE_ANIMATION_CIRCLE) {
+        run_dayTime_mode_2b_Pulse_single_color();
+    } else if(animation_state == STATE_ANIMATION_GREEN) {
+        run_dayTime_mode_3_Circle_choose_mixed_or_single_color();
+    } else if(animation_state == STATE_ANIMATION_OFF) {
+        run_dayTime_mode_3a_Circle_mixed_color();
+    } else if(animation_state == STATE_LEARNING) {
+        run_learning_mode();
     }
 }
 
@@ -471,9 +471,6 @@ String processor(const String &var) {
 }
 
 void async_wlan_setup() {
-    Serial.begin(115200);
-    // Local intialization. Once its business is done, there is no need to keep
-    // it around
     AsyncWiFiManager wifiManager(&server, &dns);
     // reset saved settings >> USED TO TEST
     //  wifiManager.resetSettings();
@@ -566,7 +563,9 @@ void handle_server_get(AsyncWebServerRequest *request) {
     String tmp;
     if(request->hasParam(input_sleep_time)) {
         tmp = request->getParam(input_sleep_time)->value();
-        write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
+        if(user_sleep_time.setTime(tmp.c_str())) {
+            write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
+        }
     }
     if(request->hasParam(input_wakeup_time)) {
         tmp = request->getParam(input_wakeup_time)->value();
@@ -576,7 +575,9 @@ void handle_server_get(AsyncWebServerRequest *request) {
     }
     if(request->hasParam(input_animation_time)) {
         tmp = request->getParam(input_animation_time)->value();
-        write_file(SPIFFS, "/input_animation_time.txt", tmp.c_str());
+        if(user_animation_time.setTime(tmp.c_str())) {
+            write_file(SPIFFS, "/input_animation_time.txt", tmp.c_str());
+        }
     }
     if(request->hasParam(input_animation)) {
         tmp = request->getParam(input_animation)->value();
@@ -604,18 +605,18 @@ void handle_server_notFound(AsyncWebServerRequest *request) {
 /*
 *************/
 
-bool colorWipe(uint32_t color, int wait) {
+bool colorCircle(uint32_t color, int wait) {
     if(!isNoneSleepingDelayOver()) {
         return false;
     }
-    if(colorWipe_helper_i >= strip.numPixels()) {
-        colorWipe_helper_i = 0;
+    if(colorCircle_helper_i >= strip.numPixels()) {
+        colorCircle_helper_i = 0;
         return true;
     }
-    strip.setPixelColor(colorWipe_helper_i,
+    strip.setPixelColor(colorCircle_helper_i,
                         color); //  Set pixel's color (in RAM)
     strip.show();               //  Update strip to match
-    colorWipe_helper_i++;
+    colorCircle_helper_i++;
     setNoneSleepingDelay(wait);
     return false;
 }

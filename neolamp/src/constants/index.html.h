@@ -55,18 +55,6 @@ const char index_html[] PROGMEM = R"rawliteral("
           <td><hr /></td>
         </tr>
         <tr>
-          <td style="text-align: right; padding-right: 1em">Schlafenszeit:</td>
-          <td>
-            <input
-              type="text"
-              name="input_sleep_time"
-              value="%input_sleep_time%"
-              style="width: 15em"
-              placeholder="19:00"
-            />
-          </td>
-        </tr>
-        <tr>
           <td style="text-align: right; padding-right: 1em">Aufstehzeit:</td>
           <td>
             <input
@@ -87,6 +75,18 @@ const char index_html[] PROGMEM = R"rawliteral("
               value="%input_animation_time%"
               style="width: 15em"
               placeholder="08:30"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: right; padding-right: 1em">Schlafenszeit:</td>
+          <td>
+            <input
+              type="text"
+              name="input_sleep_time"
+              value="%input_sleep_time%"
+              style="width: 15em"
+              placeholder="19:00"
             />
           </td>
         </tr>
