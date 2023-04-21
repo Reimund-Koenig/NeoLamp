@@ -378,34 +378,24 @@ void handleDayTime() {
 }
 
 String read_file(fs::FS &fs, const char *path) {
-    Serial.printf("Reading file: %s\r\n", path);
     File file = fs.open(path, "r");
     if(!file || file.isDirectory()) {
-        Serial.println("Empty file/Failed to open file");
         return String();
     }
-    Serial.println("- read from file:");
     String fileContent;
     while(file.available()) {
         fileContent += String((char)file.read());
     }
     file.close();
-    Serial.println(fileContent);
     return fileContent;
 }
 
 void write_file(fs::FS &fs, const char *path, const char *message) {
-    Serial.printf("Writing file: %s\r\n", path);
     File file = fs.open(path, "w");
     if(!file) {
-        Serial.println("Failed to open file for writing");
         return;
     }
-    if(file.print(message)) {
-        Serial.println("SUCCESS in writing file");
-    } else {
-        Serial.println("FAILED to write file");
-    }
+    file.print(message);
     file.close();
 }
 
@@ -417,8 +407,6 @@ void updateTimeZone() {
     for(int i = 0;
         i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]); i++) {
         if(value == array_of_timezones[i][0]) {
-            Serial.print("Set Timezone to: ");
-            Serial.println(array_of_timezones[i][1]);
             setenv("TZ", array_of_timezones[i][1], 1);
             tzset();
             updateTime();
@@ -494,7 +482,6 @@ void async_wlan_setup() {
 
 void updateTime() {
     if(!getLocalTime(&timeinfo)) {
-        Serial.println("Failed to obtain time 1");
         return;
     }
     current_time.setTime(timeinfo.tm_hour, timeinfo.tm_min);

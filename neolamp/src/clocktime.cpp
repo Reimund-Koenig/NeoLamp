@@ -36,6 +36,10 @@ bool Clocktime::setTime(String timestring) {
     Serial.println(timestring_hours);
     int tmp_min = timestring_minutes.toInt();
     int tmp_hour = timestring_hours.toInt();
+    Serial.print("INT Minutes: ");
+    Serial.print(tmp_min);
+    Serial.print("INT Hours: ");
+    Serial.println(tmp_hour);
     if(tmp_hour < 0 || tmp_hour > 24) {
         return false;
     }
