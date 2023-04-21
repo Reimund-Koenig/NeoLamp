@@ -14,4 +14,4 @@ class Clocktime {
     int minutes;
     int hours;
 };
-#endif
+#endif // CLOCKTIME

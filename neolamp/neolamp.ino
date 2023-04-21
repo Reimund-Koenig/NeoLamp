@@ -10,12 +10,12 @@
 #include <FS.h>
 #include <Hash.h>
 // #include <WiFiUdp.h>
-#include "clocktime.h"
-#include "index.html.h"
-#include "modes.h"
-#include "secrets.h"
+#include "src/clocktime.h"
+#include "src/constants/index.html.h"
+#include "src/constants/modes.h"
+#include "src/constants/secrets.h"
+#include "src/constants/timezones.h"
 #include "time.h"
-#include "timezones.h"
 
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
