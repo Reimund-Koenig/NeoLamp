@@ -18,6 +18,12 @@ const char index_html[] PROGMEM = R"rawliteral("
     </style>
 
     <script>
+      function handle_select_on_change() {
+        document.getElementById("getForm").submit();
+        setTimeout(function () {
+          document.location.reload(false);
+        }, 500);
+      }
       function handle_new_input() {
         setTimeout(function () {
           document.location.reload(false);
@@ -28,7 +34,7 @@ const char index_html[] PROGMEM = R"rawliteral("
   <body>
     <h2>Nachtlicht</h2>
     <h2>Einstellungen</h2>
-    <form action="/get" target="hidden-form">
+    <form action="/get" target="hidden-form" id="getForm">
       <table style="margin-left: auto; margin-right: auto; width: 20em">
         <tr>
           <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
@@ -101,7 +107,11 @@ const char index_html[] PROGMEM = R"rawliteral("
         <tr>
           <td style="text-align: right; padding-right: 1em">Zeitzone:</td>
           <td>
-            <select name="input_timezone" style="width: 15em">
+            <select
+              name="input_timezone"
+              style="width: 15em"
+              onchange="handle_select_on_change()"
+            >
               %input_timezone%
             </select>
           </td>
@@ -113,7 +123,7 @@ const char index_html[] PROGMEM = R"rawliteral("
         <tr>
           <td style="text-align: right; padding-right: 1em">
             Uhrzeit:<br />
-            <label style="font-size: 0.75em"> (beim Laden der Seite)</label>
+            <label style="font-size: 0.75em"> (der Lampe)</label>
           </td>
           <td style="width: 15em">
             %input_time_on_load%
