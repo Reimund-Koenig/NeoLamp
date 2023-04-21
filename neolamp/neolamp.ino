@@ -114,6 +114,7 @@ void handle_server_notFound(AsyncWebServerRequest *request);
 String processor(const String &var);
 String read_file(fs::FS &fs, const char *path);
 void write_file(fs::FS &fs, const char *path, const char *message);
+void printServerInfo();
 
 /************************************************************************************************************
 /*
@@ -143,28 +144,17 @@ void setup() {
         delay(1000);
         Serial.println("Connecting to WiFi..");
     }
-    delay(10000);
-    if(MDNS.begin(
-           "kinderlampe")) { // Start the mDNS responder for kinderlampe.local
+    if(MDNS.begin("kinderlampe")) { // mDNS: kinderlampe.local
         Serial.println("mDNS responder started");
     } else {
         Serial.println("Error setting up MDNS responder!");
     }
-
     MDNS.addService("http", "tcp", 80);
     server.on("/", HTTP_GET, handle_server_root);
     server.on("/get", HTTP_GET, handle_server_get);
     server.onNotFound(handle_server_notFound);
     server.begin(); // Actually start the server
-    Serial.println("HTTP server started");
-    // Get Current Hostname
-    Serial.print("Default hostname: ");
-    Serial.println(WiFi.hostname().c_str());
-
-    Serial.print("Connected to ");
-    Serial.println(WiFi.SSID()); // Tell us what network we're connected to
-    Serial.print("IP address:\t");
-    Serial.println(WiFi.localIP());
+    // printServerInfo();
 }
 
 void loop() {
@@ -572,6 +562,14 @@ void createRandomColor() {
 /* Server Handler
 /*
 *************/
+void printServerInfo() {
+    Serial.print("Default hostname: ");
+    Serial.println(WiFi.hostname().c_str());
+    Serial.print("Connected to ");
+    Serial.println(WiFi.SSID()); // Tell us what network we're connected to
+    Serial.print("IP address:\t");
+    Serial.println(WiFi.localIP());
+}
 
 void handle_server_root(AsyncWebServerRequest *request) {
     request->send_P(200, "text/html", index_html, processor);
