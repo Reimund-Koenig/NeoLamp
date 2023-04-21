@@ -52,9 +52,6 @@ uint8_t last_state = 0; // State which was choosen last
 bool state_first_run = true;
 uint8_t learning_mode_substate = 0;
 
-int buttonState = false;
-int lastButtonState = LOW;
-
 int colorWipe_helper_i = 0;
 int colorPulse_helper_i = 255;
 int colorPulse_helper_j = 12;
@@ -75,109 +72,6 @@ Clocktime wakeup_time;
 Clocktime bed_time;
 Clocktime animation_time;
 Clocktime current_time;
-
-String read_file(fs::FS &fs, const char *path) {
-    Serial.printf("Reading file: %s\r\n", path);
-    File file = fs.open(path, "r");
-    if(!file || file.isDirectory()) {
-        Serial.println("Empty file/Failed to open file");
-        return String();
-    }
-    Serial.println("- read from file:");
-    String fileContent;
-    while(file.available()) {
-        fileContent += String((char)file.read());
-    }
-    file.close();
-    Serial.println(fileContent);
-    return fileContent;
-}
-
-void write_file(fs::FS &fs, const char *path, const char *message) {
-    Serial.printf("Writing file: %s\r\n", path);
-    File file = fs.open(path, "w");
-    if(!file) {
-        Serial.println("Failed to open file for writing");
-        return;
-    }
-    if(file.print(message)) {
-        Serial.println("SUCCESS in writing file");
-    } else {
-        Serial.println("FAILED to write file");
-    }
-    file.close();
-}
-void updateTimeZone() {
-    String value = read_file(SPIFFS, "/input_timezone.txt");
-    if(value == "" || value == NULL) {
-        value = "Berlin";
-    };
-    for(int i = 0;
-        i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]); i++) {
-        if(value == array_of_timezones[i][0]) {
-            Serial.print("Set Timezone to: ");
-            Serial.println(array_of_timezones[i][1]);
-            setenv("TZ", array_of_timezones[i][1], 1);
-            tzset();
-            updateTime();
-            return;
-        }
-    }
-}
-String processor(const String &var) {
-    if(var == "input_sleep_time") {
-        return read_file(SPIFFS, "/input_sleep_time.txt");
-    } else if(var == "input_wakeup_time") {
-        return read_file(SPIFFS, "/input_wakeup_time.txt");
-    } else if(var == "input_animation_time") {
-        return read_file(SPIFFS, "/input_animation_time.txt");
-    } else if(var == "input_animation") {
-        String tmp = "";
-        String value = read_file(SPIFFS, "/input_animation.txt");
-        if(value == "" || value == NULL) {
-            value = "mix";
-        };
-        for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
-            i++) {
-            tmp += "<option value = '";
-            tmp += array_of_modes[i][1];
-            if(value == array_of_modes[i][1]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += array_of_modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
-    } else if(var == "input_timezone") {
-        String tmp = "";
-        String value = read_file(SPIFFS, "/input_timezone.txt");
-        if(value == "" || value == NULL) {
-            value = "Europe_Berlin";
-        };
-        for(int i = 0;
-            i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]);
-            i++) {
-            tmp += "<option value = '";
-            tmp += array_of_timezones[i][0];
-            if(value == array_of_timezones[i][0]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += array_of_timezones[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
-    } else if(var == "input_brightness") {
-        return read_file(SPIFFS, "/input_brightness.txt");
-    } else if(var == "input_time_on_load") {
-        updateTime();
-        return current_time.getTimeString();
-    }
-    return "";
-}
 
 /************************************************************************************************************
 /*
@@ -206,23 +100,19 @@ bool isNoneSleepingDelayOver();
 void changeState(int new_state);
 void getBrightnessFromPoti();
 void createRandomColor();
-void printTime();
-void printAnalog(int a0);
 
 bool colorWipe(uint32_t color, unsigned long wait);
 bool colorPulse(uint32_t color, unsigned long wait);
 
 void initTime();
-// void handleRoot();              // function prototypes for HTTP handlers
-// void handleNotFound();
-
+void updateTimeZone();
 void async_wlan_setup();
 
-// void handle_server_root();
-// void handle_server_input1();
-// void handle_server_input2();
-// void handle_server_input3();
 void handle_server_notFound(AsyncWebServerRequest *request);
+String processor(const String &var);
+String read_file(fs::FS &fs, const char *path);
+void write_file(fs::FS &fs, const char *path, const char *message);
+
 /************************************************************************************************************
 /*
 /* Arduino Functions
@@ -317,28 +207,11 @@ void loop() {
     String input_animation = read_file(SPIFFS, "/input_animation.txt");
     String input_timezone = read_file(SPIFFS, "/input_timezone.txt");
     String input_brightness = read_file(SPIFFS, "/input_brightness.txt");
-    Serial.print("str_sleep_time: ");
-    Serial.print(str_sleep_time);
-    Serial.print(", str_wakeup_time: ");
-    Serial.print(str_wakeup_time);
-    Serial.print(", str_animation_time: ");
-    Serial.print(str_animation_time);
-    Serial.print(", input_animation: ");
-    Serial.print(input_animation);
-    Serial.print(", input_timezone: ");
-    Serial.print(input_timezone);
-    Serial.print(", input_brightness: ");
-    Serial.print(input_brightness);
-    Serial.println("....");
 
     // handleDayTime();
     // stateMachine();
     updateTime();
-    int h = timeinfo.tm_hour;
-    int m = timeinfo.tm_min;
-    Serial.print(h);
-    Serial.print(":");
-    Serial.println(m);
+    current_time.print();
     setNoneSleepingDelay(5000);
 }
 
@@ -351,44 +224,6 @@ void loop() {
 void handle_server_notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
 }
-
-/*
-void handle_server_root() {
-    server.send(200, "text/html", index_html);
-  // Timezone - default: Berlin
-  // Go to bed time - default: 19:00 Uhr
-  // Wakeup time - default: 8:00 Uhr
-  // Daymode: default: Farbkeise und Pulsieren
-  // modes: off, green, Farbkreise, Pulsieren, Farbkeise und Pulsieren
-}
-
-
-
-void handle_server_input1 () {
-  Serial.println("Input 1");
-   if(!server.hasArg("input1") || server.arg("input1") == NULL) {
-      Serial.println(server.arg("ERR: No input1 or NULL"));
-      server.send(400, "text/plain", "400: Invalid Request");         // The
-request is invalid, so send HTTP status 400 return;
-  }
-  Serial.println(server.arg("input1"));
-  server.sendHeader("Location","/");        // Add a header to respond with a
-new location for the browser to go to the home page again server.send(303); //
-Send it back to the browser with an HTTP status 303 (See Other) to redirect
-}
-void handle_server_input2 () {
-  Serial.println("Input 2");
-  server.sendHeader("Location","/");        // Add a header to respond with a
-new location for the browser to go to the home page again server.send(303); //
-Send it back to the browser with an HTTP status 303 (See Other) to redirect
-}
-void handle_server_input3 () {
-  Serial.println("Input 3");
-  server.sendHeader("Location","/");        // Add a header to respond with a
-new location for the browser to go to the home page again server.send(303); //
-Send it back to the browser with an HTTP status 303 (See Other) to redirect
-}
-*/
 
 // ToDo: rainbowFade(3, 3);
 void test() {
@@ -551,7 +386,7 @@ void stateMachine() {
 
 /************************************************************************************************************
 /*
-/* Inputs
+/* HELPER
 /*
 *************/
 
@@ -560,11 +395,8 @@ void handleDayTime() {
         return;
     }
     updateTime();
-    int h = timeinfo.tm_hour;
-    int m = timeinfo.tm_min;
-    Serial.print(h);
-    Serial.print(":");
-    Serial.println(m);
+    int h = current_time.getHour();
+    int m = current_time.getMinutes();
     if(h >= 18) { // Schlafen 19:00 - 24:00 Uhr
         changeState(STATE_SLEEPING_TIME);
     } else if(h >= 10) {
@@ -588,11 +420,110 @@ void handleDayTime() {
     setNoneSleepingDelay(1000);
 }
 
-/************************************************************************************************************
-/*
-/* HELPER
-/*
-*************/
+String read_file(fs::FS &fs, const char *path) {
+    Serial.printf("Reading file: %s\r\n", path);
+    File file = fs.open(path, "r");
+    if(!file || file.isDirectory()) {
+        Serial.println("Empty file/Failed to open file");
+        return String();
+    }
+    Serial.println("- read from file:");
+    String fileContent;
+    while(file.available()) {
+        fileContent += String((char)file.read());
+    }
+    file.close();
+    Serial.println(fileContent);
+    return fileContent;
+}
+
+void write_file(fs::FS &fs, const char *path, const char *message) {
+    Serial.printf("Writing file: %s\r\n", path);
+    File file = fs.open(path, "w");
+    if(!file) {
+        Serial.println("Failed to open file for writing");
+        return;
+    }
+    if(file.print(message)) {
+        Serial.println("SUCCESS in writing file");
+    } else {
+        Serial.println("FAILED to write file");
+    }
+    file.close();
+}
+
+void updateTimeZone() {
+    String value = read_file(SPIFFS, "/input_timezone.txt");
+    if(value == "" || value == NULL) {
+        value = "Berlin";
+    };
+    for(int i = 0;
+        i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]); i++) {
+        if(value == array_of_timezones[i][0]) {
+            Serial.print("Set Timezone to: ");
+            Serial.println(array_of_timezones[i][1]);
+            setenv("TZ", array_of_timezones[i][1], 1);
+            tzset();
+            updateTime();
+            return;
+        }
+    }
+}
+
+String processor(const String &var) {
+    if(var == "input_sleep_time") {
+        return read_file(SPIFFS, "/input_sleep_time.txt");
+    } else if(var == "input_wakeup_time") {
+        return read_file(SPIFFS, "/input_wakeup_time.txt");
+    } else if(var == "input_animation_time") {
+        return read_file(SPIFFS, "/input_animation_time.txt");
+    } else if(var == "input_animation") {
+        String tmp = "";
+        String value = read_file(SPIFFS, "/input_animation.txt");
+        if(value == "" || value == NULL) {
+            value = "mix";
+        };
+        for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
+            i++) {
+            tmp += "<option value = '";
+            tmp += array_of_modes[i][1];
+            if(value == array_of_modes[i][1]) {
+                tmp += "' selected>";
+            } else {
+                tmp += "'>";
+            }
+            tmp += array_of_modes[i][0];
+            tmp += "</ option>";
+        }
+        return tmp;
+    } else if(var == "input_timezone") {
+        String tmp = "";
+        String value = read_file(SPIFFS, "/input_timezone.txt");
+        if(value == "" || value == NULL) {
+            value = "Europe_Berlin";
+        };
+        for(int i = 0;
+            i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]);
+            i++) {
+            tmp += "<option value = '";
+            tmp += array_of_timezones[i][0];
+            if(value == array_of_timezones[i][0]) {
+                tmp += "' selected>";
+            } else {
+                tmp += "'>";
+            }
+            tmp += array_of_timezones[i][0];
+            tmp += "</ option>";
+        }
+        return tmp;
+    } else if(var == "input_brightness") {
+        return read_file(SPIFFS, "/input_brightness.txt");
+    } else if(var == "input_time_on_load") {
+        updateTime();
+        return current_time.getTimeString();
+    }
+    return "";
+}
 
 void async_wlan_setup() {
     Serial.begin(115200);
@@ -640,16 +571,6 @@ void changeState(int new_state) {
     state = new_state;
     state_first_run = true;
 }
-void getBrightnessFromPoti() {
-    // Values from 0-255
-    int a0 = analogRead(A0);
-    if(a0 < STEPS) {
-        colorBrightness = 1;
-    } else {
-        colorBrightness = (int(a0 / STEPS) * MULTIPLICATOR) - 1;
-    }
-    // printAnalog(a0);
-}
 
 void createRandomColor() {
     int r1 = random(0, 4);
@@ -677,13 +598,6 @@ void createRandomColor() {
             random_color = strip.Color(random(0, 150), 0, random(30, 256));
         }
     }
-}
-
-void printAnalog(int a0) {
-    Serial.print("Analog Read: ");
-    Serial.print(a0);
-    Serial.print("colorBrightness: ");
-    Serial.println(colorBrightness);
 }
 
 /************************************************************************************************************

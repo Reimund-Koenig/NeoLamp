@@ -9,6 +9,8 @@ class Clocktime {
     String getTimeString();
     bool setTime(String timestring);
     bool setTime(int hour, int minutes);
+    int getHour();
+    int getMinutes();
 
   private:
     int minutes;

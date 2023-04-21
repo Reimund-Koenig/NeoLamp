@@ -34,3 +34,6 @@ String Clocktime::getTimeString() {
     tmp += " Uhr";
     return tmp;
 }
+
+int Clocktime::getHour() { return hours; }
+int Clocktime::getMinutes() { return minutes; };
