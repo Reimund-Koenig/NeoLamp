@@ -96,7 +96,7 @@ void run_circle();
 void run_pulse();
 void run_lamp_off();
 
-void handleDayTime();
+void updateState();
 
 void setNoneSleepingDelay(unsigned long sleepTime);
 bool isNoneSleepingDelayOver();
@@ -165,13 +165,11 @@ void setup() {
     updateBrightness();
     updateAnimation();
     updateUserTimes();
+    updateState();
 }
 
 void loop() {
     MDNS.update();
-    String input_animation = read_file(SPIFFS, "/input_animation.txt");
-
-    handleDayTime();
     stateMachine();
     updateTime();
     // current_time.print();
@@ -329,14 +327,12 @@ void animationStateMachine() {
 /*
 *************/
 
-void handleDayTime() {
-    if(!isNoneSleepingDelayOver()) { return; }
+void updateState() {
     updateTime();
     changeState(helper.get_mode(current_time, user_animation_time,
                                 STATE_ANIMATION_TIME, user_sleep_time,
                                 STATE_SLEEPING_TIME, user_wakeup_time,
                                 STATE_WAKEUP_TIME));
-    setNoneSleepingDelay(1000);
 }
 
 String read_file(fs::FS &fs, const char *path) {
@@ -565,18 +561,21 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(input_sleep_time)->value();
         if(user_sleep_time.setTime(tmp.c_str())) {
             write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
+            updateState();
         }
     }
     if(request->hasParam(input_wakeup_time)) {
         tmp = request->getParam(input_wakeup_time)->value();
         if(user_wakeup_time.setTime(tmp.c_str())) {
             write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
+            updateState();
         }
     }
     if(request->hasParam(input_animation_time)) {
         tmp = request->getParam(input_animation_time)->value();
         if(user_animation_time.setTime(tmp.c_str())) {
             write_file(SPIFFS, "/input_animation_time.txt", tmp.c_str());
+            updateState();
         }
     }
     if(request->hasParam(input_animation)) {
