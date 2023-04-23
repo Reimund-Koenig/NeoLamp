@@ -185,13 +185,13 @@ void loop() {
 void test() {
     for(int i = 0; i < strip.numPixels(); i++) {
         if(i > 10) {
-            strip.setPixelColor(
-                i, strip.Color(0, 128, 255, colorBrightness)); // Heaven_Blue
+            strip.setPixelColor(i,
+                                strip.Color(0, 128, 255, 255)); // Heaven_Blue
         } else {
-            strip.setPixelColor(
-                i, strip.Color(255, 0, 128, colorBrightness)); // Pink
+            strip.setPixelColor(i, strip.Color(255, 0, 128, 255)); // Pink
         }
     }
+    strip.setBrightness(colorBrightness);
     if(colorPulse(0, 5)) {
         // Back to start
     }
@@ -242,13 +242,14 @@ void run_circle() {
 void run_wakeupTime_mode() {
     if(state_first_run) {
         Serial.println("run_wakeupTime_mode");
-        strip.fill(strip.Color(0, 75, 0, colorBrightness));
-        strip.setPixelColor(3, strip.Color(0, 255, 0, colorBrightness));
-        strip.setPixelColor(4, strip.Color(0, 255, 0, colorBrightness));
-        strip.setPixelColor(5, strip.Color(0, 255, 0, colorBrightness));
-        strip.setPixelColor(6, strip.Color(0, 255, 0, colorBrightness));
-        strip.setPixelColor(7, strip.Color(0, 255, 0, colorBrightness));
-        strip.setPixelColor(8, strip.Color(0, 255, 0, colorBrightness));
+        strip.fill(strip.Color(0, 75, 0, 0));
+        strip.setPixelColor(3, strip.Color(0, 255, 0, 0));
+        strip.setPixelColor(4, strip.Color(0, 255, 0, 0));
+        strip.setPixelColor(5, strip.Color(0, 255, 0, 0));
+        strip.setPixelColor(6, strip.Color(0, 255, 0, 0));
+        strip.setPixelColor(7, strip.Color(0, 255, 0, 0));
+        strip.setPixelColor(8, strip.Color(0, 255, 0, 0));
+        strip.setBrightness(colorBrightness);
         strip.show();
         state_first_run = false;
     }
@@ -257,13 +258,14 @@ void run_wakeupTime_mode() {
 void run_sleepingTime_mode() {
     if(state_first_run) {
         Serial.println("run_sleepingTime_mode");
-        strip.fill(strip.Color(255, 75, 0, colorBrightness));
-        strip.setPixelColor(3, strip.Color(255, 9, 0, colorBrightness));
-        strip.setPixelColor(4, strip.Color(255, 18, 0, colorBrightness));
-        strip.setPixelColor(5, strip.Color(255, 37, 0, colorBrightness));
-        strip.setPixelColor(6, strip.Color(255, 0, 0, colorBrightness));
-        strip.setPixelColor(7, strip.Color(255, 0, 0, colorBrightness));
-        strip.setPixelColor(8, strip.Color(255, 0, 0, colorBrightness));
+        strip.fill(strip.Color(255, 75, 0, 255));
+        strip.setPixelColor(3, strip.Color(255, 9, 0, 0));
+        strip.setPixelColor(4, strip.Color(255, 18, 0, 0));
+        strip.setPixelColor(5, strip.Color(255, 37, 0, 0));
+        strip.setPixelColor(6, strip.Color(255, 0, 0, 0));
+        strip.setPixelColor(7, strip.Color(255, 0, 0, 0));
+        strip.setPixelColor(8, strip.Color(255, 0, 0, 0));
+        strip.setBrightness(colorBrightness);
         strip.show();
         state_first_run = false;
     }
