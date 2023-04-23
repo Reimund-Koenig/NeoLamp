@@ -30,9 +30,8 @@ String getValue(String data, char separator, int index) {
 boolean Clocktime::isValidNumber(String str) {
     for(byte i = 0; i < str.length(); i++) {
         if(!isDigit(str.charAt(i))) { return false; }
-    };
-}
-return true;
+    }
+    return true;
 }
 
 bool Clocktime::setTime(String timestring) {
