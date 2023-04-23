@@ -47,6 +47,7 @@ const char index_html[] PROGMEM = R"rawliteral("
               min="0"
               max="100"
               style="width: 15em"
+              onchange="handle_select_on_change()"
             />
           </td>
         </tr>
