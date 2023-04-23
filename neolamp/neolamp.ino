@@ -27,16 +27,7 @@
 #define STATE_ANIMATION_CIRCLE 5
 #define STATE_ANIMATION_GREEN 6
 #define STATE_ANIMATION_OFF 7
-
-#define STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE 2
-#define STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR 3
-#define STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR 4
-#define STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR 5
-#define STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR 6
-#define STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR 7
-#define STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR 8
-
-#define STATE_LEARNING 9
+#define STATE_LEARNING 8
 
 #define NEOPIXEL_PIN 4
 #define NEOPIXEL_COUNT 16
@@ -52,14 +43,14 @@ Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 struct tm timeinfo;
 
 uint8_t colorBrightness = 64; // Set BRIGHTNESS to about 1/5 (max = 255)
-uint8_t lastColorBrightness = colorBrightness;
 
 unsigned long time_from_start = 0;
 unsigned long sleep_till_time = 0;
 
 uint8_t state = 0;
-uint8_t animation_state = 0;
 uint8_t last_state = 0; // State which was choosen last
+uint8_t animation_state = 0;
+uint8_t last_animation_state = 0;
 bool state_first_run = true;
 uint8_t learning_mode_substate = 0;
 
@@ -92,26 +83,25 @@ LampHelper helper;
 *************/
 void test();
 void stateMachine();
+void animationStateMachine();
+
+void changeState(int new_state);
+void changeAnimationState(int new_state);
 
 void run_wakeupTime_mode();
 void run_sleepingTime_mode();
 void run_learning_mode();
 
-void run_dayTime_mode_1_choosePulseOrCircle();
-void run_dayTime_mode_2_Pulse_choose_mixed_or_single_color();
 void run_animation_circle_pulse();
-void run_dayTime_mode_2a_Pulse_mixed_color();
-void run_dayTime_mode_2b_Pulse_single_color();
-void run_dayTime_mode_3_Circle_choose_mixed_or_single_color();
-void run_dayTime_mode_3a_Circle_mixed_color();
-void run_dayTime_mode_3b_Circle_single_color();
+void run_circle();
+void run_pulse();
+void run_lamp_off();
 
 void handleDayTime();
 
 void setNoneSleepingDelay(unsigned long sleepTime);
 bool isNoneSleepingDelayOver();
-void changeState(int new_state);
-void getBrightnessFromPoti();
+uint8_t getBrightness();
 void createRandomColor();
 
 bool colorCircle(uint32_t color, unsigned long wait);
@@ -168,6 +158,7 @@ void setup() {
     server.onNotFound(handle_server_notFound);
     server.begin(); // Actually start the server
     // printServerInfo();
+    colorBrightness = getBrightness();
 }
 
 void loop() {
@@ -181,7 +172,9 @@ void loop() {
     String input_brightness = read_file(SPIFFS, "/input_brightness.txt");
 
     // handleDayTime();
-    // stateMachine();
+    stateMachine();
+    strip.setBrightness(colorBrightness);
+    strip.show();
     updateTime();
     current_time.print();
     setNoneSleepingDelay(1000);
@@ -214,50 +207,38 @@ void test() {
 /* Modes
 /*
 *************/
-void run_dayTime_mode_1_choosePulseOrCircle() {
+void run_animation_circle_pulse() {
     if(choose_pulse_circle_counter < 100) {
-        changeState(STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR);
+        run_circle();
     } else {
-        changeState(STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR);
+        run_pulse();
     }
     if(choose_pulse_circle_counter > 110) { choose_pulse_circle_counter = 0; }
     choose_pulse_circle_counter++;
 }
 
-void run_dayTime_mode_2b_Pulse_single_color() {
+void run_pulse() {
     if(state_first_run) {
         createRandomColor();
         state_first_run = false;
     }
-    if(colorPulse(random_color, 17)) {
-        changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
+    if(colorPulse(random_color, 17)) { state_first_run = true; }
+}
+
+void run_lamp_off() {
+    if(state_first_run) {
+        strip.fill(strip.Color(0, 0, 0, 0));
+        strip.show();
+        state_first_run = false;
     }
 }
 
-void run_dayTime_mode_3_Circle_choose_mixed_or_single_color() {
-    getBrightnessFromPoti();
-    strip.setBrightness(colorBrightness);
-    strip.show();
-    if(random(0, 2) == 0) {
-        changeState(STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR);
-    } else {
-        changeState(STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR);
-    }
-}
-
-void run_dayTime_mode_3a_Circle_mixed_color() {
-    // ToDo
-    changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
-}
-
-void run_dayTime_mode_3b_Circle_single_color() {
+void run_circle() {
     if(state_first_run) {
         createRandomColor();
         state_first_run = false;
     }
-    if(colorCircle(random_color, 100)) {
-        changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
-    }
+    if(colorCircle(random_color, 100)) { state_first_run = true; }
 }
 
 void run_wakeupTime_mode() {
@@ -316,7 +297,7 @@ void stateMachine() {
     } else if(state == STATE_ANIMATION_TIME) {
         animationStateMachine();
     } else {
-        strip.fill(strip.Color(255, 0, 0, 255));
+        strip.fill(strip.Color(255, 128, 0, 255));
         strip.show();
     }
 }
@@ -325,13 +306,13 @@ void animationStateMachine() {
     if(animation_state == STATE_ANIMATION_CIRCLE_PULSE) {
         run_animation_circle_pulse();
     } else if(animation_state == STATE_ANIMATION_PULSE) {
-        run_dayTime_mode_2a_Pulse_mixed_color();
+        run_pulse();
     } else if(animation_state == STATE_ANIMATION_CIRCLE) {
-        run_dayTime_mode_2b_Pulse_single_color();
+        run_circle();
     } else if(animation_state == STATE_ANIMATION_GREEN) {
-        run_dayTime_mode_3_Circle_choose_mixed_or_single_color();
+        run_wakeupTime_mode();
     } else if(animation_state == STATE_ANIMATION_OFF) {
-        run_dayTime_mode_3a_Circle_mixed_color();
+        run_lamp_off();
     } else if(animation_state == STATE_LEARNING) {
         run_learning_mode();
     }
@@ -342,6 +323,11 @@ void animationStateMachine() {
 /* HELPER
 /*
 *************/
+uint8_t getBrightness() {
+    int percent = read_file(SPIFFS, "/input_brightness.txt").toFloat() / 100;
+    if(percent > 1.0) { percent = 1; }
+    return (uint8_t)(255 * percent);
+}
 
 void handleDayTime() {
     if(!isNoneSleepingDelayOver()) { return; }
@@ -467,6 +453,12 @@ bool isNoneSleepingDelayOver() {
     return true;
 }
 
+void changeAnimationState(int new_state) {
+    last_animation_state = animation_state;
+    animation_state = new_state;
+    state_first_run = true;
+}
+
 void changeState(int new_state) {
     if(last_state != STATE_LEARNING) { last_state = state; }
     state = new_state;
@@ -551,6 +543,7 @@ void handle_server_get(AsyncWebServerRequest *request) {
     if(request->hasParam(input_brightness)) {
         tmp = request->getParam(input_brightness)->value();
         write_file(SPIFFS, "/input_brightness.txt", tmp.c_str());
+        colorBrightness = getBrightness();
     }
     request->send(200, "text/text", "ok");
 }
