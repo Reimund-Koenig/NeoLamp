@@ -170,9 +170,7 @@ void setup() {
 
 void loop() {
     MDNS.update();
-    if(!isNoneSleepingDelayOver()) {
-        return;
-    }
+    if(!isNoneSleepingDelayOver()) { return; }
     String str_sleep_time = read_file(SPIFFS, "/input_sleep_time.txt");
     String str_wakeup_time = read_file(SPIFFS, "/input_wakeup_time.txt");
     String str_animation_time = read_file(SPIFFS, "/input_animation_time.txt");
@@ -220,9 +218,7 @@ void run_dayTime_mode_1_choosePulseOrCircle() {
     } else {
         changeState(STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR);
     }
-    if(choose_pulse_circle_counter > 110) {
-        choose_pulse_circle_counter = 0;
-    }
+    if(choose_pulse_circle_counter > 110) { choose_pulse_circle_counter = 0; }
     choose_pulse_circle_counter++;
 }
 
@@ -291,9 +287,7 @@ void run_sleepingTime_mode() {
 }
 
 void run_learning_mode() {
-    if(!isNoneSleepingDelayOver()) {
-        return;
-    }
+    if(!isNoneSleepingDelayOver()) { return; }
     if(learning_mode_substate == 0) {
         state_first_run = true;
         run_wakeupTime_mode();
@@ -347,41 +341,103 @@ void animationStateMachine() {
 /*
 *************/
 
-void handleDayTime() {
-    if(!isNoneSleepingDelayOver()) {
-        return;
+Clocktime get_biggest_time(Clocktime t1, Clocktime t2) {
+    if(t1.getHour() > t2.getHour()) { return t1; }
+    if(t2.getHour() > t1.getHour()) { return t2; }
+    if(t1.getMinutes() > t2.getMinutes()) { return t1; }
+    return t2;
+}
+
+Clocktime get_biggest_time(Clocktime t1, Clocktime t2, Clocktime t3) {
+    Clocktime tmp = get_biggest_time(t1, t2);
+    return get_biggest_time(tmp, t3);
+}
+
+bool is_current_time_greater_then(Clocktime t1) {
+    if(current_time.getHour() > t1.getHour()) { return true; }
+    if(current_time.getHour() < t1.getHour()) { return false; }
+    if(current_time.getMinutes() > t1.getMinutes()) { return true; }
+    return false;
+}
+bool is_time_equal(Clocktime t1, Clocktime t2) {
+    if(t1.getHour() == t2.getHour() && t1.getMinutes() == t2.getMinutes()) {
+        return true;
     }
-    updateTime();
-    int h = current_time.getHour();
-    int m = current_time.getMinutes();
-    if(h >= 18) { // Schlafen 19:00 - 24:00 Uhr
-        changeState(STATE_SLEEPING_TIME);
-    } else if(h >= 10) {
-        if(state == STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE ||
-           state == STATE_DAY_TIME_2_PULSE_CHOOSE_MIXED_OR_SINGLE_COLOR ||
-           state == STATE_DAY_TIME_2A_PULSE_CHOOSE_MIXED_COLOR ||
-           state == STATE_DAY_TIME_2B_PULSE_CHOOSE_SINGLE_COLOR ||
-           state == STATE_DAY_TIME_3_WIPE_CHOOSE_MIXED_OR_SINGLE_COLOR ||
-           state == STATE_DAY_TIME_3A_WIPE_CHOOSE_MIXED_COLOR ||
-           state == STATE_DAY_TIME_3B_WIPE_CHOOSE_SINGLE_COLOR) {
-            return; // only start mode once
+    return false;
+}
+
+int get_mode(Clocktime t1, int m1, Clocktime t2, int m2, Clocktime t3, int m3) {
+    Clocktime big_t = get_biggest_time(t1, t2, t3);
+    if(is_time_equal(big_t, t1)) {
+        // t1 is the biggest time
+        if(is_current_time_greater_then(t1)) {
+            return m1;
+        } else {
+            big_t = get_biggest_time(t2, t3);
+            if(is_time_equal(big_t, t2)) {
+                // t2 is the second biggest time
+                if(is_current_time_greater_then(t2)) {
+                    return m2;
+                } else if(is_current_time_greater_then(t3)) {
+                    return m3;
+                } else {
+                    // current time is smaller then all times
+                    return m1;
+                }
+            }
         }
-        changeState(STATE_DAY_TIME_1_CHOOSE_PULSE_OR_WIPE);
-    } else if(h > 6 ||
-              (h == 6 &&
-               m >= 45)) { // Gleich Zeit zum Aufstehen 06:45 - 10:00 Uhr
-        changeState(STATE_WAKEUP_TIME);
-    } else if(h < 6 || (h == 6 && m < 45)) { // Schlafen 0:00 - 6:45 Uhr
-        changeState(STATE_SLEEPING_TIME);
+    } else if(is_time_equal(big_t, t2)) {
+        // t2 is the biggest time
+        if(is_current_time_greater_then(t2)) {
+            return m2;
+        } else {
+            big_t = get_biggest_time(t1, t3);
+            if(is_time_equal(big_t, t1)) {
+                // t1 is the second biggest time
+                if(is_current_time_greater_then(t1)) {
+                    return m1;
+                } else if(is_current_time_greater_then(t3)) {
+                    return m3;
+                } else {
+                    // current time is smaller then all times
+                    return m2;
+                }
+            }
+        }
+    } else if(is_time_equal(big_t, t3)) {
+        // t3 is the biggest time
+        if(is_current_time_greater_then(t3)) {
+            return m3;
+        } else {
+            big_t = get_biggest_time(t1, t2);
+            if(is_time_equal(big_t, t1)) {
+                // t1 is the second biggest time
+                if(is_current_time_greater_then(t1)) {
+                    return m1;
+                } else if(is_current_time_greater_then(t2)) {
+                    return m2;
+                } else {
+                    // current time is smaller then all times
+                    return m3;
+                }
+            }
+        }
     }
+    // should never happen
+    return m1;
+}
+void handleDayTime() {
+    if(!isNoneSleepingDelayOver()) { return; }
+    updateTime();
+    changeState(get_mode(user_animation_time, STATE_ANIMATION_TIME,
+                         user_sleep_time, STATE_SLEEPING_TIME, user_wakeup_time,
+                         STATE_WAKEUP_TIME));
     setNoneSleepingDelay(1000);
 }
 
 String read_file(fs::FS &fs, const char *path) {
     File file = fs.open(path, "r");
-    if(!file || file.isDirectory()) {
-        return String();
-    }
+    if(!file || file.isDirectory()) { return String(); }
     String fileContent;
     while(file.available()) {
         fileContent += String((char)file.read());
@@ -392,18 +448,14 @@ String read_file(fs::FS &fs, const char *path) {
 
 void write_file(fs::FS &fs, const char *path, const char *message) {
     File file = fs.open(path, "w");
-    if(!file) {
-        return;
-    }
+    if(!file) { return; }
     file.print(message);
     file.close();
 }
 
 void updateTimeZone() {
     String value = read_file(SPIFFS, "/input_timezone.txt");
-    if(value == "" || value == NULL) {
-        value = "Berlin";
-    };
+    if(value == "" || value == NULL) { value = "Berlin"; };
     for(int i = 0;
         i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]); i++) {
         if(value == array_of_timezones[i][0]) {
@@ -425,9 +477,7 @@ String processor(const String &var) {
     } else if(var == "input_animation") {
         String tmp = "";
         String value = read_file(SPIFFS, "/input_animation.txt");
-        if(value == "" || value == NULL) {
-            value = "mix";
-        };
+        if(value == "" || value == NULL) { value = "mix"; };
         for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
             i++) {
             tmp += "<option value = '";
@@ -444,9 +494,7 @@ String processor(const String &var) {
     } else if(var == "input_timezone") {
         String tmp = "";
         String value = read_file(SPIFFS, "/input_timezone.txt");
-        if(value == "" || value == NULL) {
-            value = "Europe_Berlin";
-        };
+        if(value == "" || value == NULL) { value = "Europe_Berlin"; };
         for(int i = 0;
             i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]);
             i++) {
@@ -473,14 +521,12 @@ String processor(const String &var) {
 void async_wlan_setup() {
     AsyncWiFiManager wifiManager(&server, &dns);
     // reset saved settings >> USED TO TEST
-    //  wifiManager.resetSettings();
+    // wifiManager.resetSettings();
     wifiManager.autoConnect("Kinder Lampe");
 }
 
 void updateTime() {
-    if(!getLocalTime(&timeinfo)) {
-        return;
-    }
+    if(!getLocalTime(&timeinfo)) { return; }
     current_time.setTime(timeinfo.tm_hour, timeinfo.tm_min);
 }
 
@@ -499,16 +545,12 @@ void setNoneSleepingDelay(unsigned long sleepTime) {
 
 bool isNoneSleepingDelayOver() {
     time_from_start = millis();
-    if(time_from_start < sleep_till_time) {
-        return false;
-    }
+    if(time_from_start < sleep_till_time) { return false; }
     return true;
 }
 
 void changeState(int new_state) {
-    if(last_state != STATE_LEARNING) {
-        last_state = state;
-    }
+    if(last_state != STATE_LEARNING) { last_state = state; }
     state = new_state;
     state_first_run = true;
 }
@@ -606,9 +648,7 @@ void handle_server_notFound(AsyncWebServerRequest *request) {
 *************/
 
 bool colorCircle(uint32_t color, int wait) {
-    if(!isNoneSleepingDelayOver()) {
-        return false;
-    }
+    if(!isNoneSleepingDelayOver()) { return false; }
     if(colorCircle_helper_i >= strip.numPixels()) {
         colorCircle_helper_i = 0;
         return true;
@@ -622,9 +662,7 @@ bool colorCircle(uint32_t color, int wait) {
 }
 
 bool colorPulse(uint32_t color, unsigned long wait) {
-    if(!isNoneSleepingDelayOver()) {
-        return false;
-    }
+    if(!isNoneSleepingDelayOver()) { return false; }
     if(color > 0) {
         strip.fill(color);
         strip.show();
@@ -638,9 +676,7 @@ bool colorPulse(uint32_t color, unsigned long wait) {
     } else if(colorPulse_helper_k > 12) {
         colorPulse_helper_k--;
         strip.setBrightness(colorPulse_helper_k);
-        if(colorPulse_helper_k == 13) {
-            return true;
-        }
+        if(colorPulse_helper_k == 13) { return true; }
     } else {
         colorPulse_helper_l++;
         strip.setBrightness(colorPulse_helper_l);

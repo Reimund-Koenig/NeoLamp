@@ -1,5 +1,8 @@
 IndentWidth: 4
 SpaceBeforeParens: Never
+AllowShortBlocksOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
+
 BraceWrapping:
   AfterClass: false
   AfterControlStatement: false
