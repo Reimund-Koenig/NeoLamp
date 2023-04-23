@@ -354,24 +354,30 @@ void write_file(fs::FS &fs, const char *path, const char *message) {
 }
 
 void updateUserTimes() {
+    // Wakeup Time
     String tmp_time = read_file(SPIFFS, "/input_wakeup_time.txt");
-    if(tmp_time = "" || tmp_time == NULL) {
+    if(tmp_time == "" || tmp_time == NULL) {
         tmp_time = "8:00";
         write_file(SPIFFS, "/input_wakeup_time.txt", tmp_time.c_str());
     }
     user_wakeup_time.setTime(tmp_time);
+    user_wakeup_time.print();
+    // Sleep Time
     tmp_time = read_file(SPIFFS, "/input_sleep_time.txt");
-    if(tmp_time = "" || tmp_time == NULL) {
+    if(tmp_time == "" || tmp_time == NULL) {
         tmp_time = "19:00";
         write_file(SPIFFS, "/input_sleep_time.txt", tmp_time.c_str());
     }
     user_sleep_time.setTime(tmp_time);
+    user_sleep_time.print();
+    // Animation Time
     tmp_time = read_file(SPIFFS, "/input_animation_time.txt");
-    if(tmp_time = "" || tmp_time == NULL) {
-        tmp_time = "19:00";
+    if(tmp_time == "" || tmp_time == NULL) {
+        tmp_time = "8:30";
         write_file(SPIFFS, "/input_animation_time.txt", tmp_time.c_str());
     }
     user_animation_time.setTime(tmp_time);
+    user_animation_time.print();
 }
 
 void updateBrightness() {
