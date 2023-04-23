@@ -12,7 +12,7 @@ class LampHelper {
   private:
     Clocktime get_biggest_time(Clocktime t1, Clocktime t2);
     Clocktime get_biggest_time(Clocktime t1, Clocktime t2, Clocktime t3);
-    bool is_t1_greater_t2(Clocktime t1, Clocktime t2);
+    bool is_t1_greater_or_euqal_t2(Clocktime t1, Clocktime t2);
     bool is_time_equal(Clocktime t1, Clocktime t2);
 };
 #endif // LAMPHELPER
