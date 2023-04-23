@@ -169,14 +169,12 @@ void setup() {
 
 void loop() {
     MDNS.update();
-    if(!isNoneSleepingDelayOver()) { return; }
     String input_animation = read_file(SPIFFS, "/input_animation.txt");
 
-    // handleDayTime();
+    handleDayTime();
     stateMachine();
     updateTime();
-    current_time.print();
-    setNoneSleepingDelay(1000);
+    // current_time.print();
 }
 
 /************************************************************************************************************
