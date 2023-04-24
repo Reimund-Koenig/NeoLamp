@@ -25,9 +25,10 @@
 #define STATE_ANIMATION_CIRCLE_PULSE String(array_of_modes[0][1])
 #define STATE_ANIMATION_PULSE String(array_of_modes[1][1])
 #define STATE_ANIMATION_CIRCLE String(array_of_modes[2][1])
-#define STATE_ANIMATION_GREEN String(array_of_modes[3][1])
-#define STATE_ANIMATION_OFF String(array_of_modes[4][1])
-#define STATE_LEARNING String(array_of_modes[5][1])
+#define STATE_ANIMATION_RAINBOW String(array_of_modes[3][1])
+#define STATE_ANIMATION_GREEN String(array_of_modes[4][1])
+#define STATE_ANIMATION_OFF String(array_of_modes[5][1])
+#define STATE_LEARNING String(array_of_modes[6][1])
 
 #define NEOPIXEL_PIN 4
 #define NEOPIXEL_COUNT 16
@@ -53,6 +54,7 @@ String animation_state = "";
 bool state_first_run = true;
 bool brightness_changed = false;
 uint8_t learning_mode_substate = 0;
+uint32_t firstPixelHue = 0;
 
 int colorCircle_helper_i = 0;
 int colorPulse_helper_brightness = 255;
@@ -79,7 +81,6 @@ LampHelper helper;
 /* Header
 /*
 *************/
-void test();
 void stateMachine();
 void animationStateMachine();
 
@@ -90,9 +91,10 @@ void run_wakeupTime_mode();
 void run_sleepingTime_mode();
 void run_learning_mode();
 
-void run_animation_circle_pulse();
+void run_animation_mixed();
 void run_circle();
 void run_pulse();
+void run_rainbow();
 void run_lamp_off();
 
 void updateStateAndTime();
@@ -103,6 +105,7 @@ void createRandomColor();
 
 bool colorCircle(unsigned long wait);
 bool colorPulse(unsigned long wait);
+bool rainbowCircle(int wait);
 
 void initTime();
 
@@ -176,38 +179,18 @@ void loop() {
 
 /************************************************************************************************************
 /*
-/* Test
-/*
-*************/
-
-// ToDo: rainbowFade(3, 3);
-void test() {
-    for(int i = 0; i < strip.numPixels(); i++) {
-        if(i > 10) {
-            strip.setPixelColor(i,
-                                strip.Color(0, 128, 255, 255)); // Heaven_Blue
-        } else {
-            strip.setPixelColor(i, strip.Color(255, 0, 128, 255)); // Pink
-        }
-    }
-    strip.setBrightness(colorBrightness);
-    if(colorPulse(5)) {
-        // Back to start
-    }
-}
-
-/************************************************************************************************************
-/*
 /* Modes
 /*
 *************/
-void run_animation_circle_pulse() {
+void run_animation_mixed() {
     if(state_first_run) { choose_pulse_circle_counter++; }
-    if(choose_pulse_circle_counter > 46) { choose_pulse_circle_counter = 0; }
+    if(choose_pulse_circle_counter >= 65) { choose_pulse_circle_counter = 0; }
     if(choose_pulse_circle_counter <= 40) {
         run_circle();
-    } else {
+    } else if(choose_pulse_circle_counter <= 46) {
         run_pulse();
+    } else {
+        run_rainbow();
     }
 }
 
@@ -232,6 +215,15 @@ void run_circle() {
         Serial.println("run_circle");
     }
     if(colorCircle(100)) { state_first_run = true; }
+}
+
+void run_rainbow() {
+    if(state_first_run) {
+        firstPixelHue = 0;
+        state_first_run = false;
+        Serial.println("run_rainbow");
+    }
+    if(rainbowCircle(20)) { state_first_run = true; }
 }
 
 void run_lamp_off() {
@@ -280,14 +272,14 @@ void run_sleepingTime_mode() {
 void run_learning_mode() {
     if(learning_mode_substate == 0) {
         run_wakeupTime_mode();
-    } else if(learning_mode_substate == 1) {
+    } else {
         run_sleepingTime_mode();
     }
     if(isSleeping(animationmode_sleep)) { return; }
     if(learning_mode_substate == 0) {
         state_first_run = true;
         learning_mode_substate = 1;
-    } else if(learning_mode_substate == 1) {
+    } else {
         state_first_run = true;
         learning_mode_substate = 0;
     }
@@ -315,11 +307,13 @@ void stateMachine() {
 
 void animationStateMachine() {
     if(animation_state == STATE_ANIMATION_CIRCLE_PULSE) {
-        run_animation_circle_pulse();
+        run_animation_mixed();
     } else if(animation_state == STATE_ANIMATION_PULSE) {
         run_pulse();
     } else if(animation_state == STATE_ANIMATION_CIRCLE) {
         run_circle();
+    } else if(animation_state == STATE_ANIMATION_RAINBOW) {
+        run_rainbow();
     } else if(animation_state == STATE_ANIMATION_GREEN) {
         run_wakeupTime_mode();
     } else if(animation_state == STATE_ANIMATION_OFF) {
@@ -659,44 +653,18 @@ bool colorCircle(int wait) {
     return false;
 }
 
-/*
+bool rainbowCircle(int wait) {
+    if(isSleeping(animationmode_sleep)) { return false; }
 
-void rainbowFade(int wait, int rainbowLoops) {
-  int fadeVal=0, fadeMax=100;
-
-  // Hue of first pixel runs 'rainbowLoops' complete loops through the color
-  // wheel. Color wheel has a range of 65536 but it's OK if we roll over, so
-  // just count from 0 to rainbowLoops*65536, using steps of 256 so we
-  // advance around the wheel at a decent clip.
-  for(uint32_t firstPixelHue = 0; firstPixelHue < rainbowLoops*65536;
-    firstPixelHue += 256) {
-
-    for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
-
-      // Offset pixel hue by an amount to make one full revolution of the
-      // color wheel (range of 65536) along the length of the strip
-      // (strip.numPixels() steps):
-      uint32_t pixelHue = firstPixelHue + (i * 65536L / strip.numPixels());
-
-      // strip.ColorHSV() can take 1 or 3 arguments: a hue (0 to 65535) or
-      // optionally add saturation and value (brightness) (each 0 to 255).
-      // Here we're using just the three-argument variant, though the
-      // second value (saturation) is a constant 255.
-      strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(pixelHue, 255,
-        255 * fadeVal / fadeMax)));
+    firstPixelHue += 256;
+    if(firstPixelHue >= 65536) { return true; }
+    for(int i = 0; i < strip.numPixels(); i++) {
+        uint32_t pixelHue = firstPixelHue + (i * 65536L / strip.numPixels());
+        strip.setPixelColor(i,
+                            strip.gamma32(strip.ColorHSV(pixelHue, 255, 255)));
     }
-
+    strip.setBrightness(colorBrightness);
     strip.show();
-    delay(wait);
-
-    if(firstPixelHue < 65536) {                              // First loop,
-      if(fadeVal < fadeMax) fadeVal++;                       // fade in
-    } else if(firstPixelHue >= ((rainbowLoops-1) * 65536)) { // Last loop,
-      if(fadeVal > 0) fadeVal--;                             // fade out
-    } else {
-      fadeVal = fadeMax; // Interim loop, make sure fade is at max
-    }
-  }
-  delay(500); // Pause 1/2 second
+    setNoneSleepingDelay(wait, &animationmode_sleep);
+    return false;
 }
-*/

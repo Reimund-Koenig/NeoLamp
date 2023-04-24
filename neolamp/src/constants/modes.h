@@ -1,6 +1,5 @@
-const char *array_of_modes[][2] = {{"Farbkeise und Pulsieren", "mix"},
-                                   {"Pulsieren", "pulse"},
-                                   {"Farbkeise", "circle"},
-                                   {"Gruen", "green"},
-                                   {"Lampe Ausgeschaltet", "off"},
-                                   {"Lernmodus", "learn"}};
+const char *array_of_modes[][2] = {
+    {"Mixed", "mix"},        {"Pulsieren", "pulse"},
+    {"Farbkeise", "circle"}, {"Regenbogen", "rainbow"},
+    {"Gruen", "green"},      {"Lampe Ausgeschaltet", "off"},
+    {"Lernmodus", "learn"}};
