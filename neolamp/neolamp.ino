@@ -18,6 +18,7 @@
 #include "src/lamphelper.h"
 #include "time.h"
 
+#define NAME "Nachtlicht"
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
 #define STATE_ANIMATION_TIME 2
@@ -136,7 +137,9 @@ void setup() {
         return;
     }
     WiFi.mode(WIFI_STA);
-    WiFi.hostname("kinderlampe");
+    String lower_case_name = NAME;
+    lower_case_name.toLowerCase();
+    WiFi.hostname(lower_case_name);
     async_wlan_setup();
 
     // this resets all the neopixels to an off state
@@ -147,7 +150,7 @@ void setup() {
         delay(1000);
         Serial.println("Connecting to WiFi..");
     }
-    if(MDNS.begin("kinderlampe")) { // mDNS: kinderlampe.local
+    if(MDNS.begin(lower_case_name)) { // browser: name.local
         Serial.println("mDNS responder started");
     } else {
         Serial.println("Error setting up MDNS responder!");
@@ -426,6 +429,7 @@ void updateTimeZone() {
 }
 
 String processor(const String &var) {
+    if(var == "input_name") { return NAME; }
     if(var == "input_sleep_time") {
         return read_file(SPIFFS, "/input_sleep_time.txt");
     } else if(var == "input_wakeup_time") {
@@ -480,7 +484,7 @@ void async_wlan_setup() {
     AsyncWiFiManager wifiManager(&server, &dns);
     // reset saved settings >> USED TO TEST
     // wifiManager.resetSettings();
-    wifiManager.autoConnect("Kinder Lampe");
+    wifiManager.autoConnect(NAME);
 }
 
 void updateTime() {
