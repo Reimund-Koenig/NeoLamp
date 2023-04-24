@@ -55,10 +55,8 @@ bool brightness_changed = false;
 uint8_t learning_mode_substate = 0;
 
 int colorCircle_helper_i = 0;
-int colorPulse_helper_i = 255;
-int colorPulse_helper_j = 12;
-int colorPulse_helper_k = 255;
-int colorPulse_helper_l = 12;
+int colorPulse_helper_brightness = 255;
+bool colorPulse_helper_lighten = true;
 uint32_t random_color;
 uint32_t choose_pulse_circle_counter = 0;
 int createRandomColor_helper;
@@ -103,8 +101,8 @@ void setNoneSleepingDelay(unsigned long wait, unsigned long *sleepUntilTime);
 bool isSleeping();
 void createRandomColor();
 
-bool colorCircle(uint32_t color, unsigned long wait);
-bool colorPulse(uint32_t color, unsigned long wait);
+bool colorCircle(unsigned long wait);
+bool colorPulse(unsigned long wait);
 
 void initTime();
 
@@ -193,7 +191,7 @@ void test() {
         }
     }
     strip.setBrightness(colorBrightness);
-    if(colorPulse(0, 5)) {
+    if(colorPulse(5)) {
         // Back to start
     }
 }
@@ -216,10 +214,24 @@ void run_animation_circle_pulse() {
 void run_pulse() {
     if(state_first_run) {
         createRandomColor();
-        state_first_run = false;
+        colorPulse_helper_brightness = 0;
+        colorPulse_helper_lighten = true;
+        strip.fill(random_color);
+        strip.setBrightness(colorPulse_helper_brightness);
+        strip.show();
         Serial.println("run_pulse");
+        state_first_run = false;
     }
-    if(colorPulse(random_color, 17)) { state_first_run = true; }
+    if(colorPulse(17)) { state_first_run = true; }
+}
+
+void run_circle() {
+    if(state_first_run) {
+        createRandomColor();
+        state_first_run = false;
+        Serial.println("run_circle");
+    }
+    if(colorCircle(100)) { state_first_run = true; }
 }
 
 void run_lamp_off() {
@@ -229,15 +241,6 @@ void run_lamp_off() {
         strip.show();
         state_first_run = false;
     }
-}
-
-void run_circle() {
-    if(state_first_run) {
-        createRandomColor();
-        state_first_run = false;
-        Serial.println("run_circle");
-    }
-    if(colorCircle(random_color, 100)) { state_first_run = true; }
 }
 
 void run_wakeupTime_mode() {
@@ -623,49 +626,35 @@ void handle_server_notFound(AsyncWebServerRequest *request) {
 /*
 *************/
 
-bool colorCircle(uint32_t color, int wait) {
+bool colorPulse(int wait) {
+    if(isSleeping(animationmode_sleep)) { return false; }
+    wait = (int)(wait * 5 * (255.0 / colorBrightness));
+    if(colorPulse_helper_lighten) {
+        colorPulse_helper_brightness += 5;
+        if(colorPulse_helper_brightness >= colorBrightness) {
+            colorPulse_helper_lighten = false;
+        }
+    } else {
+        colorPulse_helper_brightness -= 5;
+        if(colorPulse_helper_brightness <= 0) { return true; }
+    }
+    strip.fill(random_color);
+    strip.setBrightness(colorPulse_helper_brightness);
+    strip.show();
+    setNoneSleepingDelay(wait, &animationmode_sleep);
+    return false;
+}
+
+bool colorCircle(int wait) {
     if(isSleeping(animationmode_sleep)) { return false; }
     if(colorCircle_helper_i >= strip.numPixels()) {
         colorCircle_helper_i = 0;
         return true;
     }
+    strip.setPixelColor(colorCircle_helper_i, random_color);
     strip.setBrightness(colorBrightness);
-    strip.setPixelColor(colorCircle_helper_i,
-                        color); //  Set pixel's color (in RAM)
-    strip.show();               //  Update strip to match
-    colorCircle_helper_i++;
-    setNoneSleepingDelay(wait, &animationmode_sleep);
-    return false;
-}
-
-bool colorPulse(uint32_t color, unsigned long wait) {
-    if(isSleeping(animationmode_sleep)) { return false; }
-    wait = (int)(wait * (255.0 / colorBrightness));
-    if(color > 0) {
-        strip.fill(color);
-        strip.show();
-    }
-    if(colorPulse_helper_i > 0) {
-        colorPulse_helper_i--;
-        strip.setBrightness(colorPulse_helper_i);
-    } else if(colorPulse_helper_j < colorBrightness) {
-        colorPulse_helper_j++;
-        strip.setBrightness(colorPulse_helper_j);
-    } else if(colorPulse_helper_k > 0) {
-        colorPulse_helper_k--;
-        strip.setBrightness(colorPulse_helper_k);
-        if(colorPulse_helper_k == 13) { return true; }
-    } else {
-        colorPulse_helper_l++;
-        strip.setBrightness(colorPulse_helper_l);
-        if(colorPulse_helper_l >= colorBrightness) {
-            colorPulse_helper_i = colorBrightness;
-            colorPulse_helper_j = 0;
-            colorPulse_helper_k = colorBrightness;
-            colorPulse_helper_l = 0;
-        }
-    }
     strip.show();
+    colorCircle_helper_i++;
     setNoneSleepingDelay(wait, &animationmode_sleep);
     return false;
 }
