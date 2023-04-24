@@ -202,13 +202,13 @@ void test() {
 /*
 *************/
 void run_animation_circle_pulse() {
-    if(choose_pulse_circle_counter < 100) {
+    if(state_first_run) { choose_pulse_circle_counter++; }
+    if(choose_pulse_circle_counter > 65) { choose_pulse_circle_counter = 0; }
+    if(choose_pulse_circle_counter <= 50) {
         run_circle();
     } else {
         run_pulse();
     }
-    if(choose_pulse_circle_counter > 110) { choose_pulse_circle_counter = 0; }
-    choose_pulse_circle_counter++;
 }
 
 void run_pulse() {
