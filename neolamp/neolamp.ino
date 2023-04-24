@@ -184,10 +184,10 @@ void loop() {
 *************/
 void run_animation_mixed() {
     if(state_first_run) { choose_pulse_circle_counter++; }
-    if(choose_pulse_circle_counter >= 65) { choose_pulse_circle_counter = 0; }
+    if(choose_pulse_circle_counter >= 58) { choose_pulse_circle_counter = 0; }
     if(choose_pulse_circle_counter <= 40) {
         run_circle();
-    } else if(choose_pulse_circle_counter <= 46) {
+    } else if(choose_pulse_circle_counter <= 47) {
         run_pulse();
     } else {
         run_rainbow();
