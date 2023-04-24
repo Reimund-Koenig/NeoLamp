@@ -30,10 +30,12 @@
 #define STATE_ANIMATION_OFF String(array_of_modes[5][1])
 #define STATE_LEARNING String(array_of_modes[6][1])
 
+// Needed input values
+#define BUTTON_PIN 12
+#define STEPS 25
+
 #define NEOPIXEL_PIN 4
 #define NEOPIXEL_COUNT 16
-#define STEPS 32 // 2^x
-#define MULTIPLICATOR 256 / STEPS
 #define ULONG_MAX (LONG_MAX * 2UL + 1UL)
 
 AsyncWebServer server(80);
@@ -49,8 +51,8 @@ unsigned long clock_sleep = 0;
 unsigned long animationmode_sleep = 0;
 
 uint8_t state = 0;
-uint8_t last_state = 0; // State which was choosen last
 String animation_state = "";
+String last_animation_state = "";
 bool state_first_run = true;
 bool brightness_changed = false;
 uint8_t learning_mode_substate = 0;
@@ -62,6 +64,12 @@ bool colorPulse_helper_lighten = true;
 uint32_t random_color;
 uint32_t choose_pulse_circle_counter = 0;
 int createRandomColor_helper;
+
+int last_a0;
+int buttonState = false;
+int lastButtonState = LOW;
+unsigned long lastDebounceTime = 0; // the last time the output pin was toggled
+unsigned long debounceDelay = 50;   // the debounce time
 
 const char *input_sleep_time = "input_sleep_time";
 const char *input_wakeup_time = "input_wakeup_time";
@@ -140,7 +148,7 @@ void setup() {
         return;
     }
     WiFi.mode(WIFI_STA);
-    WiFi.hostname("kinderlampe");
+    WiFi.hostname("finn");
     async_wlan_setup();
 
     // this resets all the neopixels to an off state
@@ -151,7 +159,7 @@ void setup() {
         delay(1000);
         Serial.println("Connecting to WiFi..");
     }
-    if(MDNS.begin("kinderlampe")) { // mDNS: kinderlampe.local
+    if(MDNS.begin("finn")) { // mDNS: finn.local
         Serial.println("mDNS responder started");
     } else {
         Serial.println("Error setting up MDNS responder!");
@@ -168,12 +176,19 @@ void setup() {
     updateAnimation();
     updateUserTimes();
     updateStateAndTime();
+
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+    int a0 = analogRead(A0);
+    last_a0 = a0 - (a0 % STEPS);
 }
 
 void loop() {
     MDNS.update();
     stateMachine();
     updateStateAndTime();
+    handlePotiBrightnessInput();
+    handleButton();
     // current_time.print();
 }
 
@@ -324,6 +339,44 @@ void animationStateMachine() {
         strip.fill(strip.Color(0, 0, 128, 255));
         strip.show();
     }
+}
+
+/************************************************************************************************************
+/*
+/* Inputs
+/*
+*************/
+void handlePotiBrightnessInput() {
+    // Values from 0-255
+    int a0 = analogRead(A0);
+    a0 = a0 - (a0 % STEPS);
+    if(last_a0 == a0) { return; }
+    last_a0 = a0;
+    String value = String((int)(a0 / 255.0 * 100.0));
+    write_file(SPIFFS, "/input_brightness.txt", value.c_str());
+    brightness_changed = true;
+    colorBrightness = (uint8_t)(a0);
+}
+
+void handleButton() {
+    int reading = digitalRead(BUTTON_PIN);
+    if(reading != lastButtonState) { lastDebounceTime = millis(); }
+    if((millis() - lastDebounceTime) > debounceDelay) {
+        if(reading != buttonState) {
+            buttonState = reading;
+            if(buttonState == HIGH) {
+                last_animation_state = animation_state;
+                String value = "off";
+                write_file(SPIFFS, "/input_animation.txt", value.c_str());
+                updateAnimation();
+            } else {
+                String value = last_animation_state;
+                write_file(SPIFFS, "/input_animation.txt", value.c_str());
+                updateAnimation();
+            }
+        }
+    }
+    lastButtonState = reading;
 }
 
 /************************************************************************************************************
@@ -484,7 +537,7 @@ void async_wlan_setup() {
     AsyncWiFiManager wifiManager(&server, &dns);
     // reset saved settings >> USED TO TEST
     // wifiManager.resetSettings();
-    wifiManager.autoConnect("Kinder Lampe");
+    wifiManager.autoConnect("Finns Lampe");
 }
 
 void updateTime() {
