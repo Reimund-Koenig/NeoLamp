@@ -214,7 +214,7 @@ void run_animation_circle_pulse() {
 void run_pulse() {
     if(state_first_run) {
         createRandomColor();
-        colorPulse_helper_brightness = 0;
+        colorPulse_helper_brightness = 2;
         colorPulse_helper_lighten = true;
         strip.fill(random_color);
         strip.setBrightness(colorPulse_helper_brightness);
@@ -628,15 +628,15 @@ void handle_server_notFound(AsyncWebServerRequest *request) {
 
 bool colorPulse(int wait) {
     if(isSleeping(animationmode_sleep)) { return false; }
-    wait = (int)(wait * 5 * (255.0 / colorBrightness));
+    wait = (int)(wait * (255.0 / colorBrightness));
     if(colorPulse_helper_lighten) {
-        colorPulse_helper_brightness += 5;
+        colorPulse_helper_brightness++;
         if(colorPulse_helper_brightness >= colorBrightness) {
             colorPulse_helper_lighten = false;
         }
     } else {
-        colorPulse_helper_brightness -= 5;
-        if(colorPulse_helper_brightness <= 0) { return true; }
+        colorPulse_helper_brightness--;
+        if(colorPulse_helper_brightness <= 2) { return true; }
     }
     strip.fill(random_color);
     strip.setBrightness(colorPulse_helper_brightness);
