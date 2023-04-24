@@ -51,6 +51,7 @@ uint8_t state = 0;
 uint8_t last_state = 0; // State which was choosen last
 String animation_state = "";
 bool state_first_run = true;
+bool brightness_changed = false;
 uint8_t learning_mode_substate = 0;
 
 int colorCircle_helper_i = 0;
@@ -84,7 +85,7 @@ void test();
 void stateMachine();
 void animationStateMachine();
 
-void changeState(int new_state);
+void updateState(int new_state);
 void changeAnimationState(String new_state);
 
 void run_wakeupTime_mode();
@@ -96,7 +97,7 @@ void run_circle();
 void run_pulse();
 void run_lamp_off();
 
-void updateState();
+void updateStateAndTime();
 
 void setNoneSleepingDelay(unsigned long sleepTime);
 bool isNoneSleepingDelayOver();
@@ -165,13 +166,13 @@ void setup() {
     updateBrightness();
     updateAnimation();
     updateUserTimes();
-    updateState();
+    updateStateAndTime();
 }
 
 void loop() {
     MDNS.update();
     stateMachine();
-    updateTime();
+    updateStateAndTime();
     // current_time.print();
 }
 
@@ -240,7 +241,7 @@ void run_circle() {
 }
 
 void run_wakeupTime_mode() {
-    if(state_first_run) {
+    if(state_first_run || brightness_changed) {
         Serial.println("run_wakeupTime_mode");
         strip.fill(strip.Color(0, 75, 0, 0));
         strip.setPixelColor(3, strip.Color(0, 255, 0, 0));
@@ -252,11 +253,12 @@ void run_wakeupTime_mode() {
         strip.setBrightness(colorBrightness);
         strip.show();
         state_first_run = false;
+        brightness_changed = false;
     }
 }
 
 void run_sleepingTime_mode() {
-    if(state_first_run) {
+    if(state_first_run || brightness_changed) {
         Serial.println("run_sleepingTime_mode");
         strip.fill(strip.Color(255, 75, 0, 255));
         strip.setPixelColor(3, strip.Color(255, 9, 0, 0));
@@ -268,18 +270,22 @@ void run_sleepingTime_mode() {
         strip.setBrightness(colorBrightness);
         strip.show();
         state_first_run = false;
+        brightness_changed = false;
     }
 }
 
 void run_learning_mode() {
+    if(learning_mode_substate == 0) {
+        run_wakeupTime_mode();
+    } else if(learning_mode_substate == 1) {
+        run_sleepingTime_mode();
+    }
     if(!isNoneSleepingDelayOver()) { return; }
     if(learning_mode_substate == 0) {
         state_first_run = true;
-        run_wakeupTime_mode();
         learning_mode_substate = 1;
     } else if(learning_mode_substate == 1) {
         state_first_run = true;
-        run_sleepingTime_mode();
         learning_mode_substate = 0;
     }
     setNoneSleepingDelay(3000);
@@ -329,9 +335,9 @@ void animationStateMachine() {
 /*
 *************/
 
-void updateState() {
+void updateStateAndTime() {
     updateTime();
-    changeState(helper.get_mode(current_time, user_animation_time,
+    updateState(helper.get_mode(current_time, user_animation_time,
                                 STATE_ANIMATION_TIME, user_sleep_time,
                                 STATE_SLEEPING_TIME, user_wakeup_time,
                                 STATE_WAKEUP_TIME));
@@ -390,6 +396,7 @@ void updateBrightness() {
     }
     float percent = value.toFloat() / 100.0;
     if(percent > 1.0) { percent = 1.0; }
+    brightness_changed = true;
     colorBrightness = (uint8_t)(255 * percent);
 }
 
@@ -512,7 +519,8 @@ void changeAnimationState(String new_state) {
     state_first_run = true;
 }
 
-void changeState(int new_state) {
+void updateState(int new_state) {
+    if(new_state == state) { return; }
     state = new_state;
     state_first_run = true;
 }
@@ -569,21 +577,21 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(input_sleep_time)->value();
         if(user_sleep_time.setTime(tmp.c_str())) {
             write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
-            updateState();
+            updateStateAndTime();
         }
     }
     if(request->hasParam(input_wakeup_time)) {
         tmp = request->getParam(input_wakeup_time)->value();
         if(user_wakeup_time.setTime(tmp.c_str())) {
             write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
-            updateState();
+            updateStateAndTime();
         }
     }
     if(request->hasParam(input_animation_time)) {
         tmp = request->getParam(input_animation_time)->value();
         if(user_animation_time.setTime(tmp.c_str())) {
             write_file(SPIFFS, "/input_animation_time.txt", tmp.c_str());
-            updateState();
+            updateStateAndTime();
         }
     }
     if(request->hasParam(input_animation)) {
