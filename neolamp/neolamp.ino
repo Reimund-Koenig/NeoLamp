@@ -32,9 +32,6 @@
 
 #define NEOPIXEL_PIN 4
 #define NEOPIXEL_COUNT 16
-#define STEPS 32 // 2^x
-#define MULTIPLICATOR 256 / STEPS
-#define ULONG_MAX (LONG_MAX * 2UL + 1UL)
 
 AsyncWebServer server(80);
 DNSServer dns;
@@ -49,19 +46,18 @@ unsigned long clock_sleep = 0;
 unsigned long animationmode_sleep = 0;
 
 uint8_t state = 0;
-uint8_t last_state = 0; // State which was choosen last
 String animation_state = "";
 bool state_first_run = true;
 bool brightness_changed = false;
-uint8_t learning_mode_substate = 0;
-uint32_t firstPixelHue = 0;
-
-int colorCircle_helper_i = 0;
-int colorPulse_helper_brightness = 255;
-bool colorPulse_helper_lighten = true;
 uint32_t random_color;
-uint32_t choose_pulse_circle_counter = 0;
 int createRandomColor_helper;
+
+int color_circle_mode_helper = 0;
+int color_pulse_helper_brightness = 255;
+bool color_pulse_helper_lighten = true;
+uint32_t mix_mode_helper = 0;
+uint8_t learning_mode_helper = 0;
+uint32_t rainbow_mode_helper = 0;
 
 const char *input_sleep_time = "input_sleep_time";
 const char *input_wakeup_time = "input_wakeup_time";
@@ -183,11 +179,11 @@ void loop() {
 /*
 *************/
 void run_animation_mixed() {
-    if(state_first_run) { choose_pulse_circle_counter++; }
-    if(choose_pulse_circle_counter >= 65) { choose_pulse_circle_counter = 0; }
-    if(choose_pulse_circle_counter <= 40) {
+    if(state_first_run) { mix_mode_helper++; }
+    if(mix_mode_helper >= 65) { mix_mode_helper = 0; }
+    if(mix_mode_helper <= 40) {
         run_circle();
-    } else if(choose_pulse_circle_counter <= 47) {
+    } else if(mix_mode_helper <= 47) {
         run_pulse();
     } else {
         run_rainbow();
@@ -197,10 +193,10 @@ void run_animation_mixed() {
 void run_pulse() {
     if(state_first_run) {
         createRandomColor();
-        colorPulse_helper_brightness = 2;
-        colorPulse_helper_lighten = true;
+        color_pulse_helper_brightness = 2;
+        color_pulse_helper_lighten = true;
         strip.fill(random_color);
-        strip.setBrightness(colorPulse_helper_brightness);
+        strip.setBrightness(color_pulse_helper_brightness);
         strip.show();
         Serial.println("run_pulse");
         state_first_run = false;
@@ -219,7 +215,7 @@ void run_circle() {
 
 void run_rainbow() {
     if(state_first_run) {
-        firstPixelHue = 0;
+        rainbow_mode_helper = 0;
         state_first_run = false;
         Serial.println("run_rainbow");
     }
@@ -270,18 +266,18 @@ void run_sleepingTime_mode() {
 }
 
 void run_learning_mode() {
-    if(learning_mode_substate == 0) {
+    if(learning_mode_helper == 0) {
         run_wakeupTime_mode();
     } else {
         run_sleepingTime_mode();
     }
     if(isSleeping(animationmode_sleep)) { return; }
-    if(learning_mode_substate == 0) {
+    if(learning_mode_helper == 0) {
         state_first_run = true;
-        learning_mode_substate = 1;
+        learning_mode_helper = 1;
     } else {
         state_first_run = true;
-        learning_mode_substate = 0;
+        learning_mode_helper = 0;
     }
     setNoneSleepingDelay(3000, &animationmode_sleep);
 }
@@ -623,17 +619,17 @@ void handle_server_notFound(AsyncWebServerRequest *request) {
 bool colorPulse(int wait) {
     if(isSleeping(animationmode_sleep)) { return false; }
     wait = (int)(wait * (255.0 / colorBrightness));
-    if(colorPulse_helper_lighten) {
-        colorPulse_helper_brightness++;
-        if(colorPulse_helper_brightness >= colorBrightness) {
-            colorPulse_helper_lighten = false;
+    if(color_pulse_helper_lighten) {
+        color_pulse_helper_brightness++;
+        if(color_pulse_helper_brightness >= colorBrightness) {
+            color_pulse_helper_lighten = false;
         }
     } else {
-        colorPulse_helper_brightness--;
-        if(colorPulse_helper_brightness <= 2) { return true; }
+        color_pulse_helper_brightness--;
+        if(color_pulse_helper_brightness <= 2) { return true; }
     }
     strip.fill(random_color);
-    strip.setBrightness(colorPulse_helper_brightness);
+    strip.setBrightness(color_pulse_helper_brightness);
     strip.show();
     setNoneSleepingDelay(wait, &animationmode_sleep);
     return false;
@@ -641,14 +637,14 @@ bool colorPulse(int wait) {
 
 bool colorCircle(int wait) {
     if(isSleeping(animationmode_sleep)) { return false; }
-    if(colorCircle_helper_i >= strip.numPixels()) {
-        colorCircle_helper_i = 0;
+    if(color_circle_mode_helper >= strip.numPixels()) {
+        color_circle_mode_helper = 0;
         return true;
     }
-    strip.setPixelColor(colorCircle_helper_i, random_color);
+    strip.setPixelColor(color_circle_mode_helper, random_color);
     strip.setBrightness(colorBrightness);
     strip.show();
-    colorCircle_helper_i++;
+    color_circle_mode_helper++;
     setNoneSleepingDelay(wait, &animationmode_sleep);
     return false;
 }
@@ -656,10 +652,11 @@ bool colorCircle(int wait) {
 bool rainbowCircle(int wait) {
     if(isSleeping(animationmode_sleep)) { return false; }
 
-    firstPixelHue += 256;
-    if(firstPixelHue >= 65536) { return true; }
+    rainbow_mode_helper += 256;
+    if(rainbow_mode_helper >= 65536) { return true; }
     for(int i = 0; i < strip.numPixels(); i++) {
-        uint32_t pixelHue = firstPixelHue + (i * 65536L / strip.numPixels());
+        uint32_t pixelHue =
+            rainbow_mode_helper + (i * 65536L / strip.numPixels());
         strip.setPixelColor(i,
                             strip.gamma32(strip.ColorHSV(pixelHue, 255, 255)));
     }
