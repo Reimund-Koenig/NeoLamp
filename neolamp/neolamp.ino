@@ -337,7 +337,7 @@ void animationStateMachine() {
 
 void updateStateAndTime() {
     updateTime();
-    updateState(helper.get_mode(current_time, user_animation_time,
+    updateState(helper.get_state(current_time, user_animation_time,
                                 STATE_ANIMATION_TIME, user_sleep_time,
                                 STATE_SLEEPING_TIME, user_wakeup_time,
                                 STATE_WAKEUP_TIME));
