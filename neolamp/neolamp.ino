@@ -44,8 +44,8 @@ struct tm timeinfo;
 
 uint8_t colorBrightness = 64; // Set BRIGHTNESS to about 1/5 (max = 255)
 
-unsigned long time_from_start = 0;
-unsigned long sleep_till_time = 0;
+unsigned long clock_sleep = 0;
+unsigned long animationmode_sleep = 0;
 
 uint8_t state = 0;
 uint8_t last_state = 0; // State which was choosen last
@@ -99,8 +99,8 @@ void run_lamp_off();
 
 void updateStateAndTime();
 
-void setNoneSleepingDelay(unsigned long sleepTime);
-bool isNoneSleepingDelayOver();
+void setNoneSleepingDelay(unsigned long wait, unsigned long *sleepUntilTime);
+bool isSleeping();
 void createRandomColor();
 
 bool colorCircle(uint32_t color, unsigned long wait);
@@ -280,7 +280,7 @@ void run_learning_mode() {
     } else if(learning_mode_substate == 1) {
         run_sleepingTime_mode();
     }
-    if(!isNoneSleepingDelayOver()) { return; }
+    if(isSleeping(animationmode_sleep)) { return; }
     if(learning_mode_substate == 0) {
         state_first_run = true;
         learning_mode_substate = 1;
@@ -288,7 +288,7 @@ void run_learning_mode() {
         state_first_run = true;
         learning_mode_substate = 0;
     }
-    setNoneSleepingDelay(3000);
+    setNoneSleepingDelay(3000, &animationmode_sleep);
 }
 
 /************************************************************************************************************
@@ -338,9 +338,9 @@ void animationStateMachine() {
 void updateStateAndTime() {
     updateTime();
     updateState(helper.get_state(current_time, user_animation_time,
-                                STATE_ANIMATION_TIME, user_sleep_time,
-                                STATE_SLEEPING_TIME, user_wakeup_time,
-                                STATE_WAKEUP_TIME));
+                                 STATE_ANIMATION_TIME, user_sleep_time,
+                                 STATE_SLEEPING_TIME, user_wakeup_time,
+                                 STATE_WAKEUP_TIME));
 }
 
 String read_file(fs::FS &fs, const char *path) {
@@ -491,8 +491,10 @@ void async_wlan_setup() {
 }
 
 void updateTime() {
+    if(isSleeping(clock_sleep)) { return; }
     if(!getLocalTime(&timeinfo)) { return; }
     current_time.setTime(timeinfo.tm_hour, timeinfo.tm_min);
+    setNoneSleepingDelay(200, &clock_sleep);
 }
 
 void initTime() {
@@ -504,14 +506,13 @@ void initTime() {
     updateTimeZone();
 }
 
-void setNoneSleepingDelay(unsigned long sleepTime) {
-    sleep_till_time = time_from_start + sleepTime;
+void setNoneSleepingDelay(unsigned long wait, unsigned long *time) {
+    *time = millis() + wait;
 }
 
-bool isNoneSleepingDelayOver() {
-    time_from_start = millis();
-    if(time_from_start < sleep_till_time) { return false; }
-    return true;
+bool isSleeping(unsigned long sleepUntilTime) {
+    if(millis() < sleepUntilTime) { return true; }
+    return false;
 }
 
 void changeAnimationState(String new_state) {
@@ -623,7 +624,7 @@ void handle_server_notFound(AsyncWebServerRequest *request) {
 *************/
 
 bool colorCircle(uint32_t color, int wait) {
-    if(!isNoneSleepingDelayOver()) { return false; }
+    if(isSleeping(animationmode_sleep)) { return false; }
     if(colorCircle_helper_i >= strip.numPixels()) {
         colorCircle_helper_i = 0;
         return true;
@@ -633,12 +634,13 @@ bool colorCircle(uint32_t color, int wait) {
                         color); //  Set pixel's color (in RAM)
     strip.show();               //  Update strip to match
     colorCircle_helper_i++;
-    setNoneSleepingDelay(wait);
+    setNoneSleepingDelay(wait, &animationmode_sleep);
     return false;
 }
 
 bool colorPulse(uint32_t color, unsigned long wait) {
-    if(!isNoneSleepingDelayOver()) { return false; }
+    if(isSleeping(animationmode_sleep)) { return false; }
+    wait = (int)(wait * (255.0 / colorBrightness));
     if(color > 0) {
         strip.fill(color);
         strip.show();
@@ -664,7 +666,7 @@ bool colorPulse(uint32_t color, unsigned long wait) {
         }
     }
     strip.show();
-    setNoneSleepingDelay(wait);
+    setNoneSleepingDelay(wait, &animationmode_sleep);
     return false;
 }
 
