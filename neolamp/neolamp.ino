@@ -22,15 +22,16 @@
 #define URL "nachtlicht"
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
-#define STATE_ANIMATION_TIME 2
+#define STATE_DAYTIME_TIME 2
 
-#define STATE_ANIMATION_CIRCLE_PULSE String(array_of_modes[0][1])
+#define STATE_ANIMATION_MIX String(array_of_modes[0][1])
 #define STATE_ANIMATION_PULSE String(array_of_modes[1][1])
 #define STATE_ANIMATION_CIRCLE String(array_of_modes[2][1])
 #define STATE_ANIMATION_RAINBOW String(array_of_modes[3][1])
 #define STATE_ANIMATION_GREEN String(array_of_modes[4][1])
-#define STATE_ANIMATION_OFF String(array_of_modes[5][1])
-#define STATE_LEARNING String(array_of_modes[6][1])
+#define STATE_ANIMATION_RED String(array_of_modes[5][1])
+#define STATE_ANIMATION_OFF String(array_of_modes[6][1])
+#define STATE_ANIMATION_LEARNING String(array_of_modes[7][1])
 
 #define NEOPIXEL_PIN 4
 #define NEOPIXEL_COUNT 16
@@ -42,13 +43,15 @@ Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 struct tm timeinfo;
 
-uint8_t colorBrightness = 64; // Set BRIGHTNESS to about 1/5 (max = 255)
+uint8_t wakeup_brightness = 25;
+uint8_t daytime_brightness = 100;
+uint8_t sleep_brightness = 15;
+uint8_t colorBrightness = 0; // (max = 255)
 
 unsigned long clock_sleep = 0;
-unsigned long animationmode_sleep = 0;
+unsigned long substate_sleep = 0;
 
 uint8_t state = 0;
-String animation_state = "";
 bool state_first_run = true;
 bool brightness_changed = false;
 uint32_t random_color;
@@ -61,16 +64,26 @@ uint32_t mix_mode_helper = 0;
 uint8_t learning_mode_helper = 0;
 uint32_t rainbow_mode_helper = 0;
 
-const char *input_sleep_time = "input_sleep_time";
 const char *input_wakeup_time = "input_wakeup_time";
-const char *input_animation_time = "input_animation_time";
-const char *input_animation = "input_animation";
+const char *input_wakeup_mode = "input_wakeup_mode";
+String wakeup_state = "";
+const char *input_wakeup_brightness = "input_wakeup_brightness";
+
+const char *input_daytime_time = "input_daytime_time";
+const char *input_daytime_mode = "input_daytime_mode";
+String daytime_state = "";
+const char *input_daytime_brightness = "input_daytime_brightness";
+
+const char *input_sleep_time = "input_sleep_time";
+const char *input_sleep_mode = "input_sleep_mode";
+String sleep_state = "";
+const char *input_sleep_brightness = "input_sleep_brightness";
+
 const char *input_timezone = "input_timezone";
-const char *input_brightness = "input_brightness";
 
 Clocktime user_wakeup_time;
 Clocktime user_sleep_time;
-Clocktime user_animation_time;
+Clocktime user_daytime_time;
 Clocktime current_time;
 LampHelper helper;
 
@@ -80,16 +93,18 @@ LampHelper helper;
 /*
 *************/
 void stateMachine();
-void animationStateMachine();
+void animationStateMachine(String substate);
 
 void updateState(int new_state);
-void changeAnimationState(String new_state);
+void change_wakeup_state(String new_state);
+void change_daytime_state(String new_state);
+void change_sleep_state(String new_state);
 
 void run_wakeupTime_mode();
 void run_sleepingTime_mode();
 void run_learning_mode();
 
-void run_animation_mixed();
+void run_mixed();
 void run_circle();
 void run_pulse();
 void run_rainbow();
@@ -107,8 +122,14 @@ bool rainbowCircle(int wait);
 
 void initTime();
 
-void updateAnimation();
-void updateBrightness();
+void update_daytime_mode();
+
+void update_color_brightness();
+
+void update_wakeup_brightness();
+void update_daytime_brightness();
+void update_sleep_brightness();
+
 void updateUserTimes();
 void updateTimeZone();
 void async_wlan_setup();
@@ -162,8 +183,14 @@ void setup() {
     // printServerInfo();
 
     // Load values from persistent storage or use default
-    updateBrightness();
-    updateAnimation();
+    update_wakeup_brightness();
+    update_daytime_brightness();
+    update_sleep_brightness();
+
+    update_wakeup_mode();
+    update_daytime_mode();
+    update_sleep_mode();
+
     updateUserTimes();
     updateStateAndTime();
 }
@@ -180,7 +207,7 @@ void loop() {
 /* Modes
 /*
 *************/
-void run_animation_mixed() {
+void run_mixed() {
     if(state_first_run) { mix_mode_helper++; }
     if(mix_mode_helper >= 65) { mix_mode_helper = 0; }
     if(mix_mode_helper <= 40) {
@@ -273,7 +300,7 @@ void run_learning_mode() {
     } else {
         run_sleepingTime_mode();
     }
-    if(isSleeping(animationmode_sleep)) { return; }
+    if(isSleeping(substate_sleep)) { return; }
     if(learning_mode_helper == 0) {
         state_first_run = true;
         learning_mode_helper = 1;
@@ -281,7 +308,7 @@ void run_learning_mode() {
         state_first_run = true;
         learning_mode_helper = 0;
     }
-    setNoneSleepingDelay(3000, &animationmode_sleep);
+    setNoneSleepingDelay(3000, &substate_sleep);
 }
 
 /************************************************************************************************************
@@ -291,32 +318,37 @@ void run_learning_mode() {
 *************/
 
 void stateMachine() {
-    if(state == STATE_SLEEPING_TIME) {
-        run_sleepingTime_mode();
-    } else if(state == STATE_WAKEUP_TIME) {
-        run_wakeupTime_mode();
-    } else if(state == STATE_ANIMATION_TIME) {
-        animationStateMachine();
+    if(state == STATE_WAKEUP_TIME) {
+        update_color_brightness(wakeup_brightness);
+        animationStateMachine(wakeup_state);
+    } else if(state == STATE_DAYTIME_TIME) {
+        update_color_brightness(daytime_brightness);
+        animationStateMachine(daytime_state);
+    } else if(state == STATE_SLEEPING_TIME) {
+        update_color_brightness(sleep_brightness);
+        animationStateMachine(sleep_state);
     } else {
         strip.fill(strip.Color(255, 128, 0, 255));
         strip.show();
     }
 }
 
-void animationStateMachine() {
-    if(animation_state == STATE_ANIMATION_CIRCLE_PULSE) {
-        run_animation_mixed();
-    } else if(animation_state == STATE_ANIMATION_PULSE) {
+void animationStateMachine(String substate) {
+    if(substate == STATE_ANIMATION_MIX) {
+        run_mixed();
+    } else if(substate == STATE_ANIMATION_PULSE) {
         run_pulse();
-    } else if(animation_state == STATE_ANIMATION_CIRCLE) {
+    } else if(substate == STATE_ANIMATION_CIRCLE) {
         run_circle();
-    } else if(animation_state == STATE_ANIMATION_RAINBOW) {
+    } else if(substate == STATE_ANIMATION_RAINBOW) {
         run_rainbow();
-    } else if(animation_state == STATE_ANIMATION_GREEN) {
+    } else if(substate == STATE_ANIMATION_GREEN) {
         run_wakeupTime_mode();
-    } else if(animation_state == STATE_ANIMATION_OFF) {
+    } else if(substate == STATE_ANIMATION_RED) {
+        run_sleepingTime_mode();
+    } else if(substate == STATE_ANIMATION_OFF) {
         run_lamp_off();
-    } else if(animation_state == STATE_LEARNING) {
+    } else if(substate == STATE_ANIMATION_LEARNING) {
         run_learning_mode();
     } else {
         strip.fill(strip.Color(0, 0, 128, 255));
@@ -332,10 +364,9 @@ void animationStateMachine() {
 
 void updateStateAndTime() {
     updateTime();
-    updateState(helper.get_state(current_time, user_animation_time,
-                                 STATE_ANIMATION_TIME, user_sleep_time,
-                                 STATE_SLEEPING_TIME, user_wakeup_time,
-                                 STATE_WAKEUP_TIME));
+    updateState(helper.get_state(
+        current_time, user_daytime_time, STATE_DAYTIME_TIME, user_sleep_time,
+        STATE_SLEEPING_TIME, user_wakeup_time, STATE_WAKEUP_TIME));
 }
 
 String read_file(fs::FS &fs, const char *path) {
@@ -373,38 +404,95 @@ void updateUserTimes() {
     }
     user_sleep_time.setTime(tmp_time);
     user_sleep_time.print();
-    // Animation Time
-    tmp_time = read_file(SPIFFS, "/input_animation_time.txt");
+    // Daytime Time
+    tmp_time = read_file(SPIFFS, "/input_daytime_time.txt");
     if(tmp_time == "" || tmp_time == NULL) {
         tmp_time = "8:30";
-        write_file(SPIFFS, "/input_animation_time.txt", tmp_time.c_str());
+        write_file(SPIFFS, "/input_daytime_time.txt", tmp_time.c_str());
     }
-    user_animation_time.setTime(tmp_time);
-    user_animation_time.print();
+    user_daytime_time.setTime(tmp_time);
+    user_daytime_time.print();
 }
 
-void updateBrightness() {
-    String value = read_file(SPIFFS, "/input_brightness.txt");
+void update_color_brightness(uint8_t inputBrightness) {
+    if(colorBrightness == inputBrightness) { return; }
+    brightness_changed = true;
+    colorBrightness = inputBrightness;
+}
+
+void update_wakeup_brightness() {
+    String value = read_file(SPIFFS, "/input_wakeup_brightness.txt");
     if(value == "" || value == NULL) {
         value = "75";
-        write_file(SPIFFS, "/input_brightness.txt", value.c_str());
+        write_file(SPIFFS, "/input_wakeup_brightness.txt", value.c_str());
     }
     float percent = value.toFloat() / 100.0;
     if(percent > 1.0) { percent = 1.0; }
-    brightness_changed = true;
-    colorBrightness = (uint8_t)(255 * percent);
+    wakeup_brightness = (uint8_t)(255 * percent);
 }
 
-void updateAnimation() {
-    String value = read_file(SPIFFS, "/input_animation.txt");
+void update_daytime_brightness() {
+    String value = read_file(SPIFFS, "/input_daytime_brightness.txt");
     if(value == "" || value == NULL) {
-        value = "mix";
-        write_file(SPIFFS, "/input_animation.txt", value.c_str());
+        value = "100";
+        write_file(SPIFFS, "/input_daytime_brightness.txt", value.c_str());
+    }
+    float percent = value.toFloat() / 100.0;
+    if(percent > 1.0) { percent = 1.0; }
+    daytime_brightness = (uint8_t)(255 * percent);
+}
+
+void update_sleep_brightness() {
+    String value = read_file(SPIFFS, "/input_sleep_brightness.txt");
+    if(value == "" || value == NULL) {
+        value = "15";
+        write_file(SPIFFS, "/input_sleep_brightness.txt", value.c_str());
+    }
+    float percent = value.toFloat() / 100.0;
+    if(percent > 1.0) { percent = 1.0; }
+    sleep_brightness = (uint8_t)(255 * percent);
+}
+
+void update_wakeup_mode() {
+    String value = read_file(SPIFFS, "/input_wakeup_mode.txt");
+    if(value == "" || value == NULL) {
+        value = "green";
+        write_file(SPIFFS, "/input_wakeup_mode.txt", value.c_str());
     }
     for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
         i++) {
         if(value == array_of_modes[i][1]) {
-            changeAnimationState(array_of_modes[i][1]);
+            change_wakeup_state(array_of_modes[i][1]);
+            return;
+        }
+    }
+}
+
+void update_daytime_mode() {
+    String value = read_file(SPIFFS, "/input_daytime_mode.txt");
+    if(value == "" || value == NULL) {
+        value = "mix";
+        write_file(SPIFFS, "/input_daytime_mode.txt", value.c_str());
+    }
+    for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
+        i++) {
+        if(value == array_of_modes[i][1]) {
+            change_daytime_state(array_of_modes[i][1]);
+            return;
+        }
+    }
+}
+
+void update_sleep_mode() {
+    String value = read_file(SPIFFS, "/input_sleep_mode.txt");
+    if(value == "" || value == NULL) {
+        value = "red";
+        write_file(SPIFFS, "/input_sleep_mode.txt", value.c_str());
+    }
+    for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
+        i++) {
+        if(value == array_of_modes[i][1]) {
+            change_sleep_state(array_of_modes[i][1]);
             return;
         }
     }
@@ -433,12 +521,46 @@ String processor(const String &var) {
         return read_file(SPIFFS, "/input_sleep_time.txt");
     } else if(var == "input_wakeup_time") {
         return read_file(SPIFFS, "/input_wakeup_time.txt");
-    } else if(var == "input_animation_time") {
-        return read_file(SPIFFS, "/input_animation_time.txt");
-    } else if(var == "input_animation") {
+    } else if(var == "input_daytime_time") {
+        return read_file(SPIFFS, "/input_daytime_time.txt");
+    } else if(var == "input_daytime_mode") {
         String tmp = "";
-        String value = read_file(SPIFFS, "/input_animation.txt");
+        String value = read_file(SPIFFS, "/input_wakeup_mode.txt");
+        if(value == "" || value == NULL) { value = "green"; };
+        for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
+            i++) {
+            tmp += "<option value = '";
+            tmp += array_of_modes[i][1];
+            if(value == array_of_modes[i][1]) {
+                tmp += "' selected>";
+            } else {
+                tmp += "'>";
+            }
+            tmp += array_of_modes[i][0];
+            tmp += "</ option>";
+        }
+        return tmp;
+    } else if(var == "input_daytime_mode") {
+        String tmp = "";
+        String value = read_file(SPIFFS, "/input_daytime_mode.txt");
         if(value == "" || value == NULL) { value = "mix"; };
+        for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
+            i++) {
+            tmp += "<option value = '";
+            tmp += array_of_modes[i][1];
+            if(value == array_of_modes[i][1]) {
+                tmp += "' selected>";
+            } else {
+                tmp += "'>";
+            }
+            tmp += array_of_modes[i][0];
+            tmp += "</ option>";
+        }
+        return tmp;
+    } else if(var == "input_daytime_mode") {
+        String tmp = "";
+        String value = read_file(SPIFFS, "/input_sleep_mode.txt");
+        if(value == "" || value == NULL) { value = "red"; };
         for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
             i++) {
             tmp += "<option value = '";
@@ -470,7 +592,11 @@ String processor(const String &var) {
             tmp += "</ option>";
         }
         return tmp;
-    } else if(var == "input_brightness") {
+    } else if(var == "input_wakeup_brightness") {
+        return read_file(SPIFFS, "/input_wakeup_brightness.txt");
+    } else if(var == "input_daytime_brightness") {
+        return read_file(SPIFFS, "/input_daytime_brightness.txt");
+    } else if(var == "input_sleep_brightness") {
         return read_file(SPIFFS, "/input_brightness.txt");
     } else if(var == "input_time_on_load") {
         updateTime();
@@ -511,13 +637,26 @@ bool isSleeping(unsigned long sleepUntilTime) {
     return false;
 }
 
-void changeAnimationState(String new_state) {
-    animation_state = new_state;
+void change_wakeup_state(String new_state) {
+    if(new_state == wakeup_state) { return; }
+    wakeup_state = new_state;
+    state_first_run = true;
+}
+
+void change_daytime_state(String new_state) {
+    if(new_state == daytime_state) { return; }
+    daytime_state = new_state;
+    state_first_run = true;
+}
+
+void change_sleep_state(String new_state) {
+    if(new_state == sleep_state) { return; }
+    sleep_state = new_state;
     state_first_run = true;
 }
 
 void updateState(int new_state) {
-    if(new_state == state) { return; }
+    if(state == new_state) { return; }
     state = new_state;
     state_first_run = true;
 }
@@ -574,38 +713,56 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(input_sleep_time)->value();
         if(user_sleep_time.setTime(tmp.c_str())) {
             write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
-            updateStateAndTime();
         }
     }
     if(request->hasParam(input_wakeup_time)) {
         tmp = request->getParam(input_wakeup_time)->value();
         if(user_wakeup_time.setTime(tmp.c_str())) {
             write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
-            updateStateAndTime();
         }
     }
-    if(request->hasParam(input_animation_time)) {
-        tmp = request->getParam(input_animation_time)->value();
-        if(user_animation_time.setTime(tmp.c_str())) {
-            write_file(SPIFFS, "/input_animation_time.txt", tmp.c_str());
-            updateStateAndTime();
+    if(request->hasParam(input_daytime_time)) {
+        tmp = request->getParam(input_daytime_time)->value();
+        if(user_daytime_time.setTime(tmp.c_str())) {
+            write_file(SPIFFS, "/input_daytime_time.txt", tmp.c_str());
         }
     }
-    if(request->hasParam(input_animation)) {
-        tmp = request->getParam(input_animation)->value();
-        write_file(SPIFFS, "/input_animation.txt", tmp.c_str());
-        updateAnimation();
+    if(request->hasParam(input_wakeup_mode)) {
+        tmp = request->getParam(input_wakeup_mode)->value();
+        write_file(SPIFFS, "/input_wakeup_mode.txt", tmp.c_str());
+        change_wakeup_state(tmp.c_str());
+    }
+    if(request->hasParam(input_daytime_mode)) {
+        tmp = request->getParam(input_daytime_mode)->value();
+        write_file(SPIFFS, "/input_daytime_mode.txt", tmp.c_str());
+        change_daytime_state(tmp.c_str());
+    }
+    if(request->hasParam(input_sleep_mode)) {
+        tmp = request->getParam(input_sleep_mode)->value();
+        write_file(SPIFFS, "/input_sleep_mode.txt", tmp.c_str());
+        change_sleep_state(tmp.c_str());
+    }
+    if(request->hasParam(input_wakeup_brightness)) {
+        tmp = request->getParam(input_wakeup_brightness)->value();
+        write_file(SPIFFS, "/input_wakeup_brightness.txt", tmp.c_str());
+    }
+    if(request->hasParam(input_daytime_brightness)) {
+        tmp = request->getParam(input_daytime_brightness)->value();
+        write_file(SPIFFS, "/input_daytime_brightness.txt", tmp.c_str());
+    }
+    if(request->hasParam(input_sleep_brightness)) {
+        tmp = request->getParam(input_sleep_brightness)->value();
+        write_file(SPIFFS, "/input_sleep_brightness.txt", tmp.c_str());
     }
     if(request->hasParam(input_timezone)) {
         tmp = request->getParam(input_timezone)->value();
         write_file(SPIFFS, "/input_timezone.txt", tmp.c_str());
-        updateTimeZone();
     }
-    if(request->hasParam(input_brightness)) {
-        tmp = request->getParam(input_brightness)->value();
-        write_file(SPIFFS, "/input_brightness.txt", tmp.c_str());
-        updateBrightness();
-    }
+    updateTimeZone();
+    update_wakeup_brightness();
+    update_daytime_brightness();
+    update_sleep_brightness();
+    updateStateAndTime();
     request->send(200, "text/text", "ok");
 }
 
@@ -620,7 +777,7 @@ void handle_server_notFound(AsyncWebServerRequest *request) {
 *************/
 
 bool colorPulse(int wait) {
-    if(isSleeping(animationmode_sleep)) { return false; }
+    if(isSleeping(substate_sleep)) { return false; }
     wait = (int)(wait * (255.0 / colorBrightness));
     if(color_pulse_helper_lighten) {
         color_pulse_helper_brightness++;
@@ -634,12 +791,12 @@ bool colorPulse(int wait) {
     strip.fill(random_color);
     strip.setBrightness(color_pulse_helper_brightness);
     strip.show();
-    setNoneSleepingDelay(wait, &animationmode_sleep);
+    setNoneSleepingDelay(wait, &substate_sleep);
     return false;
 }
 
 bool colorCircle(int wait) {
-    if(isSleeping(animationmode_sleep)) { return false; }
+    if(isSleeping(substate_sleep)) { return false; }
     if(color_circle_mode_helper >= strip.numPixels()) {
         color_circle_mode_helper = 0;
         return true;
@@ -648,12 +805,12 @@ bool colorCircle(int wait) {
     strip.setBrightness(colorBrightness);
     strip.show();
     color_circle_mode_helper++;
-    setNoneSleepingDelay(wait, &animationmode_sleep);
+    setNoneSleepingDelay(wait, &substate_sleep);
     return false;
 }
 
 bool rainbowCircle(int wait) {
-    if(isSleeping(animationmode_sleep)) { return false; }
+    if(isSleeping(substate_sleep)) { return false; }
 
     rainbow_mode_helper += 256;
     if(rainbow_mode_helper >= 65536) { return true; }
@@ -665,6 +822,6 @@ bool rainbowCircle(int wait) {
     }
     strip.setBrightness(colorBrightness);
     strip.show();
-    setNoneSleepingDelay(wait, &animationmode_sleep);
+    setNoneSleepingDelay(wait, &substate_sleep);
     return false;
 }

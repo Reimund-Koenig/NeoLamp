@@ -11,7 +11,12 @@
         text-align: center;
       }
       h2 {
-        font-size: 2rem;
+        font-size: 1.5rem;
+        color: #ffaa00;
+      }
+
+      h3 {
+        font-size: 1rem;
         color: #ffaa00;
       }
     </style>
@@ -32,15 +37,45 @@
   </head>
   <body>
     <h2>%input_name%</h2>
-    <h2>Einstellungen</h2>
+    <h3>Einstellungen</h3>
     <form action="/get" target="hidden-form" id="getForm">
+      <!----------------------------------------------------->
+      <!-- WakeUp Time -->
       <table style="margin-left: auto; margin-right: auto; width: 20em">
+        <tr>
+          <td><hr /></td>
+          <td><hr /></td>
+        </tr>
+        <tr>
+          <td style="text-align: right; padding-right: 1em">Aufstehzeit:</td>
+          <td>
+            <input
+              type="time"
+              name="input_wakeup_time"
+              value="%input_wakeup_time%"
+              style="width: 15em"
+              placeholder="8:00"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
+          <td>
+            <select
+              name="input_wakup_mode"
+              style="width: 15em"
+              onchange="handle_select_on_change()"
+            >
+              %input_wakup_mode%
+            </select>
+          </td>
+        </tr>
         <tr>
           <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
           <td>
             <input
-              name="input_brightness"
-              value="%input_brightness%"
+              name="input_wakeup_brightness"
+              value="%input_wakeup_brightness%"
               type="range"
               orient="vertical"
               min="0"
@@ -54,35 +89,59 @@
           <td><hr /></td>
           <td><hr /></td>
         </tr>
+        <!----------------------------------------------------->
+        <!-- Daytime -->
         <tr>
-          <td style="text-align: right; padding-right: 1em">Aufstehzeit:</td>
+          <td style="text-align: right; padding-right: 1em">Tagsüber:</td>
           <td>
             <input
-              type="text"
-              name="input_wakeup_time"
-              value="%input_wakeup_time%"
-              style="width: 15em"
-              placeholder="8:00"
-            />
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Animationszeit:</td>
-          <td>
-            <input
-              type="text"
-              name="input_animation_time"
-              value="%input_animation_time%"
+              type="time"
+              name="input_daytime_time"
+              value="%input_daytime_time%"
               style="width: 15em"
               placeholder="08:30"
             />
           </td>
         </tr>
         <tr>
+          <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
+          <td>
+            <select
+              name="input_daytime_mode"
+              style="width: 15em"
+              onchange="handle_select_on_change()"
+            >
+              %input_daytime_mode%
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
+          <td>
+            <input
+              name="input_daytime_brightness"
+              value="%input_daytime_brightness%"
+              type="range"
+              orient="vertical"
+              min="0"
+              max="100"
+              style="width: 15em"
+              onchange="handle_select_on_change()"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td><hr /></td>
+          <td><hr /></td>
+        </tr>
+        <!----------------------------------------------------->
+        <!-- Sleep Time  -->
+
+        <tr>
           <td style="text-align: right; padding-right: 1em">Schlafenszeit:</td>
           <td>
             <input
-              type="text"
+              type="time"
               name="input_sleep_time"
               value="%input_sleep_time%"
               style="width: 15em"
@@ -91,23 +150,38 @@
           </td>
         </tr>
         <tr>
-          <td style="text-align: right; padding-right: 1em">
-            Animation am Tag:
-          </td>
+          <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
           <td>
             <select
-              name="input_animation"
+              name="input_sleep_mode"
               style="width: 15em"
               onchange="handle_select_on_change()"
             >
-              %input_animation%
+              %input_sleep_mode%
             </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
+          <td>
+            <input
+              name="input_sleep_brightness"
+              value="%input_sleep_brightness%"
+              type="range"
+              orient="vertical"
+              min="0"
+              max="100"
+              style="width: 15em"
+              onchange="handle_select_on_change()"
+            />
           </td>
         </tr>
         <tr>
           <td><hr /></td>
           <td><hr /></td>
         </tr>
+        <!----------------------------------------------------->
+        <!-- Time Zone -->
         <tr>
           <td style="text-align: right; padding-right: 1em">Zeitzone:</td>
           <td>
