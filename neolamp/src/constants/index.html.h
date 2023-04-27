@@ -63,11 +63,11 @@ const char index_html[] PROGMEM = R"rawliteral("
           <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
           <td>
             <select
-              name="input_wakup_mode"
+              name="input_wakeup_mode"
               style="width: 15em"
               onchange="handle_select_on_change()"
             >
-              %input_wakup_mode%
+              %input_wakeup_mode%
             </select>
           </td>
         </tr>

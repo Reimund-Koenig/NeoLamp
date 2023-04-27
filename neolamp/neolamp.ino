@@ -523,7 +523,7 @@ String processor(const String &var) {
         return read_file(SPIFFS, "/input_wakeup_time.txt");
     } else if(var == "input_daytime_time") {
         return read_file(SPIFFS, "/input_daytime_time.txt");
-    } else if(var == "input_daytime_mode") {
+    } else if(var == "input_wakeup_mode") {
         String tmp = "";
         String value = read_file(SPIFFS, "/input_wakeup_mode.txt");
         if(value == "" || value == NULL) { value = "green"; };
@@ -557,7 +557,7 @@ String processor(const String &var) {
             tmp += "</ option>";
         }
         return tmp;
-    } else if(var == "input_daytime_mode") {
+    } else if(var == "input_sleep_mode") {
         String tmp = "";
         String value = read_file(SPIFFS, "/input_sleep_mode.txt");
         if(value == "" || value == NULL) { value = "red"; };
@@ -593,11 +593,11 @@ String processor(const String &var) {
         }
         return tmp;
     } else if(var == "input_wakeup_brightness") {
-        return input_wakeup_brightness;
+        return read_file(SPIFFS, "/input_wakeup_brightness.txt");
     } else if(var == "input_daytime_brightness") {
-        return input_daytime_brightness;
+        return read_file(SPIFFS, "/input_daytime_brightness.txt");
     } else if(var == "input_sleep_brightness") {
-        return input_sleep_brightness;
+        return read_file(SPIFFS, "/input_sleep_brightness.txt");
     } else if(var == "input_time_on_load") {
         updateTime();
         return current_time.getTimeString();
