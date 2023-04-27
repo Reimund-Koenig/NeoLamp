@@ -93,7 +93,7 @@ const char index_html[] PROGMEM = R"rawliteral("
         <!----------------------------------------------------->
         <!-- Daytime -->
         <tr>
-          <td style="text-align: right; padding-right: 1em">Tagsüber:</td>
+          <td style="text-align: right; padding-right: 1em">Tags:</td>
           <td>
             <input
               type="time"
