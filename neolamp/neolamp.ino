@@ -124,7 +124,7 @@ void initTime();
 
 void update_daytime_mode();
 
-void update_color_brightness();
+void update_color_brightness(String inputBrightness);
 
 void update_wakeup_brightness();
 void update_daytime_brightness();
@@ -391,11 +391,19 @@ void updateUserTimes() {
     // Wakeup Time
     String tmp_time = read_file(SPIFFS, "/input_wakeup_time.txt");
     if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "8:00";
+        tmp_time = "08:00";
         write_file(SPIFFS, "/input_wakeup_time.txt", tmp_time.c_str());
     }
     user_wakeup_time.setTime(tmp_time);
     user_wakeup_time.print();
+    // Daytime Time
+    tmp_time = read_file(SPIFFS, "/input_daytime_time.txt");
+    if(tmp_time == "" || tmp_time == NULL) {
+        tmp_time = "08:30";
+        write_file(SPIFFS, "/input_daytime_time.txt", tmp_time.c_str());
+    }
+    user_daytime_time.setTime(tmp_time);
+    user_daytime_time.print();
     // Sleep Time
     tmp_time = read_file(SPIFFS, "/input_sleep_time.txt");
     if(tmp_time == "" || tmp_time == NULL) {
@@ -404,14 +412,6 @@ void updateUserTimes() {
     }
     user_sleep_time.setTime(tmp_time);
     user_sleep_time.print();
-    // Daytime Time
-    tmp_time = read_file(SPIFFS, "/input_daytime_time.txt");
-    if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "8:30";
-        write_file(SPIFFS, "/input_daytime_time.txt", tmp_time.c_str());
-    }
-    user_daytime_time.setTime(tmp_time);
-    user_daytime_time.print();
 }
 
 void update_color_brightness(uint8_t inputBrightness) {
@@ -593,11 +593,11 @@ String processor(const String &var) {
         }
         return tmp;
     } else if(var == "input_wakeup_brightness") {
-        return read_file(SPIFFS, "/input_wakeup_brightness.txt");
+        return input_wakeup_brightness;
     } else if(var == "input_daytime_brightness") {
-        return read_file(SPIFFS, "/input_daytime_brightness.txt");
+        return input_daytime_brightness;
     } else if(var == "input_sleep_brightness") {
-        return read_file(SPIFFS, "/input_brightness.txt");
+        return input_sleep_brightness;
     } else if(var == "input_time_on_load") {
         updateTime();
         return current_time.getTimeString();
@@ -711,21 +711,18 @@ void handle_server_get(AsyncWebServerRequest *request) {
     String tmp;
     if(request->hasParam(input_sleep_time)) {
         tmp = request->getParam(input_sleep_time)->value();
-        if(user_sleep_time.setTime(tmp.c_str())) {
-            write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
-        }
+        write_file(SPIFFS, "/input_sleep_time.txt", tmp.c_str());
+        user_sleep_time.setTime(tmp.c_str());
     }
     if(request->hasParam(input_wakeup_time)) {
         tmp = request->getParam(input_wakeup_time)->value();
-        if(user_wakeup_time.setTime(tmp.c_str())) {
-            write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
-        }
+        write_file(SPIFFS, "/input_wakeup_time.txt", tmp.c_str());
+        user_wakeup_time.setTime(tmp.c_str());
     }
     if(request->hasParam(input_daytime_time)) {
         tmp = request->getParam(input_daytime_time)->value();
-        if(user_daytime_time.setTime(tmp.c_str())) {
-            write_file(SPIFFS, "/input_daytime_time.txt", tmp.c_str());
-        }
+        write_file(SPIFFS, "/input_daytime_time.txt", tmp.c_str());
+        user_daytime_time.setTime(tmp.c_str());
     }
     if(request->hasParam(input_wakeup_mode)) {
         tmp = request->getParam(input_wakeup_mode)->value();
