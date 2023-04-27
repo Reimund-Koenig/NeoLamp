@@ -19,6 +19,7 @@
 #include "time.h"
 
 #define NAME "Nachtlicht"
+#define URL "nachtlicht"
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
 #define STATE_ANIMATION_TIME 2
@@ -137,9 +138,7 @@ void setup() {
         return;
     }
     WiFi.mode(WIFI_STA);
-    String lower_case_name = NAME;
-    lower_case_name.toLowerCase();
-    WiFi.hostname(lower_case_name);
+    WiFi.hostname(URL);
     async_wlan_setup();
 
     // this resets all the neopixels to an off state
@@ -150,7 +149,7 @@ void setup() {
         delay(1000);
         Serial.println("Connecting to WiFi..");
     }
-    if(MDNS.begin(lower_case_name)) { // browser: name.local
+    if(MDNS.begin(URL)) { // browser: url.local
         Serial.println("mDNS responder started");
     } else {
         Serial.println("Error setting up MDNS responder!");
