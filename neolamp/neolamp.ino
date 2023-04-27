@@ -423,7 +423,7 @@ void update_color_brightness(uint8_t inputBrightness) {
 void update_wakeup_brightness() {
     String value = read_file(SPIFFS, "/input_wakeup_brightness.txt");
     if(value == "" || value == NULL) {
-        value = "75";
+        value = "25";
         write_file(SPIFFS, "/input_wakeup_brightness.txt", value.c_str());
     }
     float percent = value.toFloat() / 100.0;

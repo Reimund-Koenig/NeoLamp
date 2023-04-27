@@ -1,4 +1,4 @@
-const char index_html[] PROGMEM = R"rawliteral("
+const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
   <head>
@@ -13,11 +13,6 @@ const char index_html[] PROGMEM = R"rawliteral("
       }
       h2 {
         font-size: 1.5rem;
-        color: #ffaa00;
-      }
-
-      h3 {
-        font-size: 1rem;
         color: #ffaa00;
       }
     </style>
@@ -38,7 +33,6 @@ const char index_html[] PROGMEM = R"rawliteral("
   </head>
   <body>
     <h2>%input_name%</h2>
-    <h3>Einstellungen</h3>
     <form action="/get" target="hidden-form" id="getForm">
       <!----------------------------------------------------->
       <!-- WakeUp Time -->
@@ -69,6 +63,17 @@ const char index_html[] PROGMEM = R"rawliteral("
             >
               %input_wakeup_mode%
             </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: right; padding-right: 1em">Farbe:</td>
+          <td>
+            <input
+              type="color"
+              name="favcolor"
+              value="%input_wakeup_color%"
+              style="width: 15em"
+            />
           </td>
         </tr>
         <tr>
@@ -117,6 +122,17 @@ const char index_html[] PROGMEM = R"rawliteral("
           </td>
         </tr>
         <tr>
+          <td style="text-align: right; padding-right: 1em">Farbe:</td>
+          <td>
+            <input
+              type="color"
+              name="favcolor"
+              value="%input_daytime_color%"
+              style="width: 15em"
+            />
+          </td>
+        </tr>
+        <tr>
           <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
           <td>
             <input
@@ -160,6 +176,17 @@ const char index_html[] PROGMEM = R"rawliteral("
             >
               %input_sleep_mode%
             </select>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: right; padding-right: 1em">Farbe:</td>
+          <td>
+            <input
+              type="color"
+              name="favcolor"
+              value="%input_sleep_color%"
+              style="width: 15em"
+            />
           </td>
         </tr>
         <tr>
