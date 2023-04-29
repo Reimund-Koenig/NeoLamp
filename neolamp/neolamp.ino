@@ -53,7 +53,7 @@ bool wakeup_isColorPickerNeeded = false;
 bool daytime_isColorPickerNeeded = false;
 bool sleep_isColorPickerNeeded = false;
 unsigned long colorPicker_Color = 0;
-bool isColorUpdateNeeded = false;
+bool isColorUpdateNeeded = true;
 
 unsigned long clock_sleep = 0;
 unsigned long substate_sleep = 0;
@@ -463,7 +463,8 @@ void update_color_picker(String state, const char *file) {
     if(!isColorUpdateNeeded) { return; }
     if(state != STATE_ANIMATION_PICK) { return; }
     String inputColor = read_file(SPIFFS, file);
-    unsigned long in = strtol(inputColor.c_str(), NULL, 16);
+    inputColor.remove(0, 1);
+    unsigned long in = strtoul(inputColor.c_str(), NULL, 16);
     Serial.print("INPUT: ");
     Serial.print(inputColor);
     Serial.print(", Long: ");
