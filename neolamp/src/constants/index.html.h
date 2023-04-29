@@ -65,14 +65,15 @@ const char index_html[] PROGMEM = R"rawliteral(
             </select>
           </td>
         </tr>
-        <tr>
+        <tr %wakeup_color_row%>
           <td style="text-align: right; padding-right: 1em">Farbe:</td>
           <td>
             <input
               type="color"
-              name="favcolor"
+              name="input_wakeup_color"
               value="%input_wakeup_color%"
               style="width: 15em"
+              onchange="handle_select_on_change()"
             />
           </td>
         </tr>
@@ -121,14 +122,15 @@ const char index_html[] PROGMEM = R"rawliteral(
             </select>
           </td>
         </tr>
-        <tr>
+        <tr %daytime_color_row%>
           <td style="text-align: right; padding-right: 1em">Farbe:</td>
           <td>
             <input
               type="color"
-              name="favcolor"
+              name="input_daytime_color"
               value="%input_daytime_color%"
               style="width: 15em"
+              onchange="handle_select_on_change()"
             />
           </td>
         </tr>
@@ -178,14 +180,15 @@ const char index_html[] PROGMEM = R"rawliteral(
             </select>
           </td>
         </tr>
-        <tr>
+        <tr %sleeptime_color_row%>
           <td style="text-align: right; padding-right: 1em">Farbe:</td>
           <td>
             <input
               type="color"
-              name="favcolor"
+              name="input_sleep_color"
               value="%input_sleep_color%"
               style="width: 15em"
+              onchange="handle_select_on_change()"
             />
           </td>
         </tr>
