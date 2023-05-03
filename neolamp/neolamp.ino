@@ -224,7 +224,6 @@ void loop() {
     MDNS.update();
     stateMachine();
     updateStateAndTime();
-    // current_time.print();
 }
 
 /************************************************************************************************************
