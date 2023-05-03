@@ -37,7 +37,7 @@
 
 // Needed input values
 #define BUTTON_PIN 12
-#define STEPS 25
+#define STEPS 100
 
 #define NEOPIXEL_PIN 4
 #define NEOPIXEL_COUNT 16
