@@ -153,7 +153,7 @@ void initTime();
 
 void update_daytime_mode();
 
-void update_color_brightness(String inputBrightness);
+void update_color_brightness(uint8_t inputBrightness);
 void update_color_picker(String state, const char *file);
 
 void update_wakeup_brightness();
@@ -168,6 +168,7 @@ void updateUserTimes();
 void updateTimeZone();
 void async_wlan_setup();
 void handleButton();
+void handlePotiBrightnessInput();
 
 void handle_server_root(AsyncWebServerRequest *request);
 void handle_server_get(AsyncWebServerRequest *request);
@@ -435,24 +436,25 @@ void handlePotiBrightnessInput() {
     a0 = a0 - (a0 % STEPS);
     if(last_a0 == a0) { return; }
     last_a0 = a0;
-    String value = String((int)(a0 / 255.0 * 100.0));
-    write_file(SPIFFS, "/input_brightness.txt", value.c_str());
-    brightness_changed = true;
-    colorBrightness = (uint8_t)(a0);
+    uint8_t colorPotiBrightness = (int)(a0 / 255.0 * 100.0);
+    String value = (String)colorPotiBrightness;
+    if(state == STATE_WAKEUP_TIME) {
+        write_file(SPIFFS, "/input_wakeup_brightness.txt", value.c_str());
+        update_wakeup_brightness();
+    } else if(state == STATE_DAYTIME_TIME) {
+        write_file(SPIFFS, "/input_daytime_brightness.txt", value.c_str());
+        update_daytime_brightness();
+    } else if(state == STATE_SLEEPING_TIME) {
+        write_file(SPIFFS, "/input_sleep_brightness.txt", value.c_str());
+        update_sleep_brightness();
+    }
 }
 
 void handleButton() {
     int reading = digitalRead(BUTTON_PIN);
     if(reading != lastButtonState) { lastDebounceTime = millis(); }
     if((millis() - lastDebounceTime) > debounceDelay) {
-        if(reading != buttonState) {
-            buttonState = reading;
-            // if(buttonState == HIGH) {
-            //  updateState(STATE_OFF);
-            //} else {
-            // updateState(last_state);
-            //}
-        }
+        if(reading != buttonState) { buttonState = reading; }
     }
     lastButtonState = reading;
 }
