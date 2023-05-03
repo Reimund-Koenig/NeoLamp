@@ -40,6 +40,20 @@
 
 /************************************************************************************************************
 /*
+/* Finns Nachtlampe (including a Poti for brightness and a Switch to switch off)
+/*
+*************/
+
+#define STATE_OFF 3
+
+// Needed input values
+#define BUTTON_PIN 12
+#define STEPS 50
+void handleButton();
+void handlePotiBrightnessInput();
+
+/************************************************************************************************************
+/*
 /* Header
 /*
 *************/

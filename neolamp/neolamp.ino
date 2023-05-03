@@ -337,13 +337,10 @@ void handleButton() {
 
 void updateStateAndTime() {
     if(isSleeping(clock_sleep)) { return; }
-<<<<<<< HEAD
     setNoneSleepingDelay(200, &clock_sleep);
     handlePotiBrightnessInput();
     handleButton();
-    == == == =
->>>>>>> master
-                 updateTime();
+    updateTime();
     if(buttonState == HIGH) {
         updateState(STATE_OFF);
         return;
@@ -351,7 +348,6 @@ void updateStateAndTime() {
     updateState(helper.get_state(
         current_time, user_daytime_time, STATE_DAYTIME_TIME, user_sleep_time,
         STATE_SLEEPING_TIME, user_wakeup_time, STATE_WAKEUP_TIME));
-    setNoneSleepingDelay(200, &clock_sleep);
 }
 
 String read_file(fs::FS &fs, const char *path) {
