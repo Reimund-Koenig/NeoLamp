@@ -18,7 +18,7 @@
 #include "src/lamphelper.h"
 #include "time.h"
 
-#define NAME "FinnsNachtlicht"
+#define NAME "Finns Nachtlicht"
 #define URL "finn"
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
@@ -242,8 +242,6 @@ void loop() {
     MDNS.update();
     stateMachine();
     updateStateAndTime();
-    handlePotiBrightnessInput();
-    handleButton();
 }
 
 /************************************************************************************************************
@@ -435,15 +433,17 @@ void handlePotiBrightnessInput() {
     last_a0 = a0;
     int colorPotiBrightness = (int)(a0 / 1023.0 * 100.0);
     String value = (String)colorPotiBrightness;
+    float percent = value.toFloat() / 100.0;
+    if(percent > 1.0) { percent = 1.0; }
     if(state == STATE_WAKEUP_TIME) {
         write_file(SPIFFS, "/input_wakeup_brightness.txt", value.c_str());
-        update_wakeup_brightness();
+        wakeup_brightness = (uint8_t)(255 * percent);
     } else if(state == STATE_DAYTIME_TIME) {
         write_file(SPIFFS, "/input_daytime_brightness.txt", value.c_str());
-        update_daytime_brightness();
+        daytime_brightness = (uint8_t)(255 * percent);
     } else if(state == STATE_SLEEPING_TIME) {
         write_file(SPIFFS, "/input_sleep_brightness.txt", value.c_str());
-        update_sleep_brightness();
+        sleep_brightness = (uint8_t)(255 * percent);
     }
 }
 
@@ -463,6 +463,10 @@ void handleButton() {
 *************/
 
 void updateStateAndTime() {
+    if(isSleeping(clock_sleep)) { return; }
+    setNoneSleepingDelay(200, &clock_sleep);
+    handlePotiBrightnessInput();
+    handleButton();
     updateTime();
     if(buttonState == HIGH) {
         updateState(STATE_OFF);
@@ -775,10 +779,8 @@ void async_wlan_setup() {
 }
 
 void updateTime() {
-    if(isSleeping(clock_sleep)) { return; }
     if(!getLocalTime(&timeinfo)) { return; }
     current_time.setTime(timeinfo.tm_hour, timeinfo.tm_min);
-    setNoneSleepingDelay(200, &clock_sleep);
 }
 
 void initTime() {
