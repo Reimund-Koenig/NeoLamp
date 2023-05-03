@@ -407,10 +407,12 @@ void animationStateMachine(String substate) {
 *************/
 
 void updateStateAndTime() {
+    if(isSleeping(clock_sleep)) { return; }
     updateTime();
     updateState(helper.get_state(
         current_time, user_daytime_time, STATE_DAYTIME_TIME, user_sleep_time,
         STATE_SLEEPING_TIME, user_wakeup_time, STATE_WAKEUP_TIME));
+    setNoneSleepingDelay(200, &clock_sleep);
 }
 
 String read_file(fs::FS &fs, const char *path) {
@@ -715,10 +717,8 @@ void async_wlan_setup() {
 }
 
 void updateTime() {
-    if(isSleeping(clock_sleep)) { return; }
     if(!getLocalTime(&timeinfo)) { return; }
     current_time.setTime(timeinfo.tm_hour, timeinfo.tm_min);
-    setNoneSleepingDelay(200, &clock_sleep);
 }
 
 void initTime() {
