@@ -433,7 +433,7 @@ void handlePotiBrightnessInput() {
     a0 = a0 - (a0 % STEPS);
     if(last_a0 == a0) { return; }
     last_a0 = a0;
-    uint8_t colorPotiBrightness = (int)(a0 / 1023.0 * 100.0);
+    int colorPotiBrightness = (int)(a0 / 1023.0 * 100.0);
     String value = (String)colorPotiBrightness;
     if(state == STATE_WAKEUP_TIME) {
         write_file(SPIFFS, "/input_wakeup_brightness.txt", value.c_str());
@@ -466,12 +466,11 @@ void updateStateAndTime() {
     updateTime();
     if(buttonState == HIGH) {
         updateState(STATE_OFF);
-    } else {
-        updateState(helper.get_state(current_time, user_daytime_time,
-                                     STATE_DAYTIME_TIME, user_sleep_time,
-                                     STATE_SLEEPING_TIME, user_wakeup_time,
-                                     STATE_WAKEUP_TIME));
+        return;
     }
+    updateState(helper.get_state(
+        current_time, user_daytime_time, STATE_DAYTIME_TIME, user_sleep_time,
+        STATE_SLEEPING_TIME, user_wakeup_time, STATE_WAKEUP_TIME));
 }
 
 String read_file(fs::FS &fs, const char *path) {
