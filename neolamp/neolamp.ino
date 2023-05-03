@@ -64,8 +64,6 @@ unsigned long clock_sleep = 0;
 unsigned long substate_sleep = 0;
 
 uint8_t state = 0;
-uint8_t last_state = 0;
-String animation_state = "";
 String sleep_state = "";
 bool state_first_run = true;
 bool brightness_changed = false;
@@ -246,7 +244,6 @@ void loop() {
     updateStateAndTime();
     handlePotiBrightnessInput();
     handleButton();
-    // current_time.print();
 }
 
 /************************************************************************************************************
@@ -431,12 +428,12 @@ void animationStateMachine(String substate) {
 /*
 *************/
 void handlePotiBrightnessInput() {
-    // Values from 0-255
+    // Values from 0-1023
     int a0 = analogRead(A0);
     a0 = a0 - (a0 % STEPS);
     if(last_a0 == a0) { return; }
     last_a0 = a0;
-    uint8_t colorPotiBrightness = (int)(a0 / 255.0 * 100.0);
+    uint8_t colorPotiBrightness = (int)(a0 / 1023.0 * 100.0);
     String value = (String)colorPotiBrightness;
     if(state == STATE_WAKEUP_TIME) {
         write_file(SPIFFS, "/input_wakeup_brightness.txt", value.c_str());
@@ -469,11 +466,12 @@ void updateStateAndTime() {
     updateTime();
     if(buttonState == HIGH) {
         updateState(STATE_OFF);
-        return;
+    } else {
+        updateState(helper.get_state(current_time, user_daytime_time,
+                                     STATE_DAYTIME_TIME, user_sleep_time,
+                                     STATE_SLEEPING_TIME, user_wakeup_time,
+                                     STATE_WAKEUP_TIME));
     }
-    updateState(helper.get_state(
-        current_time, user_daytime_time, STATE_DAYTIME_TIME, user_sleep_time,
-        STATE_SLEEPING_TIME, user_wakeup_time, STATE_WAKEUP_TIME));
 }
 
 String read_file(fs::FS &fs, const char *path) {
@@ -822,7 +820,6 @@ void change_sleep_state(String new_state) {
 
 void updateState(int new_state) {
     if(state == new_state) { return; }
-    last_state = state;
     state = new_state;
     state_first_run = true;
 }
