@@ -23,6 +23,7 @@
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
 #define STATE_DAYTIME_TIME 2
+#define STATE_OFF 3
 
 #define STATE_ANIMATION_MIX String(array_of_modes[0][1])
 #define STATE_ANIMATION_PULSE String(array_of_modes[1][1])
@@ -63,8 +64,8 @@ unsigned long clock_sleep = 0;
 unsigned long substate_sleep = 0;
 
 uint8_t state = 0;
+uint8_t last_state = 0;
 String animation_state = "";
-String last_animation_state = "";
 String sleep_state = "";
 bool state_first_run = true;
 bool brightness_changed = false;
@@ -77,7 +78,6 @@ int lastButtonState = LOW;
 unsigned long lastDebounceTime = 0; // the last time the output pin was toggled
 unsigned long debounceDelay = 50;   // the debounce time
 
-const char *input_sleep_time = "input_sleep_time";
 int color_circle_mode_helper = 0;
 int color_pulse_helper_brightness = 255;
 bool color_pulse_helper_lighten = true;
@@ -167,6 +167,7 @@ void update_wakeup_color();
 void updateUserTimes();
 void updateTimeZone();
 void async_wlan_setup();
+void handleButton();
 
 void handle_server_root(AsyncWebServerRequest *request);
 void handle_server_get(AsyncWebServerRequest *request);
@@ -378,7 +379,9 @@ void run_learning_mode() {
 *************/
 
 void stateMachine() {
-    if(state == STATE_WAKEUP_TIME) {
+    if(state == STATE_OFF) {
+        run_lamp_off();
+    } else if(state == STATE_WAKEUP_TIME) {
         update_color_brightness(wakeup_brightness);
         update_color_picker(wakeup_state, "/input_wakeup_color.txt");
         animationStateMachine(wakeup_state);
@@ -444,16 +447,11 @@ void handleButton() {
     if((millis() - lastDebounceTime) > debounceDelay) {
         if(reading != buttonState) {
             buttonState = reading;
-            if(buttonState == HIGH) {
-                last_animation_state = animation_state;
-                String value = "off";
-                write_file(SPIFFS, "/input_animation.txt", value.c_str());
-                updateAnimation();
-            } else {
-                String value = last_animation_state;
-                write_file(SPIFFS, "/input_animation.txt", value.c_str());
-                updateAnimation();
-            }
+            // if(buttonState == HIGH) {
+            //  updateState(STATE_OFF);
+            //} else {
+            // updateState(last_state);
+            //}
         }
     }
     lastButtonState = reading;
@@ -467,6 +465,10 @@ void handleButton() {
 
 void updateStateAndTime() {
     updateTime();
+    if(buttonState == HIGH) {
+        updateState(STATE_OFF);
+        return;
+    }
     updateState(helper.get_state(
         current_time, user_daytime_time, STATE_DAYTIME_TIME, user_sleep_time,
         STATE_SLEEPING_TIME, user_wakeup_time, STATE_WAKEUP_TIME));
@@ -818,6 +820,7 @@ void change_sleep_state(String new_state) {
 
 void updateState(int new_state) {
     if(state == new_state) { return; }
+    last_state = state;
     state = new_state;
     state_first_run = true;
 }
