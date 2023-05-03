@@ -18,7 +18,7 @@
 #include "src/lamphelper.h"
 #include "time.h"
 
-#define NAME "Finns Nachtlicht"
+#define NAME "FinnsNachtlicht"
 #define URL "finn"
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
