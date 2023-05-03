@@ -140,7 +140,7 @@ void initTime();
 
 void update_daytime_mode();
 
-void update_color_brightness(String inputBrightness);
+void update_color_brightness(uint8_t inputBrightness);
 void update_color_picker(String state, const char *file);
 
 void update_wakeup_brightness();
