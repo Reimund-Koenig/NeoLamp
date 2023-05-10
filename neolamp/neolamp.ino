@@ -434,7 +434,7 @@ void update_daytime_mode() {
 void update_sleep_mode() {
     String value = read_file(SPIFFS, SLEEP_MODE_FS);
     if(value == "" || value == NULL) {
-        value = "red";
+        value = "orange";
         write_file(SPIFFS, SLEEP_MODE_FS, value.c_str());
     }
     for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
@@ -511,7 +511,7 @@ String processor(const String &var) {
     } else if(var == SLEEP_MODE_IN) {
         String tmp = "";
         String value = read_file(SPIFFS, SLEEP_MODE_FS);
-        if(value == "" || value == NULL) { value = "red"; };
+        if(value == "" || value == NULL) { value = "orange"; };
         for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
             i++) {
             tmp += "<option value = '";
