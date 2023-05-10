@@ -18,13 +18,14 @@ const char index_html[] PROGMEM = R"rawliteral(
     </style>
 
     <script>
-      function handle_select_on_change(x) {
-        document.getElementById(x).submit();
+      function handle_onchange_and_reload(x) {
+          document.getElementById(x).submit();
+          setTimeout(function () {
+            document.location.reload(false);
+          }, 1000);
       }
-      function handle_new_input() {
-        setTimeout(function () {
-          document.location.reload(false);
-        }, 500);
+      function handle_onchange(x) {
+        document.getElementById(x).submit();
       }
     </script>
   </head>
@@ -46,7 +47,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               name="input_wakeup_time"
               value="%input_wakeup_time%"
               style="width: 15em"
-              onchange="handle_select_on_change('getIWT')"
+              onchange="handle_onchange_and_reload('getIWT')"
             />
           </form>
         </td>
@@ -58,7 +59,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             <select
               name="input_wakeup_mode"
               style="width: 15em"
-              onchange="handle_select_on_change('getIWM')"
+              onchange="handle_onchange_and_reload('getIWM')"
             >
               %input_wakeup_mode%
             </select>
@@ -74,7 +75,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               name="input_wakeup_color"
               value="%input_wakeup_color%"
               style="width: 15em"
-              onchange="handle_select_on_change('getIWC')"
+              onchange="handle_onchange_and_reload('getIWC')"
             />
           </form>
         </td>
@@ -91,7 +92,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               min="0"
               max="100"
               style="width: 15em"
-              onchange="handle_select_on_change('getIWB')"
+              onchange="handle_onchange_and_reload('getIWB')"
             />
           </form>
         </td>
@@ -111,7 +112,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               name="input_daytime_time"
               value="%input_daytime_time%"
               style="width: 15em"
-              onchange="handle_select_on_change('getIDT')"
+              onchange="handle_onchange_and_reload('getIDT')"
             />
           </form>
         </td>
@@ -123,7 +124,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             <select
               name="input_daytime_mode"
               style="width: 15em"
-              onchange="handle_select_on_change('getIDM')"
+              onchange="handle_onchange_and_reload('getIDM')"
             >
               %input_daytime_mode%
             </select>
@@ -139,7 +140,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               name="input_daytime_color"
               value="%input_daytime_color%"
               style="width: 15em"
-              onchange="handle_select_on_change('getIDC')"
+              onchange="handle_onchange_and_reload('getIDC')"
             />
           </form>
         </td>
@@ -156,7 +157,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               min="0"
               max="100"
               style="width: 15em"
-              onchange="handle_select_on_change('getIDB')"
+              onchange="handle_onchange_and_reload('getIDB')"
             />
           </form>
         </td>
@@ -177,7 +178,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               name="input_sleep_time"
               value="%input_sleep_time%"
               style="width: 15em"
-              onchange="handle_select_on_change('getIST')"
+              onchange="handle_onchange_and_reload('getIST')"
             />
           </form>
         </td>
@@ -189,7 +190,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             <select
               name="input_sleep_mode"
               style="width: 15em"
-              onchange="handle_select_on_change('getISM')"
+              onchange="handle_onchange_and_reload('getISM')"
             >
               %input_sleep_mode%
             </select>
@@ -205,7 +206,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               name="input_sleep_color"
               value="%input_sleep_color%"
               style="width: 15em"
-              onchange="handle_select_on_change('getISC')"
+              onchange="handle_onchange_and_reload('getISC')"
             />
           </form>
         </td>
@@ -222,7 +223,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               min="0"
               max="100"
               style="width: 15em"
-              onchange="handle_select_on_change('getISB')"
+              onchange="handle_onchange_and_reload('getISB')"
             />
           </form>
         </td>
@@ -240,7 +241,7 @@ const char index_html[] PROGMEM = R"rawliteral(
             <select
               name="input_timezone"
               style="width: 15em"
-              onchange="handle_select_on_change('getTZ')"
+              onchange="handle_onchange_and_reload('getTZ')"
             >
               %input_timezone%
             </select>

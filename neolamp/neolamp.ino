@@ -34,7 +34,6 @@ int color_circle_mode_helper = 0;
 int color_pulse_helper_brightness = 255;
 bool color_pulse_helper_lighten = true;
 uint32_t mix_mode_helper = 0;
-uint8_t learning_mode_helper = 0;
 uint32_t rainbow_mode_helper = 0;
 
 Clocktime user_wakeup_time;
@@ -55,22 +54,25 @@ void setup() {
     clock_prescale_set(clock_div_1);
 #endif
     Serial.begin(115200);
+    // this resets all the neopixels to an off state
+    strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+    strip.setBrightness(200);
+    strip.fill(strip.Color(255, 75, 0));
+    strip.show();
     if(!SPIFFS.begin()) {
         Serial.println("An Error has occurred while mounting SPIFFS");
         return;
     }
+
+    // start wifi manager
     WiFi.mode(WIFI_STA);
     WiFi.hostname(URL);
     async_wlan_setup();
-
-    // this resets all the neopixels to an off state
-    strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    strip.show();  // Turn OFF all pixels ASAP
-    initTime();
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
         Serial.println("Connecting to WiFi..");
     }
+    initTime();
     if(MDNS.begin(URL)) { // browser: url.local
         Serial.println("mDNS responder started");
     } else {
@@ -213,23 +215,6 @@ void run_sleepingTime_mode() {
     }
 }
 
-void run_learning_mode() {
-    if(learning_mode_helper == 0) {
-        run_wakeupTime_mode();
-    } else {
-        run_sleepingTime_mode();
-    }
-    if(isSleeping(substate_sleep)) { return; }
-    if(learning_mode_helper == 0) {
-        state_first_run = true;
-        learning_mode_helper = 1;
-    } else {
-        state_first_run = true;
-        learning_mode_helper = 0;
-    }
-    setNoneSleepingDelay(3000, &substate_sleep);
-}
-
 /************************************************************************************************************
 /*
 /* Main Functions
@@ -272,8 +257,6 @@ void animationStateMachine(String substate) {
         run_sleepingTime_mode();
     } else if(substate == STATE_ANIMATION_OFF) {
         run_lamp_off();
-    } else if(substate == STATE_ANIMATION_LEARNING) {
-        run_learning_mode();
     } else {
         strip.fill(strip.Color(0, 0, 128, 255));
         strip.show();
