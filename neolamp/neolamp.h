@@ -35,7 +35,7 @@
 #define STATE_ANIMATION_OFF String(array_of_modes[7][1])
 #define STATE_ANIMATION_LEARNING String(array_of_modes[8][1])
 
-#define NEOPIXEL_PIN 4
+#define NEOPIXEL_PIN 4 // Wemos D1 mini: port D2
 #define NEOPIXEL_COUNT 16
 
 /************************************************************************************************************
