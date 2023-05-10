@@ -18,8 +18,8 @@ const char index_html[] PROGMEM = R"rawliteral(
     </style>
 
     <script>
-      function handle_select_on_change() {
-        document.getElementById("getForm").submit();
+      function handle_select_on_change(x) {
+        document.getElementById(x).submit();
         setTimeout(function () {
           document.location.reload(false);
         }, 500);
@@ -33,53 +33,59 @@ const char index_html[] PROGMEM = R"rawliteral(
   </head>
   <body>
     <h2>%input_name%</h2>
-    <form action="/get" target="hidden-form" id="getForm">
-      <!----------------------------------------------------->
-      <!-- WakeUp Time -->
-      <table style="margin-left: auto; margin-right: auto; width: 20em">
-        <tr>
-          <td><hr /></td>
-          <td><hr /></td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Aufstehzeit:</td>
-          <td>
+    <!----------------------------------------------------->
+    <!-- WakeUp Time -->
+    <table style="margin-left: auto; margin-right: auto; width: 20em">
+      <tr>
+        <td><hr /></td>
+        <td><hr /></td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Aufstehzeit:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIWT">
             <input
               type="time"
               name="input_wakeup_time"
               value="%input_wakeup_time%"
               style="width: 15em"
-              placeholder="8:00"
+              onchange="handle_select_on_change('getIWT')"
             />
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIWM">
             <select
               name="input_wakeup_mode"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getIWM')"
             >
               %input_wakeup_mode%
             </select>
-          </td>
-        </tr>
-        <tr %wakeup_color_row%>
-          <td style="text-align: right; padding-right: 1em">Farbe:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr %wakeup_color_row%>
+        <td style="text-align: right; padding-right: 1em">Farbe:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIWC">
             <input
               type="color"
               name="input_wakeup_color"
               value="%input_wakeup_color%"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getIWC')"
             />
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIWB">
             <input
               name="input_wakeup_brightness"
               value="%input_wakeup_brightness%"
@@ -88,55 +94,63 @@ const char index_html[] PROGMEM = R"rawliteral(
               min="0"
               max="100"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getIWB')"
             />
-          </td>
-        </tr>
-        <tr>
-          <td><hr /></td>
-          <td><hr /></td>
-        </tr>
-        <!----------------------------------------------------->
-        <!-- Daytime -->
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Tags:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td><hr /></td>
+        <td><hr /></td>
+      </tr>
+      <!----------------------------------------------------->
+      <!-- Daytime -->
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Tags:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIDT">
             <input
               type="time"
               name="input_daytime_time"
               value="%input_daytime_time%"
               style="width: 15em"
-              placeholder="08:30"
+              onchange="handle_select_on_change('getIDT')"
             />
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIDM">
             <select
               name="input_daytime_mode"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getIDM')"
             >
               %input_daytime_mode%
             </select>
-          </td>
-        </tr>
-        <tr %daytime_color_row%>
-          <td style="text-align: right; padding-right: 1em">Farbe:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr %daytime_color_row%>
+        <td style="text-align: right; padding-right: 1em">Farbe:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIDC">
             <input
               type="color"
               name="input_daytime_color"
               value="%input_daytime_color%"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getIDC')"
             />
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIDB">
             <input
               name="input_daytime_brightness"
               value="%input_daytime_brightness%"
@@ -145,56 +159,64 @@ const char index_html[] PROGMEM = R"rawliteral(
               min="0"
               max="100"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getIDB')"
             />
-          </td>
-        </tr>
-        <tr>
-          <td><hr /></td>
-          <td><hr /></td>
-        </tr>
-        <!----------------------------------------------------->
-        <!-- Sleep Time  -->
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td><hr /></td>
+        <td><hr /></td>
+      </tr>
+      <!----------------------------------------------------->
+      <!-- Sleep Time  -->
 
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Schlafenszeit:</td>
-          <td>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Schlafenszeit:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIST">
             <input
               type="time"
               name="input_sleep_time"
               value="%input_sleep_time%"
               style="width: 15em"
-              placeholder="19:00"
+              onchange="handle_select_on_change('getIST')"
             />
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getISM">
             <select
               name="input_sleep_mode"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getISM')"
             >
               %input_sleep_mode%
             </select>
-          </td>
-        </tr>
-        <tr %sleeptime_color_row%>
-          <td style="text-align: right; padding-right: 1em">Farbe:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr %sleeptime_color_row%>
+        <td style="text-align: right; padding-right: 1em">Farbe:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getISC">
             <input
               type="color"
               name="input_sleep_color"
               value="%input_sleep_color%"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getISC')"
             />
-          </td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getISB">
             <input
               name="input_sleep_brightness"
               value="%input_sleep_brightness%"
@@ -203,56 +225,52 @@ const char index_html[] PROGMEM = R"rawliteral(
               min="0"
               max="100"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getISB')"
             />
-          </td>
-        </tr>
-        <tr>
-          <td><hr /></td>
-          <td><hr /></td>
-        </tr>
-        <!----------------------------------------------------->
-        <!-- Time Zone -->
-        <tr>
-          <td style="text-align: right; padding-right: 1em">Zeitzone:</td>
-          <td>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td><hr /></td>
+        <td><hr /></td>
+      </tr>
+      <!----------------------------------------------------->
+      <!-- Time Zone -->
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Zeitzone:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getTZ">
             <select
               name="input_timezone"
               style="width: 15em"
-              onchange="handle_select_on_change()"
+              onchange="handle_select_on_change('getTZ')"
             >
               %input_timezone%
             </select>
-          </td>
-        </tr>
-        <tr>
-          <td><hr /></td>
-          <td><hr /></td>
-        </tr>
-        <tr>
-          <td style="text-align: right; padding-right: 1em">
-            Uhrzeit:<br />
-            <label style="font-size: 0.75em"> (der Lampe)</label>
-          </td>
-          <td style="width: 15em">
-            %input_time_on_load%
-            <br />
-            <label style="font-size: 0.75em"> (wird nicht aktualisiert)</label>
-          </td>
-        </tr>
-        <tr>
-          <td><hr /></td>
-          <td><hr /></td>
-        </tr>
-      </table>
-      <br />
-      <input
-        type="submit"
-        value="Einstellungen speichern"
-        onclick="handle_new_input()"
-        style="width: 20em; height: 2.5em"
-      />
-    </form>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td><hr /></td>
+        <td><hr /></td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">
+          Uhrzeit:<br />
+          <label style="font-size: 0.75em"> (der Lampe)</label>
+        </td>
+        <td style="width: 15em">
+          %input_time_on_load%
+          <br />
+          <label style="font-size: 0.75em"> (wird nicht aktualisiert)</label>
+        </td>
+      </tr>
+      <tr>
+        <td><hr /></td>
+        <td><hr /></td>
+      </tr>
+    </table>
+    <br />
     <br />
     <br />
     <br />

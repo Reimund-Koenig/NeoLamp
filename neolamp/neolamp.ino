@@ -695,66 +695,56 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(SLEEP_TIME_IN)->value();
         write_file(SPIFFS, SLEEP_TIME_FS, tmp.c_str());
         user_sleep_time.setTime(tmp.c_str());
-    }
-    if(request->hasParam(WAKEUP_TIME_IN)) {
+    } else if(request->hasParam(WAKEUP_TIME_IN)) {
         tmp = request->getParam(WAKEUP_TIME_IN)->value();
         write_file(SPIFFS, WAKEUP_TIME_FS, tmp.c_str());
         user_wakeup_time.setTime(tmp.c_str());
-    }
-    if(request->hasParam(DAYTIME_TIME_IN)) {
+    } else if(request->hasParam(DAYTIME_TIME_IN)) {
         tmp = request->getParam(DAYTIME_TIME_IN)->value();
         write_file(SPIFFS, DAYTIME_TIME_FS, tmp.c_str());
         user_daytime_time.setTime(tmp.c_str());
-    }
-    if(request->hasParam(WAKEUP_MODE_IN)) {
+    } else if(request->hasParam(WAKEUP_MODE_IN)) {
         tmp = request->getParam(WAKEUP_MODE_IN)->value();
         write_file(SPIFFS, WAKEUP_MODE_FS, tmp.c_str());
         change_wakeup_state(tmp.c_str());
-    }
-    if(request->hasParam(DAYTIME_MODE_IN)) {
+    } else if(request->hasParam(DAYTIME_MODE_IN)) {
         tmp = request->getParam(DAYTIME_MODE_IN)->value();
         write_file(SPIFFS, DAYTIME_MODE_FS, tmp.c_str());
         change_daytime_state(tmp.c_str());
-    }
-    if(request->hasParam(SLEEP_MODE_IN)) {
+    } else if(request->hasParam(SLEEP_MODE_IN)) {
         tmp = request->getParam(SLEEP_MODE_IN)->value();
         write_file(SPIFFS, SLEEP_MODE_FS, tmp.c_str());
         change_sleep_state(tmp.c_str());
-    }
-    if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
+    } else if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
         tmp = request->getParam(WAKEUP_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, WAKEUP_BRIGHTNESS_FS, tmp.c_str());
-    }
-    if(request->hasParam(DAYTIME_BRIGHTNESS_IN)) {
+        update_wakeup_brightness();
+    } else if(request->hasParam(DAYTIME_BRIGHTNESS_IN)) {
         tmp = request->getParam(DAYTIME_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, DAYTIME_BRIGHTNESS_FS, tmp.c_str());
-    }
-    if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
+        update_daytime_brightness();
+    } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
         tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, SLEEP_BRIGHTNESS_FS, tmp.c_str());
-    }
-    if(request->hasParam(SLEEP_COLOR_IN)) {
+        update_sleep_brightness();
+    } else if(request->hasParam(SLEEP_COLOR_IN)) {
         tmp = request->getParam(SLEEP_COLOR_IN)->value();
         write_file(SPIFFS, SLEEP_COLOR_FS, tmp.c_str());
-    }
-    if(request->hasParam(DAYTIME_COLOR_IN)) {
+        isColorUpdateNeeded = true;
+    } else if(request->hasParam(DAYTIME_COLOR_IN)) {
         tmp = request->getParam(DAYTIME_COLOR_IN)->value();
+        isColorUpdateNeeded = true;
         write_file(SPIFFS, DAYTIME_COLOR_FS, tmp.c_str());
-    }
-    if(request->hasParam(WAKEUP_COLOR_IN)) {
+    } else if(request->hasParam(WAKEUP_COLOR_IN)) {
         tmp = request->getParam(WAKEUP_COLOR_IN)->value();
         write_file(SPIFFS, WAKEUP_COLOR_FS, tmp.c_str());
-    }
-    if(request->hasParam(TIMEZONE_IN)) {
+        isColorUpdateNeeded = true;
+    } else if(request->hasParam(TIMEZONE_IN)) {
         tmp = request->getParam(TIMEZONE_IN)->value();
         write_file(SPIFFS, TIMEZONE_FS, tmp.c_str());
+        updateTimeZone();
     }
-    updateTimeZone();
-    update_wakeup_brightness();
-    update_daytime_brightness();
-    update_sleep_brightness();
     updateStateAndTime();
-    isColorUpdateNeeded = true;
     request->send(200, "text/text", "ok");
 }
 
