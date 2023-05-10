@@ -172,13 +172,14 @@ void run_colorPick_mode() {
         state_first_run = false;
         Serial.println("run_colorPick_mode");
     }
-    if(!isColorUpdateNeeded) { return; }
+    if(!(isColorUpdateNeeded || brightness_changed)) { return; }
     for(int i = 0; i < strip.numPixels(); i++) {
         strip.setPixelColor(i, colorPicker_Color);
     }
-    isColorUpdateNeeded = false;
     strip.setBrightness(colorBrightness);
     strip.show();
+    isColorUpdateNeeded = false;
+    brightness_changed = false;
 }
 
 void run_wakeupTime_mode() {
