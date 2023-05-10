@@ -56,8 +56,8 @@ void setup() {
     Serial.begin(115200);
     // this resets all the neopixels to an off state
     strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    strip.setBrightness(200);
-    strip.fill(strip.Color(255, 75, 0));
+    strip.setBrightness(150);
+    strip.fill(strip.Color(255, 255, 255));
     strip.show();
     if(!SPIFFS.begin()) {
         Serial.println("An Error has occurred while mounting SPIFFS");
