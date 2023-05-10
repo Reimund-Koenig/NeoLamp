@@ -91,8 +91,9 @@ const char HTTP_ITEM[] PROGMEM =
 const char HTTP_FORM_START[] PROGMEM =
     "<form method='get' action='wifisave'><input id='s' name='s' length=32 "
     "placeholder='SSID'><br/><input id='p' name='p' length=64 type='password' "
-    "placeholder='Passwort'><br/><br/><br /><br /><label><input "
-    "type='checkbox' onclick='f()' /> Passwort anzeigen </label>";
+    "placeholder='Passwort'><br /><label><table><tl><td><input "
+    "type='checkbox' onclick='f()' /></td><td>Passwort "
+    "anzeigen</td></tl></table>";
 const char HTTP_FORM_START2[] PROGMEM =
     "<form method='get' action='wifisave'><input id='s' name='s' length=32 "
     "placeholder='SSID'><br/><input id='p' name='p' length=64 type='password' "
