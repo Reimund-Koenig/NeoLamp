@@ -785,7 +785,7 @@ void AsyncWiFiManager::handleWifi(AsyncWebServerRequest *request,
     DEBUG_WM(F("Handle wifi"));
 
     String page = FPSTR(WFM_HTTP_HEAD);
-    page.replace("{v}", "Config ESP");
+    page.replace("{v}", "Nachtlicht WLAN Einstellung");
     page += FPSTR(HTTP_SCRIPT);
     page += FPSTR(HTTP_STYLE);
     page += _customHeadElement;
