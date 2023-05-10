@@ -20,9 +20,6 @@ const char index_html[] PROGMEM = R"rawliteral(
     <script>
       function handle_select_on_change(x) {
         document.getElementById(x).submit();
-        setTimeout(function () {
-          document.location.reload(false);
-        }, 500);
       }
       function handle_new_input() {
         setTimeout(function () {
