@@ -10,6 +10,7 @@ struct tm timeinfo;
 uint8_t wakeup_brightness = 25;
 uint8_t daytime_brightness = 100;
 uint8_t sleep_brightness = 15;
+uint16_t blink_intervall = 500;
 uint8_t colorBrightness = 0; // (max = 255)
 
 bool wakeup_isColorPickerNeeded = false;
@@ -128,7 +129,7 @@ void blink() {
         digitalWrite(LED1_PIN, LOW);
     }
     blink_state = !blink_state;
-    setNoneSleepingDelay(1000, &blink_sleep);
+    setNoneSleepingDelay(blink_intervall, &blink_sleep);
 }
 
 /************************************************************************************************************
@@ -399,6 +400,15 @@ void update_sleep_brightness() {
     sleep_brightness = (uint8_t)(255 * percent);
 }
 
+void update_blink_intervall() {
+    String value = read_file(SPIFFS, BLINK_INTERVALL_FS);
+    if(value == "" || value == NULL) {
+        value = "500";
+        write_file(SPIFFS, BLINK_INTERVALL_FS, value.c_str());
+    }
+    blink_intervall = (uint16_t)(value.toInt());
+}
+
 void update_wakeup_color() {
     String value = read_file(SPIFFS, WAKEUP_COLOR_FS);
     if(value == "" || value == NULL) {
@@ -568,6 +578,8 @@ String processor(const String &var) {
             tmp += "</ option>";
         }
         return tmp;
+    } else if(var == BLINK_INTERVALL_IN) {
+        return read_file(SPIFFS, BLINK_INTERVALL_FS);
     } else if(var == WAKEUP_BRIGHTNESS_IN) {
         return read_file(SPIFFS, WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
@@ -750,6 +762,10 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(TIMEZONE_IN)->value();
         write_file(SPIFFS, TIMEZONE_FS, tmp.c_str());
         updateTimeZone();
+    } else if(request->hasParam(BLINK_INTERVALL_IN)) {
+        tmp = request->getParam(BLINK_INTERVALL_IN)->value();
+        write_file(SPIFFS, BLINK_INTERVALL_FS, tmp.c_str());
+        update_blink_intervall();
     }
     updateStateAndTime();
     request->send(200, "text/text", "ok");
