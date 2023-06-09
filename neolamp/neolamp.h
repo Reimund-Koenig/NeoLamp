@@ -36,6 +36,8 @@
 
 #define NEOPIXEL_PIN 4 // Wemos D1 mini: port D2
 #define NEOPIXEL_COUNT 16
+#define LED1_PIN 6 // ToDo
+#define LED2_PIN 5 // ToDo
 
 /************************************************************************************************************
 /*
@@ -96,3 +98,4 @@ String processor(const String &var);
 String read_file(fs::FS &fs, const char *path);
 void write_file(fs::FS &fs, const char *path, const char *message);
 void printServerInfo();
+void blink();

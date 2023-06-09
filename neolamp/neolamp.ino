@@ -17,9 +17,11 @@ bool daytime_isColorPickerNeeded = false;
 bool sleep_isColorPickerNeeded = false;
 unsigned long colorPicker_Color = 0;
 bool isColorUpdateNeeded = true;
+bool blink_state = true;
 
 unsigned long clock_sleep = 0;
 unsigned long substate_sleep = 0;
+unsigned long blink_time = 0;
 
 uint8_t state = 0;
 String wakeup_state = "";
@@ -54,6 +56,8 @@ void setup() {
     clock_prescale_set(clock_div_1);
 #endif
     Serial.begin(115200);
+    pinMode(LED1_PIN, OUTPUT);
+    pinMode(LED2_PIN, OUTPUT);
     // this resets all the neopixels to an off state
     strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
     strip.setBrightness(150);
@@ -106,6 +110,25 @@ void loop() {
     MDNS.update();
     stateMachine();
     updateStateAndTime();
+    blink();
+}
+
+/************************************************************************************************************
+/*
+/* LED Blink Code
+/*
+*************/
+void blink() {
+    if(isSleeping(blink_sleep)) { return; }
+    if(blink_state){
+        digitalWrite(LED1_PIN, HIGH);
+        digitalWrite(LED2_PIN, LOW);
+    } else {
+        digitalWrite(LED2_PIN, HIGH);
+        digitalWrite(LED1_PIN, LOW);
+    }
+    blink_state = !blink_state;
+    setNoneSleepingDelay(1000, &blink_sleep);
 }
 
 /************************************************************************************************************
