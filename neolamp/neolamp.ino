@@ -427,6 +427,7 @@ void update_wakeup_mode() {
         value = "green";
         write_file(SPIFFS, WAKEUP_MODE_FS, value.c_str());
     }
+    updateBlink(read_file(SPIFFS, WAKEUP_BLINK_FS));
     for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
         i++) {
         if(value == array_of_modes[i][1]) {
@@ -443,6 +444,7 @@ void update_daytime_mode() {
         value = "mix";
         write_file(SPIFFS, DAYTIME_MODE_FS, value.c_str());
     }
+    updateBlink(read_file(SPIFFS, DAYTIME_BLINK_FS));
     for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
         i++) {
         if(value == array_of_modes[i][1]) {
@@ -459,6 +461,7 @@ void update_sleep_mode() {
         value = "orange";
         write_file(SPIFFS, SLEEP_MODE_FS, value.c_str());
     }
+    updateBlink(read_file(SPIFFS, SLEEP_BLINK_FS));
     for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
         i++) {
         if(value == array_of_modes[i][1]) {
@@ -638,11 +641,31 @@ void change_sleep_state(String new_state) {
     sleep_state = new_state;
     state_first_run = true;
 }
-
 void updateState(int new_state) {
     if(state == new_state) { return; }
     state = new_state;
     state_first_run = true;
+    updateBlinkState(new_state);
+}
+
+void updateBlinkState(int state) {
+    if(state == STATE_WAKEUP_TIME) {
+        updateBlink(read_file(SPIFFS, WAKEUP_BLINK_FS));
+    } else if(state == STATE_DAYTIME_TIME) {
+        updateBlink(read_file(SPIFFS, DAYTIME_BLINK_FS));
+    } else if(state == STATE_SLEEPING_TIME) {
+        updateBlink(read_file(SPIFFS, SLEEP_BLINK_FS));
+    } else {
+        updateBlink("");
+    }
+}
+
+void updateBlink(String value) {
+    if(value == "" || value == NULL || value == "0") {
+        d_blink.stop();
+        return;
+    }
+    d_blink.start();
 }
 
 void createRandomColor() {
@@ -725,6 +748,18 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(DAYTIME_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, DAYTIME_BRIGHTNESS_FS, tmp.c_str());
         update_daytime_brightness();
+    } else if(request->hasParam(WAKEUP_BLINK_IN)) {
+        tmp = request->getParam(WAKEUP_BLINK_IN)->value();
+        write_file(SPIFFS, WAKEUP_BLINK_FS, tmp.c_str());
+        updateBlinkState(STATE_WAKEUP_TIME);
+    } else if(request->hasParam(DAYTIME_BLINK_IN)) {
+        tmp = request->getParam(DAYTIME_BLINK_IN)->value();
+        write_file(SPIFFS, DAYTIME_BLINK_FS, tmp.c_str());
+        updateBlinkState(STATE_DAYTIME_TIME);
+    } else if(request->hasParam(SLEEP_BLINK_IN)) {
+        tmp = request->getParam(SLEEP_BLINK_IN)->value();
+        write_file(SPIFFS, SLEEP_BLINK_FS, tmp.c_str());
+        updateBlinkState(STATE_SLEEPING_TIME);
     } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
         tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, SLEEP_BRIGHTNESS_FS, tmp.c_str());

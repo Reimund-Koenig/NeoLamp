@@ -67,6 +67,8 @@ void run_lamp_off();
 void updateStateAndTime();
 
 void blinkStateMachine();
+void updateBlink(String value);
+void updateBlinkState(int new_state);
 
 void createRandomColor();
 
