@@ -66,6 +66,8 @@ void run_lamp_off();
 
 void updateStateAndTime();
 
+void blinkStateMachine();
+
 void createRandomColor();
 
 bool colorCircle(unsigned long wait);

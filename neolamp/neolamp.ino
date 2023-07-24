@@ -108,19 +108,19 @@ void setup() {
 void loop() {
     MDNS.update();
     stateMachine();
+    blinkStateMachine();
     updateStateAndTime();
-    setLEDs();
 }
 
-void setLEDs() {
-    int state = d_blink.get_state();
-    if(state == D_BLINK_DO_NOTHING) { return; }
-    if(state == D_BLINK_SWITCH_LED_1_ON) {
+void blinkStateMachine() {
+    int blink_state = d_blink.get_state();
+    if(blink_state == D_BLINK_DO_NOTHING) { return; }
+    if(blink_state == D_BLINK_SWITCH_LED_1_ON) {
         digitalWrite(LED_1, HIGH);
         digitalWrite(LED_2, LOW);
         return;
     }
-    if(state == D_BLINK_SWITCH_LED_2_ON) {
+    if(blink_state == D_BLINK_SWITCH_LED_2_ON) {
         digitalWrite(LED_1, LOW);
         digitalWrite(LED_2, HIGH);
         return;
@@ -135,10 +135,7 @@ void setLEDs() {
 /*
 *************/
 void run_mixed() {
-    if(state_first_run) {
-        mix_mode_helper++;
-        d_blink.start();
-    }
+    if(state_first_run) { mix_mode_helper++; }
     if(mix_mode_helper >= 65) { mix_mode_helper = 0; }
     if(mix_mode_helper <= 40) {
         run_circle();
@@ -151,7 +148,6 @@ void run_mixed() {
 
 void run_pulse() {
     if(state_first_run) {
-        d_blink.start();
         createRandomColor();
         color_pulse_helper_brightness = 2;
         color_pulse_helper_lighten = true;
@@ -166,7 +162,6 @@ void run_pulse() {
 
 void run_circle() {
     if(state_first_run) {
-        d_blink.start();
         createRandomColor();
         state_first_run = false;
         Serial.println("run_circle");
@@ -176,7 +171,6 @@ void run_circle() {
 
 void run_rainbow() {
     if(state_first_run) {
-        d_blink.start();
         rainbow_mode_helper = 0;
         state_first_run = false;
         Serial.println("run_rainbow");
@@ -187,7 +181,6 @@ void run_rainbow() {
 void run_lamp_off() {
     if(state_first_run) {
         Serial.println("run_lamp_off");
-        d_blink.stop();
         strip.fill(strip.Color(0, 0, 0, 0));
         strip.show();
         state_first_run = false;
@@ -196,7 +189,6 @@ void run_lamp_off() {
 
 void run_colorPick_mode() {
     if(state_first_run) {
-        d_blink.stop();
         isColorUpdateNeeded = true;
         state_first_run = false;
         Serial.println("run_colorPick_mode");
@@ -213,7 +205,6 @@ void run_colorPick_mode() {
 
 void run_wakeupTime_mode() {
     if(state_first_run || brightness_changed) {
-        d_blink.start();
         Serial.println("run_wakeupTime_mode");
         strip.fill(strip.Color(0, 75, 0, 0));
         strip.setPixelColor(3, strip.Color(0, 255, 0, 0));
@@ -231,7 +222,6 @@ void run_wakeupTime_mode() {
 
 void run_sleepingTime_mode() {
     if(state_first_run || brightness_changed) {
-        d_blink.stop();
         Serial.println("run_sleepingTime_mode");
         strip.fill(strip.Color(255, 75, 0, 255));
         strip.setPixelColor(3, strip.Color(255, 9, 0, 0));
