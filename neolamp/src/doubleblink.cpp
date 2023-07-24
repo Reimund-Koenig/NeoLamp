@@ -10,8 +10,8 @@ void Doubleblink::start() { this->doNotBlink = false; }
 void Doubleblink::stop() { this->setDoNotBlink = true; }
 int Doubleblink::get_state() {
     if(this->doNotBlink) { return D_BLINK_DO_NOTHING; }
-    if(isSleeping(db_clock_sleep)) { return D_BLINK_DO_NOTHING; }
-    setNoneSleepingDelay(2000, &db_clock_sleep);
+    if(helper.is_sleeping(db_clock_sleep)) { return D_BLINK_DO_NOTHING; }
+    helper.set_none_sleeping_delay(2000, &db_clock_sleep);
     if(this->setDoNotBlink) {
         this->doNotBlink = true;
         this->setDoNotBlink = false;

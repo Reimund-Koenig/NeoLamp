@@ -16,11 +16,12 @@
 #include "src/constants/modes.h"
 #include "src/constants/secrets.h"
 #include "src/constants/timezones.h"
+#include "src/doubleblink.h"
 #include "src/lamphelper.h"
 #include "time.h"
 
-#define NAME "Nachtlicht"
-#define URL "nachtlicht"
+#define NAME "Finns Nachtlicht"
+#define URL "finn2"
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
 #define STATE_DAYTIME_TIME 2
@@ -35,6 +36,9 @@
 #define STATE_ANIMATION_OFF String(array_of_modes[7][1])
 
 #define NEOPIXEL_PIN 4 // Wemos D1 mini: port D2
+#define LED_1 0        // Wemos D1 mini: port D3
+#define LED_2 2        // Wemos D1 mini: port D3
+
 #define NEOPIXEL_COUNT 16
 
 /************************************************************************************************************
@@ -62,8 +66,6 @@ void run_lamp_off();
 
 void updateStateAndTime();
 
-void setNoneSleepingDelay(unsigned long wait, unsigned long *sleepUntilTime);
-bool isSleeping();
 void createRandomColor();
 
 bool colorCircle(unsigned long wait);

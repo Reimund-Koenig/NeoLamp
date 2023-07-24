@@ -1,6 +1,7 @@
 #ifndef DOUBLEBLINK
 #define DOUBLEBLINK
 #include "clocktime.h"
+#include "lamphelper.h"
 #include <Arduino.h>
 
 #define D_BLINK_OFF 0
@@ -19,5 +20,6 @@ class Doubleblink {
     bool doNotBlink = true;
     bool setDoNotBlink = false;
     bool switchHelper = false;
+    LampHelper helper;
 };
 #endif // DOUBLEBLINK

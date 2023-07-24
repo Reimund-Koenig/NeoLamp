@@ -65,3 +65,13 @@ int LampHelper::get_state(Clocktime current_time, Clocktime t1, int m1,
         return get_state_helper(current_time, t3, m3, t2, m2, t1, m1);
     }
 }
+
+bool LampHelper::is_sleeping(unsigned long sleepUntilTime) {
+    if(millis() < sleepUntilTime) { return true; }
+    return false;
+}
+
+void LampHelper::set_none_sleeping_delay(unsigned long wait,
+                                         unsigned long *time) {
+    *time = millis() + wait;
+}

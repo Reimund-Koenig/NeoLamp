@@ -41,6 +41,7 @@ Clocktime user_sleep_time;
 Clocktime user_daytime_time;
 Clocktime current_time;
 LampHelper helper;
+Doubleblink d_blink;
 
 /************************************************************************************************************
 /*
@@ -63,6 +64,8 @@ void setup() {
         Serial.println("An Error has occurred while mounting SPIFFS");
         return;
     }
+    pinMode(LED_1, OUTPUT);
+    pinMode(LED_2, OUTPUT);
 
     // start wifi manager
     WiFi.mode(WIFI_STA);
@@ -106,6 +109,24 @@ void loop() {
     MDNS.update();
     stateMachine();
     updateStateAndTime();
+    setLEDs();
+}
+
+void setLEDs() {
+    int state = d_blink.get_state();
+    if(state == D_BLINK_DO_NOTHING) { return; }
+    if(state == D_BLINK_SWITCH_LED_1_ON) {
+        digitalWrite(LED_1, HIGH);
+        digitalWrite(LED_2, LOW);
+        return;
+    }
+    if(state == D_BLINK_SWITCH_LED_2_ON) {
+        digitalWrite(LED_1, LOW);
+        digitalWrite(LED_2, HIGH);
+        return;
+    }
+    digitalWrite(LED_1, LOW);
+    digitalWrite(LED_2, LOW);
 }
 
 /************************************************************************************************************
@@ -114,7 +135,10 @@ void loop() {
 /*
 *************/
 void run_mixed() {
-    if(state_first_run) { mix_mode_helper++; }
+    if(state_first_run) {
+        mix_mode_helper++;
+        d_blink.start();
+    }
     if(mix_mode_helper >= 65) { mix_mode_helper = 0; }
     if(mix_mode_helper <= 40) {
         run_circle();
@@ -127,6 +151,7 @@ void run_mixed() {
 
 void run_pulse() {
     if(state_first_run) {
+        d_blink.start();
         createRandomColor();
         color_pulse_helper_brightness = 2;
         color_pulse_helper_lighten = true;
@@ -141,6 +166,7 @@ void run_pulse() {
 
 void run_circle() {
     if(state_first_run) {
+        d_blink.start();
         createRandomColor();
         state_first_run = false;
         Serial.println("run_circle");
@@ -150,6 +176,7 @@ void run_circle() {
 
 void run_rainbow() {
     if(state_first_run) {
+        d_blink.start();
         rainbow_mode_helper = 0;
         state_first_run = false;
         Serial.println("run_rainbow");
@@ -160,6 +187,7 @@ void run_rainbow() {
 void run_lamp_off() {
     if(state_first_run) {
         Serial.println("run_lamp_off");
+        d_blink.stop();
         strip.fill(strip.Color(0, 0, 0, 0));
         strip.show();
         state_first_run = false;
@@ -168,6 +196,7 @@ void run_lamp_off() {
 
 void run_colorPick_mode() {
     if(state_first_run) {
+        d_blink.stop();
         isColorUpdateNeeded = true;
         state_first_run = false;
         Serial.println("run_colorPick_mode");
@@ -184,6 +213,7 @@ void run_colorPick_mode() {
 
 void run_wakeupTime_mode() {
     if(state_first_run || brightness_changed) {
+        d_blink.start();
         Serial.println("run_wakeupTime_mode");
         strip.fill(strip.Color(0, 75, 0, 0));
         strip.setPixelColor(3, strip.Color(0, 255, 0, 0));
@@ -201,6 +231,7 @@ void run_wakeupTime_mode() {
 
 void run_sleepingTime_mode() {
     if(state_first_run || brightness_changed) {
+        d_blink.stop();
         Serial.println("run_sleepingTime_mode");
         strip.fill(strip.Color(255, 75, 0, 255));
         strip.setPixelColor(3, strip.Color(255, 9, 0, 0));
@@ -271,12 +302,12 @@ void animationStateMachine(String substate) {
 *************/
 
 void updateStateAndTime() {
-    if(isSleeping(clock_sleep)) { return; }
+    if(helper.is_sleeping(clock_sleep)) { return; }
     updateTime();
     updateState(helper.get_state(
         current_time, user_daytime_time, STATE_DAYTIME_TIME, user_sleep_time,
         STATE_SLEEPING_TIME, user_wakeup_time, STATE_WAKEUP_TIME));
-    setNoneSleepingDelay(200, &clock_sleep);
+    helper.set_none_sleeping_delay(200, &clock_sleep);
 }
 
 String read_file(fs::FS &fs, const char *path) {
@@ -594,15 +625,6 @@ void initTime() {
     updateTimeZone();
 }
 
-void setNoneSleepingDelay(unsigned long wait, unsigned long *time) {
-    *time = millis() + wait;
-}
-
-bool isSleeping(unsigned long sleepUntilTime) {
-    if(millis() < sleepUntilTime) { return true; }
-    return false;
-}
-
 void change_wakeup_state(String new_state) {
     if(new_state == wakeup_state) { return; }
     wakeup_state = new_state;
@@ -743,7 +765,7 @@ void handle_server_notFound(AsyncWebServerRequest *request) {
 *************/
 
 bool colorPulse(int wait) {
-    if(isSleeping(substate_sleep)) { return false; }
+    if(helper.is_sleeping(substate_sleep)) { return false; }
     wait = (int)(wait * (255.0 / colorBrightness));
     if(color_pulse_helper_lighten) {
         color_pulse_helper_brightness++;
@@ -757,12 +779,12 @@ bool colorPulse(int wait) {
     strip.fill(random_color);
     strip.setBrightness(color_pulse_helper_brightness);
     strip.show();
-    setNoneSleepingDelay(wait, &substate_sleep);
+    helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }
 
 bool colorCircle(int wait) {
-    if(isSleeping(substate_sleep)) { return false; }
+    if(helper.is_sleeping(substate_sleep)) { return false; }
     if(color_circle_mode_helper >= strip.numPixels()) {
         color_circle_mode_helper = 0;
         return true;
@@ -771,12 +793,12 @@ bool colorCircle(int wait) {
     strip.setBrightness(colorBrightness);
     strip.show();
     color_circle_mode_helper++;
-    setNoneSleepingDelay(wait, &substate_sleep);
+    helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }
 
 bool rainbowCircle(int wait) {
-    if(isSleeping(substate_sleep)) { return false; }
+    if(helper.is_sleeping(substate_sleep)) { return false; }
 
     rainbow_mode_helper += 256;
     if(rainbow_mode_helper >= 65536) { return true; }
@@ -788,6 +810,6 @@ bool rainbowCircle(int wait) {
     }
     strip.setBrightness(colorBrightness);
     strip.show();
-    setNoneSleepingDelay(wait, &substate_sleep);
+    helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }
