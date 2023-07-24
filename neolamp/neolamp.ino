@@ -555,8 +555,8 @@ String processor(const String &var) {
         return read_file(SPIFFS, SLEEP_COLOR_FS);
     } else if(var == DAYTIME_COLOR_IN) {
         return read_file(SPIFFS, DAYTIME_COLOR_FS);
-    } else if(var == DAYTIME_COLOR_IN) {
-        return read_file(SPIFFS, DAYTIME_COLOR_FS);
+    } else if(var == WAKEUP_COLOR_IN) {
+        return read_file(SPIFFS, WAKEUP_COLOR_FS);
     } else if(var == SLEEPTIME_COLOR_ROW_IN) {
         if(sleep_isColorPickerNeeded) { return "hidden"; }
         return "";
