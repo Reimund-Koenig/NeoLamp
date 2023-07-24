@@ -89,6 +89,7 @@ void setup() {
     // printServerInfo();
 
     // Load values from persistent storage or use default
+    init_blink();
     update_wakeup_brightness();
     update_daytime_brightness();
     update_sleep_brightness();
@@ -364,6 +365,24 @@ void update_color_brightness(uint8_t inputBrightness) {
     colorBrightness = inputBrightness;
 }
 
+void init_blink() {
+    String value = read_file(SPIFFS, WAKEUP_BLINK_FS);
+    if(value == "" || value == NULL) {
+        value = "0";
+        write_file(SPIFFS, WAKEUP_BLINK_FS, value.c_str());
+    }
+    value = read_file(SPIFFS, DAYTIME_BLINK_FS);
+    if(value == "" || value == NULL) {
+        value = "1";
+        write_file(SPIFFS, DAYTIME_BLINK_FS, value.c_str());
+    }
+    value = read_file(SPIFFS, SLEEP_BLINK_FS);
+    if(value == "" || value == NULL) {
+        value = "0";
+        write_file(SPIFFS, SLEEP_BLINK_FS, value.c_str());
+    }
+}
+
 void update_wakeup_brightness() {
     String value = read_file(SPIFFS, WAKEUP_BRIGHTNESS_FS);
     if(value == "" || value == NULL) {
@@ -427,7 +446,6 @@ void update_wakeup_mode() {
         value = "green";
         write_file(SPIFFS, WAKEUP_MODE_FS, value.c_str());
     }
-    updateBlink(read_file(SPIFFS, WAKEUP_BLINK_FS));
     for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
         i++) {
         if(value == array_of_modes[i][1]) {
@@ -444,7 +462,6 @@ void update_daytime_mode() {
         value = "mix";
         write_file(SPIFFS, DAYTIME_MODE_FS, value.c_str());
     }
-    updateBlink(read_file(SPIFFS, DAYTIME_BLINK_FS));
     for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
         i++) {
         if(value == array_of_modes[i][1]) {
@@ -461,7 +478,6 @@ void update_sleep_mode() {
         value = "orange";
         write_file(SPIFFS, SLEEP_MODE_FS, value.c_str());
     }
-    updateBlink(read_file(SPIFFS, SLEEP_BLINK_FS));
     for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
         i++) {
         if(value == array_of_modes[i][1]) {
@@ -645,23 +661,21 @@ void updateState(int new_state) {
     if(state == new_state) { return; }
     state = new_state;
     state_first_run = true;
-    updateBlinkState(new_state);
+    updateBlinkState();
 }
 
-void updateBlinkState(int state) {
+void updateBlinkState() {
     if(state == STATE_WAKEUP_TIME) {
         updateBlink(read_file(SPIFFS, WAKEUP_BLINK_FS));
     } else if(state == STATE_DAYTIME_TIME) {
         updateBlink(read_file(SPIFFS, DAYTIME_BLINK_FS));
     } else if(state == STATE_SLEEPING_TIME) {
         updateBlink(read_file(SPIFFS, SLEEP_BLINK_FS));
-    } else {
-        updateBlink("");
     }
 }
 
 void updateBlink(String value) {
-    if(value == "" || value == NULL || value == "0") {
+    if(value == "0") {
         d_blink.stop();
         return;
     }
@@ -751,15 +765,15 @@ void handle_server_get(AsyncWebServerRequest *request) {
     } else if(request->hasParam(WAKEUP_BLINK_IN)) {
         tmp = request->getParam(WAKEUP_BLINK_IN)->value();
         write_file(SPIFFS, WAKEUP_BLINK_FS, tmp.c_str());
-        updateBlinkState(STATE_WAKEUP_TIME);
+        if(state == STATE_WAKEUP_TIME) { updateBlinkState(); }
     } else if(request->hasParam(DAYTIME_BLINK_IN)) {
         tmp = request->getParam(DAYTIME_BLINK_IN)->value();
         write_file(SPIFFS, DAYTIME_BLINK_FS, tmp.c_str());
-        updateBlinkState(STATE_DAYTIME_TIME);
+        if(state == STATE_DAYTIME_TIME) { updateBlinkState(); }
     } else if(request->hasParam(SLEEP_BLINK_IN)) {
         tmp = request->getParam(SLEEP_BLINK_IN)->value();
         write_file(SPIFFS, SLEEP_BLINK_FS, tmp.c_str());
-        updateBlinkState(STATE_SLEEPING_TIME);
+        if(state == STATE_SLEEPING_TIME) { updateBlinkState(); }
     } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
         tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, SLEEP_BRIGHTNESS_FS, tmp.c_str());
