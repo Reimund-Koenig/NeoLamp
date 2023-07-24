@@ -24,9 +24,6 @@ const char index_html[] PROGMEM = R"rawliteral(
             document.location.reload(false);
           }, 1000);
       }
-      function handle_onchange(x) {
-        document.getElementById(x).submit();
-      }
     </script>
   </head>
   <body>
@@ -98,6 +95,24 @@ const char index_html[] PROGMEM = R"rawliteral(
         </td>
       </tr>
       <tr>
+        <td style="text-align: right; padding-right: 1em">Blink:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getIBBlink">
+            OFF<input
+              type="range"
+              name="input_wakeup_blink"
+              value="%input_wakeup_blink%"
+              type="range"
+              orient="vertical"
+              min="0"
+              max="1"
+              style="width: 3em"
+              onchange="handle_onchange_and_reload('getIBBlink')"
+            />ON
+          </form>
+        </td>
+      </tr>
+      <tr>
         <td><hr /></td>
         <td><hr /></td>
       </tr>
@@ -160,8 +175,26 @@ const char index_html[] PROGMEM = R"rawliteral(
               onchange="handle_onchange_and_reload('getIDB')"
             />
           </form>
-        </td>
-      </tr>
+          </td>
+          </tr>
+          <tr>
+            <td style="text-align: right; padding-right: 1em">Blink:</td>
+            <td>
+              <form action="/get" target="hidden-form" id="getIDBlink">
+                  OFF <input
+                  type="range"
+                  name="input_daytime_blink"
+                  value="%input_daytime_blink%"
+                  type="range"
+                  orient="vertical"
+                  min="0"
+                  max="1"
+                  style="width: 3em"
+                  onchange="handle_onchange_and_reload('getIDBlink')"
+                /> ON
+              </form>
+            </td>
+          </tr>
       <tr>
         <td><hr /></td>
         <td><hr /></td>
@@ -225,6 +258,23 @@ const char index_html[] PROGMEM = R"rawliteral(
               style="width: 15em"
               onchange="handle_onchange_and_reload('getISB')"
             />
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Blink:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getISBlink">
+            OFF <input
+              name="input_sleep_blink"
+              value="%input_sleep_blink%"
+              type="range"
+              orient="vertical"
+              min="0"
+              max="1"
+              style="width: 3em"
+              onchange="handle_onchange_and_reload('getISBlink')"
+            /> ON
           </form>
         </td>
       </tr>
