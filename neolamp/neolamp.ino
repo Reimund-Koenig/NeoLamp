@@ -570,14 +570,20 @@ String processor(const String &var) {
         return read_file(SPIFFS, WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
         return read_file(SPIFFS, DAYTIME_BRIGHTNESS_FS);
+    } else if(var == WAKEUP_BLINK_IN) {
+        return read_file(SPIFFS, WAKEUP_BLINK_FS);
+    } else if(var == DAYTIME_BLINK_IN) {
+        return read_file(SPIFFS, DAYTIME_BLINK_FS);
+    } else if(var == SLEEP_BLINK_IN) {
+        return read_file(SPIFFS, SLEEP_BLINK_FS);
     } else if(var == SLEEP_BRIGHTNESS_IN) {
         return read_file(SPIFFS, SLEEP_BRIGHTNESS_FS);
     } else if(var == SLEEP_COLOR_IN) {
         return read_file(SPIFFS, SLEEP_COLOR_FS);
     } else if(var == DAYTIME_COLOR_IN) {
         return read_file(SPIFFS, DAYTIME_COLOR_FS);
-    } else if(var == DAYTIME_COLOR_IN) {
-        return read_file(SPIFFS, DAYTIME_COLOR_FS);
+    } else if(var == WAKEUP_COLOR_IN) {
+        return read_file(SPIFFS, WAKEUP_COLOR_FS);
     } else if(var == SLEEPTIME_COLOR_ROW_IN) {
         if(sleep_isColorPickerNeeded) { return "hidden"; }
         return "";
