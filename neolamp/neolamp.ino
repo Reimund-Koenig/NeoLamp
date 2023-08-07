@@ -40,7 +40,6 @@ int color_circle_mode_helper = 0;
 int color_pulse_helper_brightness = 255;
 bool color_pulse_helper_lighten = true;
 uint32_t mix_mode_helper = 0;
-uint8_t learning_mode_helper = 0;
 uint32_t rainbow_mode_helper = 0;
 
 Clocktime user_wakeup_time;
@@ -61,22 +60,25 @@ void setup() {
     clock_prescale_set(clock_div_1);
 #endif
     Serial.begin(115200);
+    // this resets all the neopixels to an off state
+    strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+    strip.setBrightness(150);
+    strip.fill(strip.Color(255, 255, 255));
+    strip.show();
     if(!SPIFFS.begin()) {
         Serial.println("An Error has occurred while mounting SPIFFS");
         return;
     }
+
+    // start wifi manager
     WiFi.mode(WIFI_STA);
     WiFi.hostname(URL);
     async_wlan_setup();
-
-    // this resets all the neopixels to an off state
-    strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    strip.show();  // Turn OFF all pixels ASAP
-    initTime();
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
         Serial.println("Connecting to WiFi..");
     }
+    initTime();
     if(MDNS.begin(URL)) { // browser: url.local
         Serial.println("mDNS responder started");
     } else {
@@ -181,13 +183,14 @@ void run_colorPick_mode() {
         state_first_run = false;
         Serial.println("run_colorPick_mode");
     }
-    if(!isColorUpdateNeeded) { return; }
+    if(!(isColorUpdateNeeded || brightness_changed)) { return; }
     for(int i = 0; i < strip.numPixels(); i++) {
         strip.setPixelColor(i, colorPicker_Color);
     }
-    isColorUpdateNeeded = false;
     strip.setBrightness(colorBrightness);
     strip.show();
+    isColorUpdateNeeded = false;
+    brightness_changed = false;
 }
 
 void run_wakeupTime_mode() {
@@ -222,23 +225,6 @@ void run_sleepingTime_mode() {
         state_first_run = false;
         brightness_changed = false;
     }
-}
-
-void run_learning_mode() {
-    if(learning_mode_helper == 0) {
-        run_wakeupTime_mode();
-    } else {
-        run_sleepingTime_mode();
-    }
-    if(isSleeping(substate_sleep)) { return; }
-    if(learning_mode_helper == 0) {
-        state_first_run = true;
-        learning_mode_helper = 1;
-    } else {
-        state_first_run = true;
-        learning_mode_helper = 0;
-    }
-    setNoneSleepingDelay(3000, &substate_sleep);
 }
 
 /************************************************************************************************************
@@ -285,8 +271,6 @@ void animationStateMachine(String substate) {
         run_sleepingTime_mode();
     } else if(substate == STATE_ANIMATION_OFF) {
         run_lamp_off();
-    } else if(substate == STATE_ANIMATION_LEARNING) {
-        run_learning_mode();
     } else {
         strip.fill(strip.Color(0, 0, 128, 255));
         strip.show();
@@ -417,7 +401,7 @@ void update_color_brightness(uint8_t inputBrightness) {
 void update_wakeup_brightness() {
     String value = read_file(SPIFFS, WAKEUP_BRIGHTNESS_FS);
     if(value == "" || value == NULL) {
-        value = "25";
+        value = "15";
         write_file(SPIFFS, WAKEUP_BRIGHTNESS_FS, value.c_str());
     }
     float percent = value.toFloat() / 100.0;
@@ -506,7 +490,7 @@ void update_daytime_mode() {
 void update_sleep_mode() {
     String value = read_file(SPIFFS, SLEEP_MODE_FS);
     if(value == "" || value == NULL) {
-        value = "red";
+        value = "orange";
         write_file(SPIFFS, SLEEP_MODE_FS, value.c_str());
     }
     for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
@@ -583,7 +567,7 @@ String processor(const String &var) {
     } else if(var == SLEEP_MODE_IN) {
         String tmp = "";
         String value = read_file(SPIFFS, SLEEP_MODE_FS);
-        if(value == "" || value == NULL) { value = "red"; };
+        if(value == "" || value == NULL) { value = "orange"; };
         for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
             i++) {
             tmp += "<option value = '";
@@ -626,8 +610,8 @@ String processor(const String &var) {
         return read_file(SPIFFS, SLEEP_COLOR_FS);
     } else if(var == DAYTIME_COLOR_IN) {
         return read_file(SPIFFS, DAYTIME_COLOR_FS);
-    } else if(var == DAYTIME_COLOR_IN) {
-        return read_file(SPIFFS, DAYTIME_COLOR_FS);
+    } else if(var == WAKEUP_COLOR_IN) {
+        return read_file(SPIFFS, WAKEUP_COLOR_FS);
     } else if(var == SLEEPTIME_COLOR_ROW_IN) {
         if(sleep_isColorPickerNeeded) { return "hidden"; }
         return "";
@@ -750,66 +734,56 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(SLEEP_TIME_IN)->value();
         write_file(SPIFFS, SLEEP_TIME_FS, tmp.c_str());
         user_sleep_time.setTime(tmp.c_str());
-    }
-    if(request->hasParam(WAKEUP_TIME_IN)) {
+    } else if(request->hasParam(WAKEUP_TIME_IN)) {
         tmp = request->getParam(WAKEUP_TIME_IN)->value();
         write_file(SPIFFS, WAKEUP_TIME_FS, tmp.c_str());
         user_wakeup_time.setTime(tmp.c_str());
-    }
-    if(request->hasParam(DAYTIME_TIME_IN)) {
+    } else if(request->hasParam(DAYTIME_TIME_IN)) {
         tmp = request->getParam(DAYTIME_TIME_IN)->value();
         write_file(SPIFFS, DAYTIME_TIME_FS, tmp.c_str());
         user_daytime_time.setTime(tmp.c_str());
-    }
-    if(request->hasParam(WAKEUP_MODE_IN)) {
+    } else if(request->hasParam(WAKEUP_MODE_IN)) {
         tmp = request->getParam(WAKEUP_MODE_IN)->value();
         write_file(SPIFFS, WAKEUP_MODE_FS, tmp.c_str());
         change_wakeup_state(tmp.c_str());
-    }
-    if(request->hasParam(DAYTIME_MODE_IN)) {
+    } else if(request->hasParam(DAYTIME_MODE_IN)) {
         tmp = request->getParam(DAYTIME_MODE_IN)->value();
         write_file(SPIFFS, DAYTIME_MODE_FS, tmp.c_str());
         change_daytime_state(tmp.c_str());
-    }
-    if(request->hasParam(SLEEP_MODE_IN)) {
+    } else if(request->hasParam(SLEEP_MODE_IN)) {
         tmp = request->getParam(SLEEP_MODE_IN)->value();
         write_file(SPIFFS, SLEEP_MODE_FS, tmp.c_str());
         change_sleep_state(tmp.c_str());
-    }
-    if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
+    } else if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
         tmp = request->getParam(WAKEUP_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, WAKEUP_BRIGHTNESS_FS, tmp.c_str());
-    }
-    if(request->hasParam(DAYTIME_BRIGHTNESS_IN)) {
+        update_wakeup_brightness();
+    } else if(request->hasParam(DAYTIME_BRIGHTNESS_IN)) {
         tmp = request->getParam(DAYTIME_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, DAYTIME_BRIGHTNESS_FS, tmp.c_str());
-    }
-    if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
+        update_daytime_brightness();
+    } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
         tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, SLEEP_BRIGHTNESS_FS, tmp.c_str());
-    }
-    if(request->hasParam(SLEEP_COLOR_IN)) {
+        update_sleep_brightness();
+    } else if(request->hasParam(SLEEP_COLOR_IN)) {
         tmp = request->getParam(SLEEP_COLOR_IN)->value();
         write_file(SPIFFS, SLEEP_COLOR_FS, tmp.c_str());
-    }
-    if(request->hasParam(DAYTIME_COLOR_IN)) {
+        isColorUpdateNeeded = true;
+    } else if(request->hasParam(DAYTIME_COLOR_IN)) {
         tmp = request->getParam(DAYTIME_COLOR_IN)->value();
+        isColorUpdateNeeded = true;
         write_file(SPIFFS, DAYTIME_COLOR_FS, tmp.c_str());
-    }
-    if(request->hasParam(WAKEUP_COLOR_IN)) {
+    } else if(request->hasParam(WAKEUP_COLOR_IN)) {
         tmp = request->getParam(WAKEUP_COLOR_IN)->value();
         write_file(SPIFFS, WAKEUP_COLOR_FS, tmp.c_str());
-    }
-    if(request->hasParam(TIMEZONE_IN)) {
+        isColorUpdateNeeded = true;
+    } else if(request->hasParam(TIMEZONE_IN)) {
         tmp = request->getParam(TIMEZONE_IN)->value();
         write_file(SPIFFS, TIMEZONE_FS, tmp.c_str());
+        updateTimeZone();
     }
-    updateTimeZone();
-    update_wakeup_brightness();
-    update_daytime_brightness();
-    update_sleep_brightness();
     updateStateAndTime();
-    isColorUpdateNeeded = true;
     request->send(200, "text/text", "ok");
 }
 

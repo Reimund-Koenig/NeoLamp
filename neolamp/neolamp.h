@@ -33,9 +33,8 @@
 #define STATE_ANIMATION_GREEN String(array_of_modes[5][1])
 #define STATE_ANIMATION_RED String(array_of_modes[6][1])
 #define STATE_ANIMATION_OFF String(array_of_modes[7][1])
-#define STATE_ANIMATION_LEARNING String(array_of_modes[8][1])
 
-#define NEOPIXEL_PIN 4
+#define NEOPIXEL_PIN 4 // Wemos D1 mini: port D2
 #define NEOPIXEL_COUNT 16
 
 /************************************************************************************************************
@@ -68,7 +67,6 @@ void change_sleep_state(String new_state);
 void run_colorPick_mode();
 void run_wakeupTime_mode();
 void run_sleepingTime_mode();
-void run_learning_mode();
 
 void run_mixed();
 void run_circle();
