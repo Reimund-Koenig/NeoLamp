@@ -10,7 +10,6 @@ struct tm timeinfo;
 uint8_t wakeup_brightness = 25;
 uint8_t daytime_brightness = 100;
 uint8_t sleep_brightness = 15;
-uint16_t blink_interval = 500;
 uint8_t colorBrightness = 0; // (max = 255)
 
 bool wakeup_isColorPickerNeeded = false;
@@ -95,7 +94,6 @@ void setup() {
 
     // Load values from persistent storage or use default
     init_blink();
-    update_blink_interval();
 
     update_wakeup_brightness();
     update_daytime_brightness();
@@ -111,6 +109,9 @@ void setup() {
 
     updateUserTimes();
     updateStateAndTime();
+
+    update_blink_interval();
+    updateBlinkState();
 }
 
 void loop() {
@@ -118,36 +119,21 @@ void loop() {
     stateMachine();
     blinkStateMachine();
     updateStateAndTime();
-    blink();
 }
-
 /************************************************************************************************************
 /*
 /* LED Blink Code
 /*
 *************/
-void blink() {
-    if(isSleeping(blink_sleep)) { return; }
-    if(blink_state) {
-        digitalWrite(LED1_PIN, HIGH);
-        digitalWrite(LED2_PIN, LOW);
-    } else {
-        digitalWrite(LED2_PIN, HIGH);
-        digitalWrite(LED1_PIN, LOW);
-    }
-    blink_state = !blink_state;
-    setNoneSleepingDelay(blink_interval, &blink_sleep);
-}
 
 void blinkStateMachine() {
-    int blink_state = d_blink.get_state();
-    if(blink_state == D_BLINK_DO_NOTHING) { return; }
-    if(blink_state == D_BLINK_SWITCH_LED_1_ON) {
+    if(d_blink.get_state() == D_BLINK_DO_NOTHING) { return; }
+    if(d_blink.get_state() == D_BLINK_SWITCH_LED_1_ON) {
         digitalWrite(LED_1, HIGH);
         digitalWrite(LED_2, LOW);
         return;
     }
-    if(blink_state == D_BLINK_SWITCH_LED_2_ON) {
+    if(d_blink.get_state() == D_BLINK_SWITCH_LED_2_ON) {
         digitalWrite(LED_1, LOW);
         digitalWrite(LED_2, HIGH);
         return;
@@ -448,7 +434,7 @@ void update_blink_interval() {
         value = "500";
         write_file(SPIFFS, BLINK_INTERVAL_FS, value.c_str());
     }
-    blink_interval = (uint16_t)(value.toInt());
+    d_blink.set_interval((uint16_t)(value.toInt()))
 }
 
 void update_wakeup_color() {
@@ -696,9 +682,9 @@ void change_sleep_state(String new_state) {
 }
 void updateState(int new_state) {
     if(state == new_state) { return; }
+    updateBlinkState();
     state = new_state;
     state_first_run = true;
-    updateBlinkState();
 }
 
 void updateBlinkState() {
@@ -708,6 +694,8 @@ void updateBlinkState() {
         updateBlink(read_file(SPIFFS, DAYTIME_BLINK_FS));
     } else if(state == STATE_SLEEPING_TIME) {
         updateBlink(read_file(SPIFFS, SLEEP_BLINK_FS));
+    } else {
+        updateBlink("0");
     }
 }
 

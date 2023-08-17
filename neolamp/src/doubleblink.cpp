@@ -8,6 +8,7 @@ Doubleblink::Doubleblink(){};
 
 void Doubleblink::start() { this->doNotBlink = false; }
 void Doubleblink::stop() { this->setDoNotBlink = true; }
+void Doubleblink::set_interval(uint16_t interval) { blink_interval = interval; }
 int Doubleblink::get_state() {
     if(this->doNotBlink) { return D_BLINK_DO_NOTHING; }
     if(helper.is_sleeping(db_clock_sleep)) { return D_BLINK_DO_NOTHING; }

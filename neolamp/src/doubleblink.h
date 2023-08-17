@@ -21,5 +21,6 @@ class Doubleblink {
     bool setDoNotBlink = false;
     bool switchHelper = false;
     LampHelper helper;
+    uint16_t blink_interval = 500;
 };
 #endif // DOUBLEBLINK

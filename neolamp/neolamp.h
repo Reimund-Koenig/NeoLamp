@@ -106,4 +106,3 @@ String processor(const String &var);
 String read_file(fs::FS &fs, const char *path);
 void write_file(fs::FS &fs, const char *path, const char *message);
 void printServerInfo();
-void blink();
