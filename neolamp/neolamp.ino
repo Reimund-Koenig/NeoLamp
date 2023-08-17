@@ -802,15 +802,15 @@ void handle_server_get(AsyncWebServerRequest *request) {
     } else if(request->hasParam(WAKEUP_BLINK_IN)) {
         tmp = request->getParam(WAKEUP_BLINK_IN)->value();
         write_file(SPIFFS, WAKEUP_BLINK_FS, tmp.c_str());
-        if(state == STATE_WAKEUP_TIME) { updateBlinkState(); }
+        updateBlinkState();
     } else if(request->hasParam(DAYTIME_BLINK_IN)) {
         tmp = request->getParam(DAYTIME_BLINK_IN)->value();
         write_file(SPIFFS, DAYTIME_BLINK_FS, tmp.c_str());
-        if(state == STATE_DAYTIME_TIME) { updateBlinkState(); }
+        updateBlinkState();
     } else if(request->hasParam(SLEEP_BLINK_IN)) {
         tmp = request->getParam(SLEEP_BLINK_IN)->value();
         write_file(SPIFFS, SLEEP_BLINK_FS, tmp.c_str());
-        if(state == STATE_SLEEPING_TIME) { updateBlinkState(); }
+        updateBlinkState();
     } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
         tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
         write_file(SPIFFS, SLEEP_BRIGHTNESS_FS, tmp.c_str());
@@ -836,7 +836,6 @@ void handle_server_get(AsyncWebServerRequest *request) {
         write_file(SPIFFS, BLINK_INTERVAL_FS, tmp.c_str());
         update_blink_interval();
     }
-    updateStateAndTime();
     request->send(200, "text/text", "ok");
 }
 
