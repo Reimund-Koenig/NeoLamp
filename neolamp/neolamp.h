@@ -89,7 +89,7 @@ void update_color_picker(String state, const char *file);
 void update_wakeup_brightness();
 void update_daytime_brightness();
 void update_sleep_brightness();
-void update_blink_intervall();
+void update_blink_interval();
 
 void update_sleep_color();
 void update_daytime_color();

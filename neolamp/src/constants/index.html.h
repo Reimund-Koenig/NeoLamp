@@ -283,6 +283,30 @@ const char index_html[] PROGMEM = R"rawliteral(
         <td><hr /></td>
       </tr>
       <!----------------------------------------------------->
+      <!-- Blink Time -->
+      <tr>
+        <td style="text-align: right; padding-right: 1em">Blink Intervall:</td>
+        <td>
+          <form action="/get" target="hidden-form" id="getBlink">
+            <input
+              name="input_blink_time"
+              value="%input_blink_time%"
+              type="range"
+              orient="vertical"
+              min="100"
+              max="4000"
+              step="100"
+              style="width: 15em"
+              onchange="handle_onchange_and_reload('getBlink')"
+            />
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td><hr /></td>
+        <td><hr /></td>
+      </tr>
+      <!----------------------------------------------------->
       <!-- Time Zone -->
       <tr>
         <td style="text-align: right; padding-right: 1em">Zeitzone:</td>

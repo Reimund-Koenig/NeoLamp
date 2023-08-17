@@ -26,9 +26,6 @@
 #define SLEEP_BRIGHTNESS_IN "input_sleep_brightness"
 #define SLEEP_BRIGHTNESS_FS "/input_sleep_brightness.txt"
 
-#define BLINK_INTERVALL_IN "input_blink_time"
-#define BLINK_INTERVALL_FS "/input_blink_time.txt"
-
 #define SLEEPTIME_COLOR_ROW_IN "sleeptime_color_row"
 #define DAYTIME_COLOR_ROW_IN "daytime_color_row"
 #define WAKEUP_COLOR_ROW_IN "wakeup_color_row"
@@ -44,6 +41,9 @@
 
 #define TIMEZONE_IN "input_timezone"
 #define TIMEZONE_FS "/input_timezone.txt"
+
+#define BLINK_INTERVAL_IN "input_blink_time"
+#define BLINK_INTERVAL_FS "/input_blink_time.txt"
 
 #define WAKEUP_BLINK_IN "input_wakeup_blink"
 #define WAKEUP_BLINK_FS "/input_wakeup_blink.txt"
