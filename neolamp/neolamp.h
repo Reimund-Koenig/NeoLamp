@@ -71,7 +71,7 @@ void updateStateAndTime();
 void init_blink();
 void blinkStateMachine();
 void updateBlink(String value);
-void updateBlinkState(int new_state);
+void updateBlinkState();
 
 void createRandomColor();
 
