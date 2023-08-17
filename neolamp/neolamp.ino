@@ -10,6 +10,7 @@ struct tm timeinfo;
 uint8_t wakeup_brightness = 25;
 uint8_t daytime_brightness = 100;
 uint8_t sleep_brightness = 15;
+uint16_t blink_intervall = 500;
 uint8_t colorBrightness = 0; // (max = 255)
 
 bool wakeup_isColorPickerNeeded = false;
@@ -17,9 +18,11 @@ bool daytime_isColorPickerNeeded = false;
 bool sleep_isColorPickerNeeded = false;
 unsigned long colorPicker_Color = 0;
 bool isColorUpdateNeeded = true;
+bool blink_state = true;
 
 unsigned long clock_sleep = 0;
 unsigned long substate_sleep = 0;
+unsigned long blink_time = 0;
 
 uint8_t state = 0;
 String wakeup_state = "";
@@ -55,6 +58,8 @@ void setup() {
     clock_prescale_set(clock_div_1);
 #endif
     Serial.begin(115200);
+    pinMode(LED1_PIN, OUTPUT);
+    pinMode(LED2_PIN, OUTPUT);
     // this resets all the neopixels to an off state
     strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
     strip.setBrightness(150);
@@ -111,6 +116,25 @@ void loop() {
     stateMachine();
     blinkStateMachine();
     updateStateAndTime();
+    blink();
+}
+
+/************************************************************************************************************
+/*
+/* LED Blink Code
+/*
+*************/
+void blink() {
+    if(isSleeping(blink_sleep)) { return; }
+    if(blink_state){
+        digitalWrite(LED1_PIN, HIGH);
+        digitalWrite(LED2_PIN, LOW);
+    } else {
+        digitalWrite(LED2_PIN, HIGH);
+        digitalWrite(LED1_PIN, LOW);
+    }
+    blink_state = !blink_state;
+    setNoneSleepingDelay(blink_intervall, &blink_sleep);
 }
 
 void blinkStateMachine() {
@@ -416,6 +440,15 @@ void update_sleep_brightness() {
     sleep_brightness = (uint8_t)(255 * percent);
 }
 
+void update_blink_intervall() {
+    String value = read_file(SPIFFS, BLINK_INTERVALL_FS);
+    if(value == "" || value == NULL) {
+        value = "500";
+        write_file(SPIFFS, BLINK_INTERVALL_FS, value.c_str());
+    }
+    blink_intervall = (uint16_t)(value.toInt());
+}
+
 void update_wakeup_color() {
     String value = read_file(SPIFFS, WAKEUP_COLOR_FS);
     if(value == "" || value == NULL) {
@@ -585,6 +618,8 @@ String processor(const String &var) {
             tmp += "</ option>";
         }
         return tmp;
+    } else if(var == BLINK_INTERVALL_IN) {
+        return read_file(SPIFFS, BLINK_INTERVALL_FS);
     } else if(var == WAKEUP_BRIGHTNESS_IN) {
         return read_file(SPIFFS, WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
@@ -794,6 +829,10 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(TIMEZONE_IN)->value();
         write_file(SPIFFS, TIMEZONE_FS, tmp.c_str());
         updateTimeZone();
+    } else if(request->hasParam(BLINK_INTERVALL_IN)) {
+        tmp = request->getParam(BLINK_INTERVALL_IN)->value();
+        write_file(SPIFFS, BLINK_INTERVALL_FS, tmp.c_str());
+        update_blink_intervall();
     }
     updateStateAndTime();
     request->send(200, "text/text", "ok");

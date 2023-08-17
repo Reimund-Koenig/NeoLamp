@@ -40,6 +40,8 @@
 #define LED_2 2        // Wemos D1 mini: port D3
 
 #define NEOPIXEL_COUNT 16
+#define LED1_PIN 6 // ToDo
+#define LED2_PIN 5 // ToDo
 
 /************************************************************************************************************
 /*
@@ -87,6 +89,7 @@ void update_color_picker(String state, const char *file);
 void update_wakeup_brightness();
 void update_daytime_brightness();
 void update_sleep_brightness();
+void update_blink_intervall();
 
 void update_sleep_color();
 void update_daytime_color();
@@ -103,3 +106,4 @@ String processor(const String &var);
 String read_file(fs::FS &fs, const char *path);
 void write_file(fs::FS &fs, const char *path, const char *message);
 void printServerInfo();
+void blink();
