@@ -137,8 +137,10 @@ void blinkStateMachine() {
         digitalWrite(LED_2, HIGH);
         return;
     }
-    digitalWrite(LED_1, LOW);
-    digitalWrite(LED_2, LOW);
+    if(current_state == D_BLINK_OFF) {
+        digitalWrite(LED_1, LOW);
+        digitalWrite(LED_2, LOW);
+    }
 }
 
 /************************************************************************************************************
