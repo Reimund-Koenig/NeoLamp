@@ -6,7 +6,10 @@ unsigned long db_clock_sleep = 0;
 
 Doubleblink::Doubleblink(){};
 
-void Doubleblink::start() { this->doNotBlink = false; }
+void Doubleblink::start() {
+    this->doNotBlink = false;
+    this->setDoNotBlink = false;
+}
 void Doubleblink::stop() { this->setDoNotBlink = true; }
 void Doubleblink::set_interval(uint16_t interval) { blink_interval = interval; }
 int Doubleblink::get_state() {
@@ -15,7 +18,6 @@ int Doubleblink::get_state() {
     helper.set_none_sleeping_delay(blink_interval, &db_clock_sleep);
     if(this->setDoNotBlink) {
         this->doNotBlink = true;
-        this->setDoNotBlink = false;
         return D_BLINK_OFF;
     }
     this->switchHelper = !this->switchHelper;
