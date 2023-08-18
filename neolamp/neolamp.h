@@ -40,8 +40,6 @@
 #define LED_2 2        // Wemos D1 mini: port D3
 
 #define NEOPIXEL_COUNT 16
-#define LED1_PIN 6 // ToDo
-#define LED2_PIN 5 // ToDo
 
 /************************************************************************************************************
 /*
