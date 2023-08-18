@@ -12,7 +12,7 @@ void Doubleblink::set_interval(uint16_t interval) { blink_interval = interval; }
 int Doubleblink::get_state() {
     if(this->doNotBlink) { return D_BLINK_DO_NOTHING; }
     if(helper.is_sleeping(db_clock_sleep)) { return D_BLINK_DO_NOTHING; }
-    helper.set_none_sleeping_delay(2000, &db_clock_sleep);
+    helper.set_none_sleeping_delay(blink_interval, &db_clock_sleep);
     if(this->setDoNotBlink) {
         this->doNotBlink = true;
         this->setDoNotBlink = false;

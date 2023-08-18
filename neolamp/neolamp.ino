@@ -127,13 +127,14 @@ void loop() {
 *************/
 
 void blinkStateMachine() {
-    if(d_blink.get_state() == D_BLINK_DO_NOTHING) { return; }
-    if(d_blink.get_state() == D_BLINK_SWITCH_LED_1_ON) {
+    int current_state = d_blink.get_state();
+    if(current_state == D_BLINK_DO_NOTHING) { return; }
+    if(current_state == D_BLINK_SWITCH_LED_1_ON) {
         digitalWrite(LED_1, HIGH);
         digitalWrite(LED_2, LOW);
         return;
     }
-    if(d_blink.get_state() == D_BLINK_SWITCH_LED_2_ON) {
+    if(current_state == D_BLINK_SWITCH_LED_2_ON) {
         digitalWrite(LED_1, LOW);
         digitalWrite(LED_2, HIGH);
         return;
@@ -434,7 +435,7 @@ void update_blink_interval() {
         value = "500";
         write_file(SPIFFS, BLINK_INTERVAL_FS, value.c_str());
     }
-    d_blink.set_interval((uint16_t)(value.toInt()))
+    d_blink.set_interval((uint16_t)(value.toInt()));
 }
 
 void update_wakeup_color() {

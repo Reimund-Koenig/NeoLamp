@@ -15,6 +15,7 @@ class Doubleblink {
     void start();
     void stop();
     int get_state();
+    void set_interval(uint16_t interval);
 
   private:
     bool doNotBlink = true;
