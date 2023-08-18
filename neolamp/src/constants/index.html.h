@@ -293,13 +293,14 @@ const char index_html[] PROGMEM = R"rawliteral(
               value="%input_blink_time%"
               type="range"
               orient="vertical"
-              min="100"
-              max="4000"
-              step="100"
+              min="500"
+              max="5000"
+              step="500"
               style="width: 15em"
               onchange="handle_onchange_and_reload('getBlink')"
             />
           </form>
+          %input_blink_time% ms
         </td>
       </tr>
       <tr>
