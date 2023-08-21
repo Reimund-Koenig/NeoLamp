@@ -683,9 +683,9 @@ void change_sleep_state(String new_state) {
 }
 void updateState(int new_state) {
     if(state == new_state) { return; }
-    updateBlinkState();
     state = new_state;
     state_first_run = true;
+    updateBlinkState();
 }
 
 void updateBlinkState() {
