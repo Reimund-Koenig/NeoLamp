@@ -127,12 +127,12 @@ void loop() {
 void blinkStateMachine() {
     int current_state = d_blink.get_state();
     if(current_state == D_BLINK_DO_NOTHING) { return; }
-    if(current_state == D_BLINK_SWITCH_LED_1_ON) {
+    if(current_state == D_BLINK_SWITCH_BLUE_LED_ON) {
         digitalWrite(LED_1, HIGH);
         digitalWrite(LED_2, LOW);
         return;
     }
-    if(current_state == D_BLINK_SWITCH_LED_2_ON) {
+    if(current_state == D_BLINK_SWITCH_YELLOW_LED_ON) {
         digitalWrite(LED_1, LOW);
         digitalWrite(LED_2, HIGH);
         return;
@@ -381,17 +381,17 @@ void update_color_brightness(uint8_t inputBrightness) {
 void init_blink() {
     String value = read_file(SPIFFS, WAKEUP_BLINK_FS);
     if(value == "" || value == NULL) {
-        value = "0";
+        value = D_LED_MODE_OFF;
         write_file(SPIFFS, WAKEUP_BLINK_FS, value.c_str());
     }
     value = read_file(SPIFFS, DAYTIME_BLINK_FS);
     if(value == "" || value == NULL) {
-        value = "1";
+        value = D_LED_MODE_BLINK;
         write_file(SPIFFS, DAYTIME_BLINK_FS, value.c_str());
     }
     value = read_file(SPIFFS, SLEEP_BLINK_FS);
     if(value == "" || value == NULL) {
-        value = "0";
+        value = D_LED_MODE_YELLOW;
         write_file(SPIFFS, SLEEP_BLINK_FS, value.c_str());
     }
 }
@@ -612,11 +612,65 @@ String processor(const String &var) {
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
         return read_file(SPIFFS, DAYTIME_BRIGHTNESS_FS);
     } else if(var == BLINK_INTERVAL_IN) {
-        return read_file(SPIFFS, BLINK_INTERVAL_FS);
+        String tmp = "";
+        String value = read_file(SPIFFS, BLINK_INTERVAL_FS);
+        if(value == "" || value == NULL || value = "1" || value == "0") {
+            value = D_LED_MODE_BLINK;
+        };
+        for(int i = 0;
+            i < sizeof(array_of_blink_modes) / sizeof(array_of_blink_modes[0]);
+            i++) {
+            tmp += "<option value = '";
+            tmp += array_of_blink_modes[i][1];
+            if(value == array_of_blink_modes[i][1]) {
+                tmp += "' selected>";
+            } else {
+                tmp += "'>";
+            }
+            tmp += array_of_blink_modes[i][0];
+            tmp += "</ option>";
+        }
+        return tmp;
     } else if(var == WAKEUP_BLINK_IN) {
-        return read_file(SPIFFS, WAKEUP_BLINK_FS);
+        String tmp = "";
+        String value = read_file(SPIFFS, WAKEUP_BLINK_FS);
+        if(value == "" || value == NULL || value = "1" || value == "0") {
+            value = D_LED_MODE_BLINK;
+        };
+        for(int i = 0;
+            i < sizeof(array_of_blink_modes) / sizeof(array_of_blink_modes[0]);
+            i++) {
+            tmp += "<option value = '";
+            tmp += array_of_blink_modes[i][1];
+            if(value == array_of_blink_modes[i][1]) {
+                tmp += "' selected>";
+            } else {
+                tmp += "'>";
+            }
+            tmp += array_of_blink_modes[i][0];
+            tmp += "</ option>";
+        }
+        return tmp;
     } else if(var == DAYTIME_BLINK_IN) {
-        return read_file(SPIFFS, DAYTIME_BLINK_FS);
+        String tmp = "";
+        String value = read_file(SPIFFS, DAYTIME_BLINK_FS);
+        if(value == "" || value == NULL || value = "1" || value == "0") {
+            value = D_LED_MODE_BLINK;
+        };
+        for(int i = 0;
+            i < sizeof(array_of_blink_modes) / sizeof(array_of_blink_modes[0]);
+            i++) {
+            tmp += "<option value = '";
+            tmp += array_of_blink_modes[i][1];
+            if(value == array_of_blink_modes[i][1]) {
+                tmp += "' selected>";
+            } else {
+                tmp += "'>";
+            }
+            tmp += array_of_blink_modes[i][0];
+            tmp += "</ option>";
+        }
+        return tmp;
     } else if(var == SLEEP_BLINK_IN) {
         return read_file(SPIFFS, SLEEP_BLINK_FS);
     } else if(var == SLEEP_BRIGHTNESS_IN) {
@@ -701,11 +755,11 @@ void updateBlinkState() {
 }
 
 void updateBlink(String value) {
-    if(value == "0") {
+    if(value == D_LED_MODE_OFF {
         d_blink.stop();
-        return;
+    } else {
+        d_blink.start(value);
     }
-    d_blink.start();
 }
 
 void createRandomColor() {

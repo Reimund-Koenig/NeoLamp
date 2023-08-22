@@ -6,12 +6,17 @@ unsigned long db_clock_sleep = 0;
 
 Doubleblink::Doubleblink(){};
 
-void Doubleblink::start() {
+void Doubleblink::start(String mode) {
     this->doNotBlink = false;
     this->setDoNotBlink = false;
+    this->isStableColorReturned = false;
+    this->mode = mode;
 }
+
 void Doubleblink::stop() { this->setDoNotBlink = true; }
+
 void Doubleblink::set_interval(uint16_t interval) { blink_interval = interval; }
+
 int Doubleblink::get_state() {
     if(this->doNotBlink) { return D_BLINK_DO_NOTHING; }
     if(helper.is_sleeping(db_clock_sleep)) { return D_BLINK_DO_NOTHING; }
@@ -20,7 +25,37 @@ int Doubleblink::get_state() {
         this->doNotBlink = true;
         return D_BLINK_OFF;
     }
+    if(mode == D_LED_MODE_BLINK)
+        return get_state_blink;
+    else if(mode == D_LED_MODE_BLUE) {
+        if(isStableColorReturned) { return D_BLINK_DO_NOTHING; }
+        isStableColorReturned = true;
+        return D_BLINK_SWITCH_BLUE_LED_ON;
+    } else if(mode == D_LED_MODE_YELLOW) {
+        if(isStableColorReturned) { return D_BLINK_DO_NOTHING; }
+        isStableColorReturned = true;
+        return D_BLINK_SWITCH_YELLOW_LED_ON;
+    } else if(mode == D_LED_MODE_BLUE_BLINK) {
+        return get_state_blue_blink();
+    } else if(mode == D_LED_MODE_YELLOW_BLINK) {
+        return get_state_yellow_blink();
+    }
+}
+
+int Doubleblink::get_state_blue_blink() {
     this->switchHelper = !this->switchHelper;
-    if(this->switchHelper) { return D_BLINK_SWITCH_LED_1_ON; }
-    return D_BLINK_SWITCH_LED_2_ON;
+    if(this->switchHelper) { return D_BLINK_OFF; }
+    return D_BLINK_SWITCH_BLUE_LED_ON;
+}
+
+int Doubleblink::get_state_yellow_blink() {
+    this->switchHelper = !this->switchHelper;
+    if(this->switchHelper) { return D_BLINK_SWITCH_YELLOW_LED_ON; }
+    return D_BLINK_OFF;
+}
+
+int Doubleblink::get_state_blink() {
+    this->switchHelper = !this->switchHelper;
+    if(this->switchHelper) { return D_BLINK_SWITCH_YELLOW_LED_ON; }
+    return D_BLINK_SWITCH_BLUE_LED_ON;
 }
