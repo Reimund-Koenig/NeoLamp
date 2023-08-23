@@ -2,6 +2,7 @@
 #define DOUBLEBLINK
 #include "constants/blink_modes.h"
 #include "constants/html_inputs.h"
+#include "constants/modes.h"
 #include "constants/pins.h"
 #include "lampfilesystem.h"
 #include "lamphelper.h"
@@ -16,12 +17,15 @@ class Doubleblink {
   public:
     Doubleblink(LampFileSystem *lfs);
     void loop();
-    void start(String mode);
-    void stop();
     void set_interval(uint16_t interval);
+
+    void updateBlinkState(uint8_t state);
 
   private:
     int get_state();
+    void start(String mode);
+    void stop();
+    void updateBlink(String value);
     String mode = "";
     bool isStableColorReturned = false;
     bool doNotBlink = true;

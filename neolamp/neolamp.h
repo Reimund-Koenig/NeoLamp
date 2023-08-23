@@ -13,6 +13,7 @@
 #include "src/constants/html_inputs.h"
 #include "src/constants/index.html.h"
 #include "src/constants/modes.h"
+#include "src/constants/modes_array.h"
 #include "src/constants/pins.h"
 #include "src/constants/secrets.h"
 #include "src/constants/timezones.h"
@@ -23,9 +24,6 @@
 
 #define NAME "Finns Nachtlicht"
 #define URL "finn"
-#define STATE_SLEEPING_TIME 0
-#define STATE_WAKEUP_TIME 1
-#define STATE_DAYTIME_TIME 2
 
 #define NEOPIXEL_COUNT 16
 
@@ -54,11 +52,6 @@ void run_lamp_off();
 
 void updateStateAndTime();
 
-void init_blink();
-void blinkStateMachine();
-void updateBlink(String value);
-void updateBlinkState();
-
 void createRandomColor();
 
 bool colorCircle(unsigned long wait);
@@ -75,7 +68,6 @@ void update_color_picker(String state, const char *file);
 void update_wakeup_brightness();
 void update_daytime_brightness();
 void update_sleep_brightness();
-void update_blink_interval();
 
 void update_sleep_color();
 void update_daytime_color();

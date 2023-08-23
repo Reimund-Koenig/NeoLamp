@@ -17,11 +17,9 @@ bool daytime_isColorPickerNeeded = false;
 bool sleep_isColorPickerNeeded = false;
 unsigned long colorPicker_Color = 0;
 bool isColorUpdateNeeded = true;
-bool blink_state = true;
 
 unsigned long clock_sleep = 0;
 unsigned long substate_sleep = 0;
-unsigned long blink_time = 0;
 
 uint8_t state = 0;
 String wakeup_state = "";
@@ -106,8 +104,7 @@ void setup() {
     updateUserTimes();
     updateStateAndTime();
 
-    update_blink_interval();
-    updateBlinkState();
+    db->updateBlinkState(state);
 }
 
 void loop() {
@@ -365,15 +362,6 @@ void update_sleep_brightness() {
     float percent = value.toFloat() / 100.0;
     if(percent > 1.0) { percent = 1.0; }
     sleep_brightness = (uint8_t)(255 * percent);
-}
-
-void update_blink_interval() {
-    String value = lfs->read_file(BLINK_INTERVAL_FS);
-    if(value == "" || value == NULL) {
-        value = "500";
-        lfs->write_file(BLINK_INTERVAL_FS, value.c_str());
-    }
-    db->set_interval((uint16_t)(value.toInt()));
 }
 
 void update_wakeup_color() {
@@ -677,27 +665,7 @@ void updateState(int new_state) {
     if(state == new_state) { return; }
     state = new_state;
     state_first_run = true;
-    updateBlinkState();
-}
-
-void updateBlinkState() {
-    if(state == STATE_WAKEUP_TIME) {
-        updateBlink(lfs->read_file(WAKEUP_BLINK_FS));
-    } else if(state == STATE_DAYTIME_TIME) {
-        updateBlink(lfs->read_file(DAYTIME_BLINK_FS));
-    } else if(state == STATE_SLEEPING_TIME) {
-        updateBlink(lfs->read_file(SLEEP_BLINK_FS));
-    } else {
-        updateBlink("0");
-    }
-}
-
-void updateBlink(String value) {
-    if(value == D_LED_MODE_OFF) {
-        db->stop();
-    } else {
-        db->start(value);
-    }
+    db->updateBlinkState(state);
 }
 
 void createRandomColor() {
@@ -783,15 +751,15 @@ void handle_server_get(AsyncWebServerRequest *request) {
     } else if(request->hasParam(WAKEUP_BLINK_IN)) {
         tmp = request->getParam(WAKEUP_BLINK_IN)->value();
         lfs->write_file(WAKEUP_BLINK_FS, tmp.c_str());
-        updateBlinkState();
+        db->updateBlinkState(state);
     } else if(request->hasParam(DAYTIME_BLINK_IN)) {
         tmp = request->getParam(DAYTIME_BLINK_IN)->value();
         lfs->write_file(DAYTIME_BLINK_FS, tmp.c_str());
-        updateBlinkState();
+        db->updateBlinkState(state);
     } else if(request->hasParam(SLEEP_BLINK_IN)) {
         tmp = request->getParam(SLEEP_BLINK_IN)->value();
         lfs->write_file(SLEEP_BLINK_FS, tmp.c_str());
-        updateBlinkState();
+        db->updateBlinkState(state);
     } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
         tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
         lfs->write_file(SLEEP_BRIGHTNESS_FS, tmp.c_str());
@@ -815,7 +783,7 @@ void handle_server_get(AsyncWebServerRequest *request) {
     } else if(request->hasParam(BLINK_INTERVAL_IN)) {
         tmp = request->getParam(BLINK_INTERVAL_IN)->value();
         lfs->write_file(BLINK_INTERVAL_FS, tmp.c_str());
-        update_blink_interval();
+        db->set_interval((uint16_t)(tmp.toInt()));
     }
     request->send(200, "text/text", "ok");
 }

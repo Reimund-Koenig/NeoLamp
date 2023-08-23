@@ -19,6 +19,12 @@ Doubleblink::Doubleblink(LampFileSystem *lfs) {
         value = D_LED_MODE_YELLOW;
         lfs->write_file(SLEEP_BLINK_FS, value.c_str());
     }
+    value = lfs->read_file(BLINK_INTERVAL_FS);
+    if(value == "" || value == NULL) {
+        value = "500";
+        lfs->write_file(BLINK_INTERVAL_FS, value.c_str());
+    }
+    set_interval((uint16_t)(value.toInt()));
 }
 
 void Doubleblink::loop() {
@@ -93,4 +99,24 @@ int Doubleblink::get_state_blink() {
     this->switchHelper = !this->switchHelper;
     if(this->switchHelper) { return D_BLINK_SWITCH_YELLOW_LED_ON; }
     return D_BLINK_SWITCH_BLUE_LED_ON;
+}
+
+void Doubleblink::updateBlinkState(uint8_t state) {
+    if(state == STATE_WAKEUP_TIME) {
+        updateBlink(lfs->read_file(WAKEUP_BLINK_FS));
+    } else if(state == STATE_DAYTIME_TIME) {
+        updateBlink(lfs->read_file(DAYTIME_BLINK_FS));
+    } else if(state == STATE_SLEEPING_TIME) {
+        updateBlink(lfs->read_file(SLEEP_BLINK_FS));
+    } else {
+        updateBlink("0");
+    }
+}
+
+void Doubleblink::updateBlink(String value) {
+    if(value == D_LED_MODE_OFF) {
+        stop();
+    } else {
+        start(value);
+    }
 }
