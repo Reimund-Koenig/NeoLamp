@@ -43,7 +43,7 @@ Clocktime user_sleep_time;
 Clocktime user_daytime_time;
 Clocktime current_time;
 LampHelper helper;
-Doubleblink *d_blink;
+Doubleblink *db;
 LampFileSystem *lfs;
 
 /************************************************************************************************************
@@ -89,8 +89,7 @@ void setup() {
     // printServerInfo();
 
     // Load values from persistent storage or use default
-    d_blink = new Doubleblink(lfs);
-    d_blink->init_blink();
+    db = new Doubleblink(lfs);
 
     update_wakeup_brightness();
     update_daytime_brightness();
@@ -114,7 +113,7 @@ void setup() {
 void loop() {
     MDNS.update();
     stateMachine();
-    d_blink->loop();
+    db->loop();
     updateStateAndTime();
 }
 
@@ -374,7 +373,7 @@ void update_blink_interval() {
         value = "500";
         lfs->write_file(BLINK_INTERVAL_FS, value.c_str());
     }
-    d_blink->set_interval((uint16_t)(value.toInt()));
+    db->set_interval((uint16_t)(value.toInt()));
 }
 
 void update_wakeup_color() {
@@ -695,9 +694,9 @@ void updateBlinkState() {
 
 void updateBlink(String value) {
     if(value == D_LED_MODE_OFF) {
-        d_blink->stop();
+        db->stop();
     } else {
-        d_blink->start(value);
+        db->start(value);
     }
 }
 

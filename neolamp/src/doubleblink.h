@@ -15,7 +15,6 @@
 class Doubleblink {
   public:
     Doubleblink(LampFileSystem *lfs);
-    void init_blink();
     void loop();
     void start(String mode);
     void stop();

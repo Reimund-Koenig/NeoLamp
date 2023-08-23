@@ -2,9 +2,8 @@
 
 unsigned long db_clock_sleep = 0;
 
-Doubleblink::Doubleblink(LampFileSystem *lfs) { this->lfs = lfs; };
-
-void Doubleblink::init_blink() {
+Doubleblink::Doubleblink(LampFileSystem *lfs) {
+    this->lfs = lfs;
     String value = lfs->read_file(WAKEUP_BLINK_FS);
     if(value == "" || value == NULL) {
         value = D_LED_MODE_OFF;
