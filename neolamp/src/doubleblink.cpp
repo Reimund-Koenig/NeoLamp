@@ -2,23 +2,23 @@
 
 unsigned long db_clock_sleep = 0;
 
-Doubleblink::Doubleblink(){};
+Doubleblink::Doubleblink(LampFileSystem *lsf) { this->lsf = lsf; };
 
 void Doubleblink::init_blink() {
     String value = read_file(SPIFFS, WAKEUP_BLINK_FS);
     if(value == "" || value == NULL) {
         value = D_LED_MODE_OFF;
-        write_file(SPIFFS, WAKEUP_BLINK_FS, value.c_str());
+        lsf.write_file(SPIFFS, WAKEUP_BLINK_FS, value.c_str());
     }
     value = read_file(SPIFFS, DAYTIME_BLINK_FS);
     if(value == "" || value == NULL) {
         value = D_LED_MODE_BLINK;
-        write_file(SPIFFS, DAYTIME_BLINK_FS, value.c_str());
+        lsf.write_file(SPIFFS, DAYTIME_BLINK_FS, value.c_str());
     }
     value = read_file(SPIFFS, SLEEP_BLINK_FS);
     if(value == "" || value == NULL) {
         value = D_LED_MODE_YELLOW;
-        write_file(SPIFFS, SLEEP_BLINK_FS, value.c_str());
+        lsf.write_file(SPIFFS, SLEEP_BLINK_FS, value.c_str());
     }
 }
 

@@ -7,8 +7,6 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPAsyncWiFiManager.h> //https://github.com/tzapu/WiFiManager
-#include <FS.h>
-#include <Hash.h>
 
 #include "src/clocktime.h"
 #include "src/constants/blink_mode_array.h"
@@ -19,6 +17,7 @@
 #include "src/constants/secrets.h"
 #include "src/constants/timezones.h"
 #include "src/doubleblink.h"
+#include "src/lampfilesystem.h"
 #include "src/lamphelper.h"
 #include "time.h"
 
