@@ -1,6 +1,7 @@
 #ifndef DOUBLEBLINK
 #define DOUBLEBLINK
 #include "constants/blink_modes.h"
+#include "constants/pins.h"
 #include "lamphelper.h"
 #include <Arduino.h>
 
@@ -15,10 +16,10 @@ class Doubleblink {
     void loop();
     void start(String mode);
     void stop();
-    int get_state();
     void set_interval(uint16_t interval);
 
   private:
+    int get_state();
     String mode = "";
     bool isStableColorReturned = false;
     bool doNotBlink = true;

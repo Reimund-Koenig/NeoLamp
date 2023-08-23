@@ -10,8 +10,8 @@ Doubleblink::Doubleblink(){};
 /*
 *************/
 
-void loop() {
-    int current_state = d_blink.get_state();
+void Doubleblink::loop() {
+    int current_state = get_state();
     if(current_state == D_BLINK_DO_NOTHING) { return; }
     if(current_state == D_BLINK_SWITCH_BLUE_LED_ON) {
         digitalWrite(LED_1, HIGH);

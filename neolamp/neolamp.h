@@ -15,6 +15,7 @@
 #include "src/constants/html_inputs.h"
 #include "src/constants/index.html.h"
 #include "src/constants/modes.h"
+#include "src/constants/pins.h"
 #include "src/constants/secrets.h"
 #include "src/constants/timezones.h"
 #include "src/doubleblink.h"
@@ -26,10 +27,6 @@
 #define STATE_SLEEPING_TIME 0
 #define STATE_WAKEUP_TIME 1
 #define STATE_DAYTIME_TIME 2
-
-#define NEOPIXEL_PIN 4 // Wemos D1 mini: port D2
-#define LED_1 0        // Wemos D1 mini: port D3
-#define LED_2 2        // Wemos D1 mini: port D3
 
 #define NEOPIXEL_COUNT 16
 
