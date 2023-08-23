@@ -1,6 +1,4 @@
-
 #include "doubleblink.h"
-#include <Arduino.h>
 
 unsigned long db_clock_sleep = 0;
 

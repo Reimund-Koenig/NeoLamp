@@ -1,6 +1,5 @@
 #ifndef DOUBLEBLINK
 #define DOUBLEBLINK
-#include "clocktime.h"
 #include "constants/blink_modes.h"
 #include "lamphelper.h"
 #include <Arduino.h>
