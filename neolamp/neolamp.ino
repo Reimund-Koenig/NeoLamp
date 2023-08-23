@@ -458,130 +458,37 @@ String processor(const String &var) {
     } else if(var == DAYTIME_TIME_IN) {
         return lfs->read_file(DAYTIME_TIME_FS);
     } else if(var == WAKEUP_MODE_IN) {
-        String tmp = "";
         String value = lfs->read_file(WAKEUP_MODE_FS);
         if(value == "" || value == NULL) { value = "green"; };
-        for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += modes[i][1];
-            if(value == modes[i][1]) {
-                wakeup_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
+        return helper.getHtmlSelect(modes, value);
     } else if(var == DAYTIME_MODE_IN) {
-        String tmp = "";
         String value = lfs->read_file(DAYTIME_MODE_FS);
         if(value == "" || value == NULL) { value = "mix"; };
-        for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += modes[i][1];
-            if(value == modes[i][1]) {
-                daytime_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
+        return helper.getHtmlSelect(modes, value);
     } else if(var == SLEEP_MODE_IN) {
-        String tmp = "";
         String value = lfs->read_file(SLEEP_MODE_FS);
         if(value == "" || value == NULL) { value = "orange"; };
-        for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += modes[i][1];
-            if(value == modes[i][1]) {
-                sleep_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
+        return helper.getHtmlSelect(modes, value);
     } else if(var == TIMEZONE_IN) {
-        String tmp = "";
         String value = lfs->read_file(TIMEZONE_FS);
         if(value == "" || value == NULL) { value = "Europe_Berlin"; };
-        for(int i = 0; i < sizeof(timezones) / sizeof(timezones[0]); i++) {
-            tmp += "<option value = '";
-            tmp += timezones[i][0];
-            if(value == timezones[i][0]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += timezones[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
+        return helper.getHtmlSelect(timezones, value);
     } else if(var == WAKEUP_BRIGHTNESS_IN) {
         return lfs->read_file(WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
         return lfs->read_file(DAYTIME_BRIGHTNESS_FS);
     } else if(var == SLEEP_BLINK_IN) {
-        String tmp = "";
         String value = lfs->read_file(SLEEP_BLINK_FS);
-        if(value == "" || value == NULL || value == "1" || value == "0") {
-            value = D_LED_MODE_BLINK;
-        }
-        for(int i = 0; i < sizeof(blink_modes) / sizeof(blink_modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += blink_modes[i][1];
-            if(value == blink_modes[i][1]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += blink_modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
+        if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
+        return helper.getHtmlSelect(blink_modes, value);
     } else if(var == WAKEUP_BLINK_IN) {
-        String tmp = "";
         String value = lfs->read_file(WAKEUP_BLINK_FS);
-        if(value == "" || value == NULL || value == "1" || value == "0") {
-            value = D_LED_MODE_OFF;
-        }
-        for(int i = 0; i < sizeof(blink_modes) / sizeof(blink_modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += blink_modes[i][1];
-            if(value == blink_modes[i][1]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += blink_modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
+        if(value == "" || value == NULL) { value = D_LED_MODE_OFF; }
+        return helper.getHtmlSelect(blink_modes, value);
     } else if(var == DAYTIME_BLINK_IN) {
-        String tmp = "";
         String value = lfs->read_file(DAYTIME_BLINK_FS);
-        if(value == "" || value == NULL || value == "1" || value == "0") {
-            value = D_LED_MODE_BLINK;
-        }
-        for(int i = 0; i < sizeof(blink_modes) / sizeof(blink_modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += blink_modes[i][1];
-            if(value == blink_modes[i][1]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += blink_modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
+        if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
+        return helper.getHtmlSelect(blink_modes, value);
     } else if(var == BLINK_INTERVAL_IN) {
         return lfs->read_file(BLINK_INTERVAL_FS);
     } else if(var == SLEEP_BRIGHTNESS_IN) {

@@ -11,6 +11,7 @@ class LampHelper {
     void set_none_sleeping_delay(unsigned long wait,
                                  unsigned long *sleepUntilTime);
     bool is_sleeping(unsigned long sleepUntilTime);
+    String getHtmlSelect(const char *a[][2], String selected_value);
 
   private:
     Clocktime get_biggest_time(Clocktime t1, Clocktime t2);
