@@ -755,7 +755,7 @@ void updateBlinkState() {
 }
 
 void updateBlink(String value) {
-    if(value == D_LED_MODE_OFF {
+    if(value == D_LED_MODE_OFF) {
         d_blink.stop();
     } else {
         d_blink.start(value);
