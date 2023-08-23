@@ -1,7 +1,6 @@
-#include "filesystem.h"
+#include "lampfilesystem.h"
 
-void LampFileSystem::LampFileSystem() {}
-void init() {
+LampFileSystem::LampFileSystem() {
     while(!SPIFFS.begin()) {
         Serial.println("An Error has occurred while mounting SPIFFS");
     }

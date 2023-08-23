@@ -6,7 +6,6 @@
 class LampFileSystem {
   public:
     LampFileSystem();
-    void init();
     void write_file(const char *path, const char *message);
     String read_file(const char *path);
 

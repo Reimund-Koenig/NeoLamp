@@ -3,7 +3,7 @@
 #include "constants/blink_modes.h"
 #include "constants/html_inputs.h"
 #include "constants/pins.h"
-#include "filesystem.h"
+#include "lampfilesystem.h"
 #include "lamphelper.h"
 #include <Arduino.h>
 
@@ -14,7 +14,7 @@
 
 class Doubleblink {
   public:
-    Doubleblink();
+    Doubleblink(LampFileSystem *lfs);
     void init_blink();
     void loop();
     void start(String mode);
@@ -33,6 +33,6 @@ class Doubleblink {
     int get_state_blink();
     int get_state_blue_blink();
     int get_state_yellow_blink();
-    LampFileSystem *lsf;
+    LampFileSystem *lfs;
 };
 #endif // DOUBLEBLINK

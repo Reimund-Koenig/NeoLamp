@@ -4,10 +4,10 @@
       "name": "Linux",
       "includePath": [
         "${workspaceFolder}/**",
-        "~/Downloads/arduino-1.8.15-linux64/arduino-1.8.15"
+        "C:/Users/katha/AppData/Local/Arduino15"
       ],
       "defines": [],
-      "compilerPath": "/usr/bin/gcc",
+      //"compilerPath": "C:/Users/katha/AppData/Local/Arduino15",
       "cStandard": "c11",
       "cppStandard": "gnu++14",
       "intelliSenseMode": "linux-gcc-x64"
