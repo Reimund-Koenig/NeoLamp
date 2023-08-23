@@ -109,12 +109,11 @@ void setup() {
 
     updateUserTimes();
     updateStateAndTime();
+    db->updateBlinkState(state);
 
     pinMode(BUTTON_PIN, INPUT_PULLUP);
-
     int a0 = analogRead(A0);
     last_a0 = a0 - (a0 % STEPS);
-    db->updateBlinkState(state);
 }
 
 void loop() {
@@ -325,8 +324,8 @@ void handleButton() {
 *************/
 
 void updateStateAndTime() {
-    if(isSleeping(clock_sleep)) { return; }
-    setNoneSleepingDelay(200, &clock_sleep);
+    if(helper.is_sleeping(clock_sleep)) { return; }
+    helper.set_none_sleeping_delay(200, &clock_sleep);
     handlePotiBrightnessInput();
     handleButton();
     updateTime();
