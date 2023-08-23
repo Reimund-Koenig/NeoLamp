@@ -18,13 +18,10 @@
 
     <script>
       function handle_onchange_and_reload(x) {
-          document.getElementById(x).submit();
-          setTimeout(function () {
-            document.location.reload(false);
-          }, 1000);
-      }
-      function handle_onchange(x) {
         document.getElementById(x).submit();
+        setTimeout(function () {
+          document.location.reload(false);
+        }, 1000);
       }
     </script>
   </head>

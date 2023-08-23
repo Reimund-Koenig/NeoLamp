@@ -1,6 +1,5 @@
 
 #include "clocktime.h "
-#include <Arduino.h>
 
 Clocktime::Clocktime(){
 

@@ -1,0 +1,6 @@
+#define D_LED_MODE_OFF "off"
+#define D_LED_MODE_BLINK "blink"
+#define D_LED_MODE_BLUE "blue"
+#define D_LED_MODE_YELLOW "yellow"
+#define D_LED_MODE_YELLOW_BLINK "yb"
+#define D_LED_MODE_BLUE_BLINK "bb"

@@ -8,6 +8,9 @@ class LampHelper {
     LampHelper();
     int get_state(Clocktime current_time, Clocktime t1, int m1, Clocktime t2,
                   int m2, Clocktime t3, int m3);
+    void set_none_sleeping_delay(unsigned long wait,
+                                 unsigned long *sleepUntilTime);
+    bool is_sleeping(unsigned long sleepUntilTime);
 
   private:
     Clocktime get_biggest_time(Clocktime t1, Clocktime t2);
