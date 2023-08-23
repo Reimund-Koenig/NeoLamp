@@ -3,9 +3,7 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
-                "C:/Users/katha/AppData/Local/Arduino15/**",
-                "C:/Users/katha/Documents/Arduino/**"
+                "${workspaceFolder}/**"
             ],
             "defines": [],
             "cStandard": "c11",
