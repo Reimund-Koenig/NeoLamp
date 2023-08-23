@@ -614,7 +614,7 @@ String processor(const String &var) {
     } else if(var == BLINK_INTERVAL_IN) {
         String tmp = "";
         String value = read_file(SPIFFS, BLINK_INTERVAL_FS);
-        if(value == "" || value == NULL || value = "1" || value == "0") {
+        if(value == "" || value == NULL || value == "1" || value == "0") {
             value = D_LED_MODE_BLINK;
         };
         for(int i = 0;
