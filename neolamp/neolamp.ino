@@ -114,7 +114,7 @@ void setup() {
 
     int a0 = analogRead(A0);
     last_a0 = a0 - (a0 % STEPS);
-    == == == = db->updateBlinkState(state);
+    db->updateBlinkState(state);
 }
 
 void loop() {
