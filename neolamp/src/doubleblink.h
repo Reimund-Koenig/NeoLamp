@@ -1,6 +1,7 @@
 #ifndef DOUBLEBLINK
 #define DOUBLEBLINK
 #include "constants/blink_modes.h"
+#include "constants/html_inputs.h"
 #include "constants/pins.h"
 #include "lamphelper.h"
 #include <Arduino.h>
@@ -13,6 +14,7 @@
 class Doubleblink {
   public:
     Doubleblink();
+    void init_blink();
     void loop();
     void start(String mode);
     void stop();

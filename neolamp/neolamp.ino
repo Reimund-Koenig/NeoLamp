@@ -91,7 +91,7 @@ void setup() {
     // printServerInfo();
 
     // Load values from persistent storage or use default
-    init_blink();
+    d_blink.init_blink();
 
     update_wakeup_brightness();
     update_daytime_brightness();
@@ -352,24 +352,6 @@ void update_color_brightness(uint8_t inputBrightness) {
     if(colorBrightness == inputBrightness) { return; }
     brightness_changed = true;
     colorBrightness = inputBrightness;
-}
-
-void init_blink() {
-    String value = read_file(SPIFFS, WAKEUP_BLINK_FS);
-    if(value == "" || value == NULL) {
-        value = D_LED_MODE_OFF;
-        write_file(SPIFFS, WAKEUP_BLINK_FS, value.c_str());
-    }
-    value = read_file(SPIFFS, DAYTIME_BLINK_FS);
-    if(value == "" || value == NULL) {
-        value = D_LED_MODE_BLINK;
-        write_file(SPIFFS, DAYTIME_BLINK_FS, value.c_str());
-    }
-    value = read_file(SPIFFS, SLEEP_BLINK_FS);
-    if(value == "" || value == NULL) {
-        value = D_LED_MODE_YELLOW;
-        write_file(SPIFFS, SLEEP_BLINK_FS, value.c_str());
-    }
 }
 
 void update_wakeup_brightness() {
