@@ -634,7 +634,7 @@ String processor(const String &var) {
     } else if(var == WAKEUP_BLINK_IN) {
         String tmp = "";
         String value = read_file(SPIFFS, WAKEUP_BLINK_FS);
-        if(value == "" || value == NULL || value = "1" || value == "0") {
+        if(value == "" || value == NULL || value == "1" || value == "0") {
             value = D_LED_MODE_BLINK;
         };
         for(int i = 0;
@@ -654,7 +654,7 @@ String processor(const String &var) {
     } else if(var == DAYTIME_BLINK_IN) {
         String tmp = "";
         String value = read_file(SPIFFS, DAYTIME_BLINK_FS);
-        if(value == "" || value == NULL || value = "1" || value == "0") {
+        if(value == "" || value == NULL || value == "1" || value == "0") {
             value = D_LED_MODE_BLINK;
         };
         for(int i = 0;
