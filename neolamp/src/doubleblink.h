@@ -12,6 +12,7 @@
 class Doubleblink {
   public:
     Doubleblink();
+    void loop();
     void start(String mode);
     void stop();
     int get_state();

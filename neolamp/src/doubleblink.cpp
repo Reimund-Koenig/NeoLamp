@@ -4,6 +4,31 @@ unsigned long db_clock_sleep = 0;
 
 Doubleblink::Doubleblink(){};
 
+/************************************************************************************************************
+/*
+/* LED Blink Code
+/*
+*************/
+
+void loop() {
+    int current_state = d_blink.get_state();
+    if(current_state == D_BLINK_DO_NOTHING) { return; }
+    if(current_state == D_BLINK_SWITCH_BLUE_LED_ON) {
+        digitalWrite(LED_1, HIGH);
+        digitalWrite(LED_2, LOW);
+        return;
+    }
+    if(current_state == D_BLINK_SWITCH_YELLOW_LED_ON) {
+        digitalWrite(LED_1, LOW);
+        digitalWrite(LED_2, HIGH);
+        return;
+    }
+    if(current_state == D_BLINK_OFF) {
+        digitalWrite(LED_1, LOW);
+        digitalWrite(LED_2, LOW);
+    }
+}
+
 void Doubleblink::start(String mode) {
     this->doNotBlink = false;
     this->setDoNotBlink = false;

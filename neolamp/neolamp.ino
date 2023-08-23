@@ -115,32 +115,8 @@ void setup() {
 void loop() {
     MDNS.update();
     stateMachine();
-    blinkStateMachine();
+    d_blink.loop();
     updateStateAndTime();
-}
-/************************************************************************************************************
-/*
-/* LED Blink Code
-/*
-*************/
-
-void blinkStateMachine() {
-    int current_state = d_blink.get_state();
-    if(current_state == D_BLINK_DO_NOTHING) { return; }
-    if(current_state == D_BLINK_SWITCH_BLUE_LED_ON) {
-        digitalWrite(LED_1, HIGH);
-        digitalWrite(LED_2, LOW);
-        return;
-    }
-    if(current_state == D_BLINK_SWITCH_YELLOW_LED_ON) {
-        digitalWrite(LED_1, LOW);
-        digitalWrite(LED_2, HIGH);
-        return;
-    }
-    if(current_state == D_BLINK_OFF) {
-        digitalWrite(LED_1, LOW);
-        digitalWrite(LED_2, LOW);
-    }
 }
 
 /************************************************************************************************************
