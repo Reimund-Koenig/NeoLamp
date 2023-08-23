@@ -40,6 +40,7 @@ int Doubleblink::get_state() {
     } else if(mode == D_LED_MODE_YELLOW_BLINK) {
         return get_state_yellow_blink();
     }
+    return D_BLINK_OFF;
 }
 
 int Doubleblink::get_state_blue_blink() {
