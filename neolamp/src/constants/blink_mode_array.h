@@ -1,6 +1,6 @@
 #include "blink_modes.h"
 
-const char *array_of_blink_modes[][2] = {
+const char *blink_modes[][2] = {
     {"Off", D_LED_MODE_OFF},
     {"Blink", D_LED_MODE_BLINK},
     {"Blaue LED an", D_LED_MODE_BLUE},

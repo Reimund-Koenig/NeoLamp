@@ -394,10 +394,9 @@ void update_wakeup_mode() {
         value = "green";
         lfs->write_file(WAKEUP_MODE_FS, value.c_str());
     }
-    for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
-        i++) {
-        if(value == array_of_modes[i][1]) {
-            change_wakeup_state(array_of_modes[i][1]);
+    for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+        if(value == modes[i][1]) {
+            change_wakeup_state(modes[i][1]);
             wakeup_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
             return;
         }
@@ -410,10 +409,9 @@ void update_daytime_mode() {
         value = "mix";
         lfs->write_file(DAYTIME_MODE_FS, value.c_str());
     }
-    for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
-        i++) {
-        if(value == array_of_modes[i][1]) {
-            change_daytime_state(array_of_modes[i][1]);
+    for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+        if(value == modes[i][1]) {
+            change_daytime_state(modes[i][1]);
             daytime_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
             return;
         }
@@ -426,10 +424,9 @@ void update_sleep_mode() {
         value = "orange";
         lfs->write_file(SLEEP_MODE_FS, value.c_str());
     }
-    for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
-        i++) {
-        if(value == array_of_modes[i][1]) {
-            change_sleep_state(array_of_modes[i][1]);
+    for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+        if(value == modes[i][1]) {
+            change_sleep_state(modes[i][1]);
             sleep_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
             return;
         }
@@ -442,10 +439,9 @@ void updateTimeZone() {
         value = "Berlin";
         lfs->write_file(TIMEZONE_FS, value.c_str());
     };
-    for(int i = 0;
-        i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]); i++) {
-        if(value == array_of_timezones[i][0]) {
-            setenv("TZ", array_of_timezones[i][1], 1);
+    for(int i = 0; i < sizeof(timezones) / sizeof(timezones[0]); i++) {
+        if(value == timezones[i][0]) {
+            setenv("TZ", timezones[i][1], 1);
             tzset();
             updateTime();
             return;
@@ -465,17 +461,16 @@ String processor(const String &var) {
         String tmp = "";
         String value = lfs->read_file(WAKEUP_MODE_FS);
         if(value == "" || value == NULL) { value = "green"; };
-        for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
-            i++) {
+        for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
             tmp += "<option value = '";
-            tmp += array_of_modes[i][1];
-            if(value == array_of_modes[i][1]) {
+            tmp += modes[i][1];
+            if(value == modes[i][1]) {
                 wakeup_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
                 tmp += "' selected>";
             } else {
                 tmp += "'>";
             }
-            tmp += array_of_modes[i][0];
+            tmp += modes[i][0];
             tmp += "</ option>";
         }
         return tmp;
@@ -483,17 +478,16 @@ String processor(const String &var) {
         String tmp = "";
         String value = lfs->read_file(DAYTIME_MODE_FS);
         if(value == "" || value == NULL) { value = "mix"; };
-        for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
-            i++) {
+        for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
             tmp += "<option value = '";
-            tmp += array_of_modes[i][1];
-            if(value == array_of_modes[i][1]) {
+            tmp += modes[i][1];
+            if(value == modes[i][1]) {
                 daytime_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
                 tmp += "' selected>";
             } else {
                 tmp += "'>";
             }
-            tmp += array_of_modes[i][0];
+            tmp += modes[i][0];
             tmp += "</ option>";
         }
         return tmp;
@@ -501,17 +495,16 @@ String processor(const String &var) {
         String tmp = "";
         String value = lfs->read_file(SLEEP_MODE_FS);
         if(value == "" || value == NULL) { value = "orange"; };
-        for(int i = 0; i < sizeof(array_of_modes) / sizeof(array_of_modes[0]);
-            i++) {
+        for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
             tmp += "<option value = '";
-            tmp += array_of_modes[i][1];
-            if(value == array_of_modes[i][1]) {
+            tmp += modes[i][1];
+            if(value == modes[i][1]) {
                 sleep_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
                 tmp += "' selected>";
             } else {
                 tmp += "'>";
             }
-            tmp += array_of_modes[i][0];
+            tmp += modes[i][0];
             tmp += "</ option>";
         }
         return tmp;
@@ -519,17 +512,15 @@ String processor(const String &var) {
         String tmp = "";
         String value = lfs->read_file(TIMEZONE_FS);
         if(value == "" || value == NULL) { value = "Europe_Berlin"; };
-        for(int i = 0;
-            i < sizeof(array_of_timezones) / sizeof(array_of_timezones[0]);
-            i++) {
+        for(int i = 0; i < sizeof(timezones) / sizeof(timezones[0]); i++) {
             tmp += "<option value = '";
-            tmp += array_of_timezones[i][0];
-            if(value == array_of_timezones[i][0]) {
+            tmp += timezones[i][0];
+            if(value == timezones[i][0]) {
                 tmp += "' selected>";
             } else {
                 tmp += "'>";
             }
-            tmp += array_of_timezones[i][0];
+            tmp += timezones[i][0];
             tmp += "</ option>";
         }
         return tmp;
@@ -537,23 +528,21 @@ String processor(const String &var) {
         return lfs->read_file(WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
         return lfs->read_file(DAYTIME_BRIGHTNESS_FS);
-    } else if(var == BLINK_INTERVAL_IN) {
+    } else if(var == SLEEP_BLINK_IN) {
         String tmp = "";
-        String value = lfs->read_file(BLINK_INTERVAL_FS);
+        String value = lfs->read_file(SLEEP_BLINK_FS);
         if(value == "" || value == NULL || value == "1" || value == "0") {
             value = D_LED_MODE_BLINK;
-        };
-        for(int i = 0;
-            i < sizeof(array_of_blink_modes) / sizeof(array_of_blink_modes[0]);
-            i++) {
+        }
+        for(int i = 0; i < sizeof(blink_modes) / sizeof(blink_modes[0]); i++) {
             tmp += "<option value = '";
-            tmp += array_of_blink_modes[i][1];
-            if(value == array_of_blink_modes[i][1]) {
+            tmp += blink_modes[i][1];
+            if(value == blink_modes[i][1]) {
                 tmp += "' selected>";
             } else {
                 tmp += "'>";
             }
-            tmp += array_of_blink_modes[i][0];
+            tmp += blink_modes[i][0];
             tmp += "</ option>";
         }
         return tmp;
@@ -561,19 +550,17 @@ String processor(const String &var) {
         String tmp = "";
         String value = lfs->read_file(WAKEUP_BLINK_FS);
         if(value == "" || value == NULL || value == "1" || value == "0") {
-            value = D_LED_MODE_BLINK;
-        };
-        for(int i = 0;
-            i < sizeof(array_of_blink_modes) / sizeof(array_of_blink_modes[0]);
-            i++) {
+            value = D_LED_MODE_OFF;
+        }
+        for(int i = 0; i < sizeof(blink_modes) / sizeof(blink_modes[0]); i++) {
             tmp += "<option value = '";
-            tmp += array_of_blink_modes[i][1];
-            if(value == array_of_blink_modes[i][1]) {
+            tmp += blink_modes[i][1];
+            if(value == blink_modes[i][1]) {
                 tmp += "' selected>";
             } else {
                 tmp += "'>";
             }
-            tmp += array_of_blink_modes[i][0];
+            tmp += blink_modes[i][0];
             tmp += "</ option>";
         }
         return tmp;
@@ -582,23 +569,21 @@ String processor(const String &var) {
         String value = lfs->read_file(DAYTIME_BLINK_FS);
         if(value == "" || value == NULL || value == "1" || value == "0") {
             value = D_LED_MODE_BLINK;
-        };
-        for(int i = 0;
-            i < sizeof(array_of_blink_modes) / sizeof(array_of_blink_modes[0]);
-            i++) {
+        }
+        for(int i = 0; i < sizeof(blink_modes) / sizeof(blink_modes[0]); i++) {
             tmp += "<option value = '";
-            tmp += array_of_blink_modes[i][1];
-            if(value == array_of_blink_modes[i][1]) {
+            tmp += blink_modes[i][1];
+            if(value == blink_modes[i][1]) {
                 tmp += "' selected>";
             } else {
                 tmp += "'>";
             }
-            tmp += array_of_blink_modes[i][0];
+            tmp += blink_modes[i][0];
             tmp += "</ option>";
         }
         return tmp;
-    } else if(var == SLEEP_BLINK_IN) {
-        return lfs->read_file(SLEEP_BLINK_FS);
+    } else if(var == BLINK_INTERVAL_IN) {
+        return lfs->read_file(BLINK_INTERVAL_FS);
     } else if(var == SLEEP_BRIGHTNESS_IN) {
         return lfs->read_file(SLEEP_BRIGHTNESS_FS);
     } else if(var == SLEEP_COLOR_IN) {

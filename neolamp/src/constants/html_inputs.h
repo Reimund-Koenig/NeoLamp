@@ -42,9 +42,6 @@
 #define TIMEZONE_IN "input_timezone"
 #define TIMEZONE_FS "/input_timezone.txt"
 
-#define BLINK_INTERVAL_IN "input_blink_time"
-#define BLINK_INTERVAL_FS "/input_blink_time.txt"
-
 #define WAKEUP_BLINK_IN "input_wakeup_blink"
 #define WAKEUP_BLINK_FS "/input_wakeup_blink.txt"
 
@@ -53,3 +50,6 @@
 
 #define SLEEP_BLINK_IN "input_sleep_blink"
 #define SLEEP_BLINK_FS "/input_sleep_blink.txt"
+
+#define BLINK_INTERVAL_IN "input_blink_time"
+#define BLINK_INTERVAL_FS "/input_blink_time.txt"

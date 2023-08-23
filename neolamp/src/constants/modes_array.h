@@ -1,6 +1,6 @@
 #include "modes.h"
 
-const char *array_of_modes[][2] = {
+const char *modes[][2] = {
     {"Mixed", STATE_ANIMATION_MIX},
     {"Pulsieren", STATE_ANIMATION_PULSE},
     {"Farbkeise", STATE_ANIMATION_CIRCLE},
