@@ -1,5 +1,5 @@
 
-#include "doubleblink.h "
+#include "doubleblink.h"
 #include <Arduino.h>
 
 unsigned long db_clock_sleep = 0;
@@ -26,7 +26,7 @@ int Doubleblink::get_state() {
         return D_BLINK_OFF;
     }
     if(mode == D_LED_MODE_BLINK)
-        return get_state_blink;
+        return get_state_blink();
     else if(mode == D_LED_MODE_BLUE) {
         if(isStableColorReturned) { return D_BLINK_DO_NOTHING; }
         isStableColorReturned = true;
