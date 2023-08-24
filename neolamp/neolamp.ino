@@ -451,13 +451,17 @@ void updateTimeZone() {
 
 String processor(const String &var) {
     if(var == "input_name") { return NAME; }
-    if(var == SLEEP_TIME_IN) {
-        return lfs->read_file(SLEEP_TIME_FS);
-    } else if(var == WAKEUP_TIME_IN) {
+
+    // Times
+    if(var == WAKEUP_TIME_IN) {
         return lfs->read_file(WAKEUP_TIME_FS);
     } else if(var == DAYTIME_TIME_IN) {
         return lfs->read_file(DAYTIME_TIME_FS);
-    } else if(var == WAKEUP_MODE_IN) {
+    } else if(var == SLEEP_TIME_IN) {
+        return lfs->read_file(SLEEP_TIME_FS);
+    }
+    // Modes
+    else if(var == WAKEUP_MODE_IN) {
         String value = lfs->read_file(WAKEUP_MODE_FS);
         if(value == "" || value == NULL) { value = "green"; };
         return helper.getHtmlSelect(modes, sizeof_modes, value);
@@ -469,15 +473,21 @@ String processor(const String &var) {
         String value = lfs->read_file(SLEEP_MODE_FS);
         if(value == "" || value == NULL) { value = "orange"; };
         return helper.getHtmlSelect(modes, sizeof_modes, value);
-    } else if(var == TIMEZONE_IN) {
-        String value = lfs->read_file(TIMEZONE_FS);
-        if(value == "" || value == NULL) { value = "Europe_Berlin"; };
-        return helper.getHtmlSelect(timezones, sizeof_timezones, value);
-    } else if(var == WAKEUP_BRIGHTNESS_IN) {
+    }
+    // Brightness
+    else if(var == WAKEUP_BRIGHTNESS_IN) {
         return lfs->read_file(WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
         return lfs->read_file(DAYTIME_BRIGHTNESS_FS);
-    } else if(var == WAKEUP_BLINK_IN) {
+    } else if(var == SLEEP_BRIGHTNESS_IN) {
+        return lfs->read_file(SLEEP_BRIGHTNESS_FS);
+    }
+    // Blink Interval
+    else if(var == BLINK_INTERVAL_IN) {
+        return lfs->read_file(BLINK_INTERVAL_FS);
+    }
+    // Blink LEDs
+    else if(var == WAKEUP_BLINK_IN) {
         String value = lfs->read_file(WAKEUP_BLINK_FS);
         if(value == "" || value == NULL) { value = D_LED_MODE_OFF; }
         return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
@@ -489,28 +499,36 @@ String processor(const String &var) {
         String value = lfs->read_file(SLEEP_BLINK_FS);
         if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
         return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
-    } else if(var == BLINK_INTERVAL_IN) {
-        return lfs->read_file(BLINK_INTERVAL_FS);
-    } else if(var == SLEEP_BRIGHTNESS_IN) {
-        return lfs->read_file(SLEEP_BRIGHTNESS_FS);
-    } else if(var == SLEEP_COLOR_IN) {
-        return lfs->read_file(SLEEP_COLOR_FS);
+    }
+    // Color
+    else if(var == WAKEUP_COLOR_IN) {
+        return lfs->read_file(WAKEUP_COLOR_FS);
     } else if(var == DAYTIME_COLOR_IN) {
         return lfs->read_file(DAYTIME_COLOR_FS);
-    } else if(var == WAKEUP_COLOR_IN) {
-        return lfs->read_file(WAKEUP_COLOR_FS);
-    } else if(var == SLEEPTIME_COLOR_ROW_IN) {
-        if(sleep_isColorPickerNeeded) { return "hidden"; }
-        return "";
-    } else if(var == WAKEUP_COLOR_ROW_IN) {
+    } else if(var == SLEEP_COLOR_IN) {
+        return lfs->read_file(SLEEP_COLOR_FS);
+    }
+    // Color
+    else if(var == WAKEUP_COLOR_ROW_IN) {
         if(wakeup_isColorPickerNeeded) { return "hidden"; }
         return "";
     } else if(var == DAYTIME_COLOR_ROW_IN) {
         if(daytime_isColorPickerNeeded) { return "hidden"; }
         return "";
-    } else if(var == "input_time_on_load") {
+    } else if(var == SLEEPTIME_COLOR_ROW_IN) {
+        if(sleep_isColorPickerNeeded) { return "hidden"; }
+        return "";
+    }
+    // The current time
+    else if(var == "input_time_on_load") {
         updateTime();
         return current_time.getTimeString();
+    }
+    // Timezone
+    else if(var == TIMEZONE_IN) {
+        String value = lfs->read_file(TIMEZONE_FS);
+        if(value == "" || value == NULL) { value = "Europe_Berlin"; };
+        return helper.getHtmlSelect(timezones, sizeof_timezones, value);
     }
     return "";
 }
