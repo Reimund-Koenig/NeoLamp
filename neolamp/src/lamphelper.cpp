@@ -6,6 +6,22 @@ LampHelper::LampHelper(){
 
 };
 
+String LampHelper::getHtmlSelect(const char *a[][2], int s, String val) {
+    String tmp = "";
+    for(int i = 0; i < s; i++) {
+        tmp += "<option value = '";
+        tmp += a[i][1];
+        if(val == a[i][1]) {
+            tmp += "' selected>";
+        } else {
+            tmp += "'>";
+        }
+        tmp += a[i][0];
+        tmp += "</ option>";
+    }
+    return tmp;
+}
+
 Clocktime LampHelper::get_biggest_time(Clocktime t1, Clocktime t2) {
     if(t1.getHour() > t2.getHour()) { return t1; }
     if(t2.getHour() > t1.getHour()) { return t2; }

@@ -3,6 +3,8 @@
 unsigned long db_clock_sleep = 0;
 
 Doubleblink::Doubleblink(LampFileSystem *lfs) {
+    pinMode(LED_BLUE, OUTPUT);
+    pinMode(LED_YELLOW, OUTPUT);
     this->lfs = lfs;
     String value = lfs->read_file(WAKEUP_BLINK_FS);
     if(value == "" || value == NULL) {
@@ -21,28 +23,30 @@ Doubleblink::Doubleblink(LampFileSystem *lfs) {
     }
     value = lfs->read_file(BLINK_INTERVAL_FS);
     if(value == "" || value == NULL) {
-        value = "2000";
+        value = "2500";
         lfs->write_file(BLINK_INTERVAL_FS, value.c_str());
     }
     set_interval((uint16_t)(value.toInt()));
+    digitalWrite(LED_BLUE, LOW);
+    digitalWrite(LED_YELLOW, LOW);
 }
 
 void Doubleblink::loop() {
     int current_state = get_state();
     if(current_state == D_BLINK_DO_NOTHING) { return; }
     if(current_state == D_BLINK_SWITCH_BLUE_LED_ON) {
-        digitalWrite(LED_1, HIGH);
-        digitalWrite(LED_2, LOW);
+        digitalWrite(LED_BLUE, HIGH);
+        digitalWrite(LED_YELLOW, LOW);
         return;
     }
     if(current_state == D_BLINK_SWITCH_YELLOW_LED_ON) {
-        digitalWrite(LED_1, LOW);
-        digitalWrite(LED_2, HIGH);
+        digitalWrite(LED_BLUE, LOW);
+        digitalWrite(LED_YELLOW, HIGH);
         return;
     }
     if(current_state == D_BLINK_OFF) {
-        digitalWrite(LED_1, LOW);
-        digitalWrite(LED_2, LOW);
+        digitalWrite(LED_BLUE, LOW);
+        digitalWrite(LED_YELLOW, LOW);
     }
 }
 

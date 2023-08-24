@@ -14,16 +14,13 @@
 #include "src/constants/index.html.h"
 #include "src/constants/modes.h"
 #include "src/constants/modes_array.h"
-#include "src/constants/pins.h"
 #include "src/constants/secrets.h"
+#include "src/constants/settings.h"
 #include "src/constants/timezones.h"
 #include "src/doubleblink.h"
 #include "src/lampfilesystem.h"
 #include "src/lamphelper.h"
 #include "time.h"
-
-#define NAME "Finns Nachtlicht"
-#define URL "finn"
 
 #define NEOPIXEL_COUNT 16
 

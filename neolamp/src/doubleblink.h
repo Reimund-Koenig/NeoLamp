@@ -3,7 +3,7 @@
 #include "constants/blink_modes.h"
 #include "constants/html_inputs.h"
 #include "constants/modes.h"
-#include "constants/pins.h"
+#include "constants/settings.h"
 #include "lampfilesystem.h"
 #include "lamphelper.h"
 #include <Arduino.h>

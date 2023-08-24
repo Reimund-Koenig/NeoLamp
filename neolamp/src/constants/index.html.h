@@ -95,19 +95,6 @@ const char index_html[] PROGMEM = R"rawliteral(
         </td>
       </tr>
       <tr>
-        <td style="text-align: right; padding-right: 1em">Blink:</td>
-        <td>
-          <form action="/get" target="hidden-form" id="getIBBlink">
-            <select
-              name="input_wakeup_blink"
-              style="width: 15em"
-              onchange="handle_onchange_and_reload('getIBBlink')"
-            >
-              %input_wakeup_blink%
-          </form>
-        </td>
-      </tr>
-      <tr>
         <td><hr /></td>
         <td><hr /></td>
       </tr>
@@ -169,20 +156,6 @@ const char index_html[] PROGMEM = R"rawliteral(
               style="width: 15em"
               onchange="handle_onchange_and_reload('getIDB')"
             />
-          </form>
-        </td>
-      </tr>
-      <tr>
-        <td style="text-align: right; padding-right: 1em">Blink:</td>
-        <td>
-          <form action="/get" target="hidden-form" id="getIDBlink">
-            <select
-              name="input_daytime_blink"
-              style="width: 15em"
-              onchange="handle_onchange_and_reload('getIDBlink')"
-            >
-              %input_daytime_blink%
-            </select>
           </form>
         </td>
       </tr>
@@ -250,45 +223,6 @@ const char index_html[] PROGMEM = R"rawliteral(
               onchange="handle_onchange_and_reload('getISB')"
             />
           </form>
-        </td>
-      </tr>
-      <tr>
-        <td style="text-align: right; padding-right: 1em">Blink:</td>
-        <td>
-          <form action="/get" target="hidden-form" id="getISBlink">
-            <select
-              name="input_sleep_blink"
-              style="width: 15em"
-              onchange="handle_onchange_and_reload('getISBlink')"
-            >
-              %input_sleep_blink%
-            </select>
-          </form>
-        </td>
-      </tr>
-      <tr>
-        <td><hr /></td>
-        <td><hr /></td>
-      </tr>
-      <!----------------------------------------------------->
-      <!-- Blink Time -->
-      <tr>
-        <td style="text-align: right; padding-right: 1em">Blink Intervall:</td>
-        <td>
-          <form action="/get" target="hidden-form" id="getBlink">
-            <input
-              name="input_blink_time"
-              value="%input_blink_time%"
-              type="range"
-              orient="vertical"
-              min="500"
-              max="5000"
-              step="500"
-              style="width: 15em"
-              onchange="handle_onchange_and_reload('getBlink')"
-            />
-          </form>
-          %input_blink_time% ms
         </td>
       </tr>
       <tr>

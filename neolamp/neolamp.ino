@@ -62,8 +62,6 @@ void setup() {
     strip.fill(strip.Color(255, 255, 255));
     strip.show();
     lfs = new LampFileSystem();
-    pinMode(LED_1, OUTPUT);
-    pinMode(LED_2, OUTPUT);
 
     // start wifi manager
     WiFi.mode(WIFI_STA);
@@ -110,7 +108,7 @@ void setup() {
 void loop() {
     MDNS.update();
     stateMachine();
-    db->loop();
+    // db->loop();
     updateStateAndTime();
 }
 
@@ -451,159 +449,84 @@ void updateTimeZone() {
 
 String processor(const String &var) {
     if(var == "input_name") { return NAME; }
-    if(var == SLEEP_TIME_IN) {
-        return lfs->read_file(SLEEP_TIME_FS);
-    } else if(var == WAKEUP_TIME_IN) {
+
+    // Times
+    if(var == WAKEUP_TIME_IN) {
         return lfs->read_file(WAKEUP_TIME_FS);
     } else if(var == DAYTIME_TIME_IN) {
         return lfs->read_file(DAYTIME_TIME_FS);
-    } else if(var == WAKEUP_MODE_IN) {
-        String tmp = "";
+    } else if(var == SLEEP_TIME_IN) {
+        return lfs->read_file(SLEEP_TIME_FS);
+    }
+    // Modes
+    else if(var == WAKEUP_MODE_IN) {
         String value = lfs->read_file(WAKEUP_MODE_FS);
         if(value == "" || value == NULL) { value = "green"; };
-        for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += modes[i][1];
-            if(value == modes[i][1]) {
-                wakeup_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
+        return helper.getHtmlSelect(modes, sizeof_modes, value);
     } else if(var == DAYTIME_MODE_IN) {
-        String tmp = "";
         String value = lfs->read_file(DAYTIME_MODE_FS);
         if(value == "" || value == NULL) { value = "mix"; };
-        for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += modes[i][1];
-            if(value == modes[i][1]) {
-                daytime_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
+        return helper.getHtmlSelect(modes, sizeof_modes, value);
     } else if(var == SLEEP_MODE_IN) {
-        String tmp = "";
         String value = lfs->read_file(SLEEP_MODE_FS);
         if(value == "" || value == NULL) { value = "orange"; };
-        for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += modes[i][1];
-            if(value == modes[i][1]) {
-                sleep_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
-    } else if(var == TIMEZONE_IN) {
-        String tmp = "";
-        String value = lfs->read_file(TIMEZONE_FS);
-        if(value == "" || value == NULL) { value = "Europe_Berlin"; };
-        for(int i = 0; i < sizeof(timezones) / sizeof(timezones[0]); i++) {
-            tmp += "<option value = '";
-            tmp += timezones[i][0];
-            if(value == timezones[i][0]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += timezones[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
-    } else if(var == WAKEUP_BRIGHTNESS_IN) {
+        return helper.getHtmlSelect(modes, sizeof_modes, value);
+    }
+    // Brightness
+    else if(var == WAKEUP_BRIGHTNESS_IN) {
         return lfs->read_file(WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
         return lfs->read_file(DAYTIME_BRIGHTNESS_FS);
-    } else if(var == SLEEP_BLINK_IN) {
-        String tmp = "";
-        String value = lfs->read_file(SLEEP_BLINK_FS);
-        if(value == "" || value == NULL || value == "1" || value == "0") {
-            value = D_LED_MODE_BLINK;
-        }
-        for(int i = 0; i < sizeof(blink_modes) / sizeof(blink_modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += blink_modes[i][1];
-            if(value == blink_modes[i][1]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += blink_modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
-    } else if(var == WAKEUP_BLINK_IN) {
-        String tmp = "";
-        String value = lfs->read_file(WAKEUP_BLINK_FS);
-        if(value == "" || value == NULL || value == "1" || value == "0") {
-            value = D_LED_MODE_OFF;
-        }
-        for(int i = 0; i < sizeof(blink_modes) / sizeof(blink_modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += blink_modes[i][1];
-            if(value == blink_modes[i][1]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += blink_modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
-    } else if(var == DAYTIME_BLINK_IN) {
-        String tmp = "";
-        String value = lfs->read_file(DAYTIME_BLINK_FS);
-        if(value == "" || value == NULL || value == "1" || value == "0") {
-            value = D_LED_MODE_BLINK;
-        }
-        for(int i = 0; i < sizeof(blink_modes) / sizeof(blink_modes[0]); i++) {
-            tmp += "<option value = '";
-            tmp += blink_modes[i][1];
-            if(value == blink_modes[i][1]) {
-                tmp += "' selected>";
-            } else {
-                tmp += "'>";
-            }
-            tmp += blink_modes[i][0];
-            tmp += "</ option>";
-        }
-        return tmp;
-    } else if(var == BLINK_INTERVAL_IN) {
-        return lfs->read_file(BLINK_INTERVAL_FS);
     } else if(var == SLEEP_BRIGHTNESS_IN) {
         return lfs->read_file(SLEEP_BRIGHTNESS_FS);
-    } else if(var == SLEEP_COLOR_IN) {
-        return lfs->read_file(SLEEP_COLOR_FS);
+    }
+    // Blink Interval
+    else if(var == BLINK_INTERVAL_IN) {
+        return lfs->read_file(BLINK_INTERVAL_FS);
+    }
+    // Blink LEDs
+    else if(var == WAKEUP_BLINK_IN) {
+        String value = lfs->read_file(WAKEUP_BLINK_FS);
+        if(value == "" || value == NULL) { value = D_LED_MODE_OFF; }
+        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
+    } else if(var == DAYTIME_BLINK_IN) {
+        String value = lfs->read_file(DAYTIME_BLINK_FS);
+        if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
+        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
+    } else if(var == SLEEP_BLINK_IN) {
+        String value = lfs->read_file(SLEEP_BLINK_FS);
+        if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
+        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
+    }
+    // Color
+    else if(var == WAKEUP_COLOR_IN) {
+        return lfs->read_file(WAKEUP_COLOR_FS);
     } else if(var == DAYTIME_COLOR_IN) {
         return lfs->read_file(DAYTIME_COLOR_FS);
-    } else if(var == WAKEUP_COLOR_IN) {
-        return lfs->read_file(WAKEUP_COLOR_FS);
-    } else if(var == SLEEPTIME_COLOR_ROW_IN) {
-        if(sleep_isColorPickerNeeded) { return "hidden"; }
-        return "";
-    } else if(var == WAKEUP_COLOR_ROW_IN) {
+    } else if(var == SLEEP_COLOR_IN) {
+        return lfs->read_file(SLEEP_COLOR_FS);
+    }
+    // Color
+    else if(var == WAKEUP_COLOR_ROW_IN) {
         if(wakeup_isColorPickerNeeded) { return "hidden"; }
         return "";
     } else if(var == DAYTIME_COLOR_ROW_IN) {
         if(daytime_isColorPickerNeeded) { return "hidden"; }
         return "";
-    } else if(var == "input_time_on_load") {
+    } else if(var == SLEEPTIME_COLOR_ROW_IN) {
+        if(sleep_isColorPickerNeeded) { return "hidden"; }
+        return "";
+    }
+    // The current time
+    else if(var == "input_time_on_load") {
         updateTime();
         return current_time.getTimeString();
+    }
+    // Timezone
+    else if(var == TIMEZONE_IN) {
+        String value = lfs->read_file(TIMEZONE_FS);
+        if(value == "" || value == NULL) { value = "Europe_Berlin"; };
+        return helper.getHtmlSelect(timezones, sizeof_timezones, value);
     }
     return "";
 }
@@ -701,11 +624,8 @@ void handle_server_root(AsyncWebServerRequest *request) {
 
 void handle_server_get(AsyncWebServerRequest *request) {
     String tmp;
-    if(request->hasParam(SLEEP_TIME_IN)) {
-        tmp = request->getParam(SLEEP_TIME_IN)->value();
-        lfs->write_file(SLEEP_TIME_FS, tmp.c_str());
-        user_sleep_time.setTime(tmp.c_str());
-    } else if(request->hasParam(WAKEUP_TIME_IN)) {
+    // Times
+    if(request->hasParam(WAKEUP_TIME_IN)) {
         tmp = request->getParam(WAKEUP_TIME_IN)->value();
         lfs->write_file(WAKEUP_TIME_FS, tmp.c_str());
         user_wakeup_time.setTime(tmp.c_str());
@@ -713,7 +633,13 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(DAYTIME_TIME_IN)->value();
         lfs->write_file(DAYTIME_TIME_FS, tmp.c_str());
         user_daytime_time.setTime(tmp.c_str());
-    } else if(request->hasParam(WAKEUP_MODE_IN)) {
+    } else if(request->hasParam(SLEEP_TIME_IN)) {
+        tmp = request->getParam(SLEEP_TIME_IN)->value();
+        lfs->write_file(SLEEP_TIME_FS, tmp.c_str());
+        user_sleep_time.setTime(tmp.c_str());
+    }
+    // Modes
+    else if(request->hasParam(WAKEUP_MODE_IN)) {
         tmp = request->getParam(WAKEUP_MODE_IN)->value();
         lfs->write_file(WAKEUP_MODE_FS, tmp.c_str());
         change_wakeup_state(tmp.c_str());
@@ -725,7 +651,9 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(SLEEP_MODE_IN)->value();
         lfs->write_file(SLEEP_MODE_FS, tmp.c_str());
         change_sleep_state(tmp.c_str());
-    } else if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
+    }
+    // Brightness
+    else if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
         tmp = request->getParam(WAKEUP_BRIGHTNESS_IN)->value();
         lfs->write_file(WAKEUP_BRIGHTNESS_FS, tmp.c_str());
         update_wakeup_brightness();
@@ -733,7 +661,19 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(DAYTIME_BRIGHTNESS_IN)->value();
         lfs->write_file(DAYTIME_BRIGHTNESS_FS, tmp.c_str());
         update_daytime_brightness();
-    } else if(request->hasParam(WAKEUP_BLINK_IN)) {
+    } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
+        tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
+        lfs->write_file(SLEEP_BRIGHTNESS_FS, tmp.c_str());
+        update_sleep_brightness();
+    }
+    // Blink Interval
+    else if(request->hasParam(BLINK_INTERVAL_IN)) {
+        tmp = request->getParam(BLINK_INTERVAL_IN)->value();
+        lfs->write_file(BLINK_INTERVAL_FS, tmp.c_str());
+        db->set_interval((uint16_t)(tmp.toInt()));
+    }
+    // Blink LEDs
+    else if(request->hasParam(WAKEUP_BLINK_IN)) {
         tmp = request->getParam(WAKEUP_BLINK_IN)->value();
         lfs->write_file(WAKEUP_BLINK_FS, tmp.c_str());
         db->updateBlinkState(state);
@@ -745,30 +685,26 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(SLEEP_BLINK_IN)->value();
         lfs->write_file(SLEEP_BLINK_FS, tmp.c_str());
         db->updateBlinkState(state);
-    } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
-        tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
-        lfs->write_file(SLEEP_BRIGHTNESS_FS, tmp.c_str());
-        update_sleep_brightness();
-    } else if(request->hasParam(SLEEP_COLOR_IN)) {
-        tmp = request->getParam(SLEEP_COLOR_IN)->value();
-        lfs->write_file(SLEEP_COLOR_FS, tmp.c_str());
+    }
+    // Color
+    else if(request->hasParam(WAKEUP_COLOR_IN)) {
+        tmp = request->getParam(WAKEUP_COLOR_IN)->value();
+        lfs->write_file(WAKEUP_COLOR_FS, tmp.c_str());
         isColorUpdateNeeded = true;
     } else if(request->hasParam(DAYTIME_COLOR_IN)) {
         tmp = request->getParam(DAYTIME_COLOR_IN)->value();
         isColorUpdateNeeded = true;
         lfs->write_file(DAYTIME_COLOR_FS, tmp.c_str());
-    } else if(request->hasParam(WAKEUP_COLOR_IN)) {
-        tmp = request->getParam(WAKEUP_COLOR_IN)->value();
-        lfs->write_file(WAKEUP_COLOR_FS, tmp.c_str());
+    } else if(request->hasParam(SLEEP_COLOR_IN)) {
+        tmp = request->getParam(SLEEP_COLOR_IN)->value();
+        lfs->write_file(SLEEP_COLOR_FS, tmp.c_str());
         isColorUpdateNeeded = true;
-    } else if(request->hasParam(TIMEZONE_IN)) {
+    }
+    // Timezone
+    else if(request->hasParam(TIMEZONE_IN)) {
         tmp = request->getParam(TIMEZONE_IN)->value();
         lfs->write_file(TIMEZONE_FS, tmp.c_str());
         updateTimeZone();
-    } else if(request->hasParam(BLINK_INTERVAL_IN)) {
-        tmp = request->getParam(BLINK_INTERVAL_IN)->value();
-        lfs->write_file(BLINK_INTERVAL_FS, tmp.c_str());
-        db->set_interval((uint16_t)(tmp.toInt()));
     }
     request->send(200, "text/text", "ok");
 }
