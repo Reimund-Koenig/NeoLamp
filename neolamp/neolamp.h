@@ -7,34 +7,21 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPAsyncWiFiManager.h> //https://github.com/tzapu/WiFiManager
-#include <FS.h>
-#include <Hash.h>
 
 #include "src/clocktime.h"
+#include "src/constants/blink_mode_array.h"
 #include "src/constants/html_inputs.h"
 #include "src/constants/index.html.h"
 #include "src/constants/modes.h"
+#include "src/constants/modes_array.h"
 #include "src/constants/secrets.h"
+#include "src/constants/settings.h"
 #include "src/constants/timezones.h"
+#include "src/doubleblink.h"
+#include "src/lampfilesystem.h"
 #include "src/lamphelper.h"
 #include "time.h"
 
-#define NAME "Nachtlicht"
-#define URL "nachtlicht"
-#define STATE_SLEEPING_TIME 0
-#define STATE_WAKEUP_TIME 1
-#define STATE_DAYTIME_TIME 2
-
-#define STATE_ANIMATION_MIX String(array_of_modes[0][1])
-#define STATE_ANIMATION_PULSE String(array_of_modes[1][1])
-#define STATE_ANIMATION_CIRCLE String(array_of_modes[2][1])
-#define STATE_ANIMATION_RAINBOW String(array_of_modes[3][1])
-#define STATE_ANIMATION_PICK String(array_of_modes[4][1])
-#define STATE_ANIMATION_GREEN String(array_of_modes[5][1])
-#define STATE_ANIMATION_RED String(array_of_modes[6][1])
-#define STATE_ANIMATION_OFF String(array_of_modes[7][1])
-
-#define NEOPIXEL_PIN 4 // Wemos D1 mini: port D2
 #define NEOPIXEL_COUNT 16
 
 /************************************************************************************************************
@@ -62,8 +49,6 @@ void run_lamp_off();
 
 void updateStateAndTime();
 
-void setNoneSleepingDelay(unsigned long wait, unsigned long *sleepUntilTime);
-bool isSleeping();
 void createRandomColor();
 
 bool colorCircle(unsigned long wait);

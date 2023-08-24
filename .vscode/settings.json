@@ -1,0 +1,30 @@
+{
+  "files.associations": {
+    "system_error": "cpp",
+    "*.tcc": "cpp",
+    "fstream": "cpp",
+    "array": "cpp",
+    "deque": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp",
+    "string_view": "cpp",
+    "initializer_list": "cpp"
+  },
+  "cSpell.words": [
+    "Adafruit",
+    "Clocktime",
+    "Doubleblink",
+    "LAMPHELPER",
+    "lightgreen",
+    "MDNS",
+    "Nachtlicht",
+    "NEOPIXEL",
+    "neopixels",
+    "prescale",
+    "SLEEPTIME",
+    "SSID",
+    "substate",
+    "timeinfo"
+  ]
+}
