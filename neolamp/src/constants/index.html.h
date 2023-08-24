@@ -104,6 +104,7 @@ const char index_html[] PROGMEM = R"rawliteral(
               onchange="handle_onchange_and_reload('getIBBlink')"
             >
               %input_wakeup_blink%
+            </select>
           </form>
         </td>
       </tr>
