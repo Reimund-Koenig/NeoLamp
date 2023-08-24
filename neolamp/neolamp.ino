@@ -477,16 +477,16 @@ String processor(const String &var) {
         return lfs->read_file(WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
         return lfs->read_file(DAYTIME_BRIGHTNESS_FS);
-    } else if(var == SLEEP_BLINK_IN) {
-        String value = lfs->read_file(SLEEP_BLINK_FS);
-        if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
-        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
     } else if(var == WAKEUP_BLINK_IN) {
         String value = lfs->read_file(WAKEUP_BLINK_FS);
         if(value == "" || value == NULL) { value = D_LED_MODE_OFF; }
         return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
     } else if(var == DAYTIME_BLINK_IN) {
         String value = lfs->read_file(DAYTIME_BLINK_FS);
+        if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
+        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
+    } else if(var == SLEEP_BLINK_IN) {
+        String value = lfs->read_file(SLEEP_BLINK_FS);
         if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
         return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
     } else if(var == BLINK_INTERVAL_IN) {
@@ -608,11 +608,8 @@ void handle_server_root(AsyncWebServerRequest *request) {
 
 void handle_server_get(AsyncWebServerRequest *request) {
     String tmp;
-    if(request->hasParam(SLEEP_TIME_IN)) {
-        tmp = request->getParam(SLEEP_TIME_IN)->value();
-        lfs->write_file(SLEEP_TIME_FS, tmp.c_str());
-        user_sleep_time.setTime(tmp.c_str());
-    } else if(request->hasParam(WAKEUP_TIME_IN)) {
+    // Times
+    if(request->hasParam(WAKEUP_TIME_IN)) {
         tmp = request->getParam(WAKEUP_TIME_IN)->value();
         lfs->write_file(WAKEUP_TIME_FS, tmp.c_str());
         user_wakeup_time.setTime(tmp.c_str());
@@ -620,7 +617,13 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(DAYTIME_TIME_IN)->value();
         lfs->write_file(DAYTIME_TIME_FS, tmp.c_str());
         user_daytime_time.setTime(tmp.c_str());
-    } else if(request->hasParam(WAKEUP_MODE_IN)) {
+    } else if(request->hasParam(SLEEP_TIME_IN)) {
+        tmp = request->getParam(SLEEP_TIME_IN)->value();
+        lfs->write_file(SLEEP_TIME_FS, tmp.c_str());
+        user_sleep_time.setTime(tmp.c_str());
+    }
+    // Modes
+    else if(request->hasParam(WAKEUP_MODE_IN)) {
         tmp = request->getParam(WAKEUP_MODE_IN)->value();
         lfs->write_file(WAKEUP_MODE_FS, tmp.c_str());
         change_wakeup_state(tmp.c_str());
@@ -632,7 +635,9 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(SLEEP_MODE_IN)->value();
         lfs->write_file(SLEEP_MODE_FS, tmp.c_str());
         change_sleep_state(tmp.c_str());
-    } else if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
+    }
+    // Brightness
+    else if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
         tmp = request->getParam(WAKEUP_BRIGHTNESS_IN)->value();
         lfs->write_file(WAKEUP_BRIGHTNESS_FS, tmp.c_str());
         update_wakeup_brightness();
@@ -640,7 +645,19 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(DAYTIME_BRIGHTNESS_IN)->value();
         lfs->write_file(DAYTIME_BRIGHTNESS_FS, tmp.c_str());
         update_daytime_brightness();
-    } else if(request->hasParam(WAKEUP_BLINK_IN)) {
+    } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
+        tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
+        lfs->write_file(SLEEP_BRIGHTNESS_FS, tmp.c_str());
+        update_sleep_brightness();
+    }
+    // Blink Interval
+    else if(request->hasParam(BLINK_INTERVAL_IN)) {
+        tmp = request->getParam(BLINK_INTERVAL_IN)->value();
+        lfs->write_file(BLINK_INTERVAL_FS, tmp.c_str());
+        db->set_interval((uint16_t)(tmp.toInt()));
+    }
+    // Blink LEDs
+    else if(request->hasParam(WAKEUP_BLINK_IN)) {
         tmp = request->getParam(WAKEUP_BLINK_IN)->value();
         lfs->write_file(WAKEUP_BLINK_FS, tmp.c_str());
         db->updateBlinkState(state);
@@ -652,30 +669,26 @@ void handle_server_get(AsyncWebServerRequest *request) {
         tmp = request->getParam(SLEEP_BLINK_IN)->value();
         lfs->write_file(SLEEP_BLINK_FS, tmp.c_str());
         db->updateBlinkState(state);
-    } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
-        tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
-        lfs->write_file(SLEEP_BRIGHTNESS_FS, tmp.c_str());
-        update_sleep_brightness();
-    } else if(request->hasParam(SLEEP_COLOR_IN)) {
-        tmp = request->getParam(SLEEP_COLOR_IN)->value();
-        lfs->write_file(SLEEP_COLOR_FS, tmp.c_str());
+    }
+    // Color
+    else if(request->hasParam(WAKEUP_COLOR_IN)) {
+        tmp = request->getParam(WAKEUP_COLOR_IN)->value();
+        lfs->write_file(WAKEUP_COLOR_FS, tmp.c_str());
         isColorUpdateNeeded = true;
     } else if(request->hasParam(DAYTIME_COLOR_IN)) {
         tmp = request->getParam(DAYTIME_COLOR_IN)->value();
         isColorUpdateNeeded = true;
         lfs->write_file(DAYTIME_COLOR_FS, tmp.c_str());
-    } else if(request->hasParam(WAKEUP_COLOR_IN)) {
-        tmp = request->getParam(WAKEUP_COLOR_IN)->value();
-        lfs->write_file(WAKEUP_COLOR_FS, tmp.c_str());
+    } else if(request->hasParam(SLEEP_COLOR_IN)) {
+        tmp = request->getParam(SLEEP_COLOR_IN)->value();
+        lfs->write_file(SLEEP_COLOR_FS, tmp.c_str());
         isColorUpdateNeeded = true;
-    } else if(request->hasParam(TIMEZONE_IN)) {
+    }
+    // Timezone
+    else if(request->hasParam(TIMEZONE_IN)) {
         tmp = request->getParam(TIMEZONE_IN)->value();
         lfs->write_file(TIMEZONE_FS, tmp.c_str());
         updateTimeZone();
-    } else if(request->hasParam(BLINK_INTERVAL_IN)) {
-        tmp = request->getParam(BLINK_INTERVAL_IN)->value();
-        lfs->write_file(BLINK_INTERVAL_FS, tmp.c_str());
-        db->set_interval((uint16_t)(tmp.toInt()));
     }
     request->send(200, "text/text", "ok");
 }
