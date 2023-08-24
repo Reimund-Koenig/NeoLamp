@@ -108,7 +108,7 @@ void setup() {
 void loop() {
     MDNS.update();
     stateMachine();
-    db->loop();
+    // db->loop();
     updateStateAndTime();
 }
 
