@@ -62,8 +62,6 @@ void setup() {
     strip.fill(strip.Color(255, 255, 255));
     strip.show();
     lfs = new LampFileSystem();
-    pinMode(LED_1, OUTPUT);
-    pinMode(LED_2, OUTPUT);
 
     // start wifi manager
     WiFi.mode(WIFI_STA);
