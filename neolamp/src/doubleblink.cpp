@@ -21,7 +21,7 @@ Doubleblink::Doubleblink(LampFileSystem *lfs) {
     }
     value = lfs->read_file(BLINK_INTERVAL_FS);
     if(value == "" || value == NULL) {
-        value = "2000";
+        value = "2500";
         lfs->write_file(BLINK_INTERVAL_FS, value.c_str());
     }
     set_interval((uint16_t)(value.toInt()));
