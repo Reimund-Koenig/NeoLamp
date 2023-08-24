@@ -460,19 +460,19 @@ String processor(const String &var) {
     } else if(var == WAKEUP_MODE_IN) {
         String value = lfs->read_file(WAKEUP_MODE_FS);
         if(value == "" || value == NULL) { value = "green"; };
-        return helper.getHtmlSelect(modes, value);
+        return helper.getHtmlSelect(modes, sizeof_modes, value);
     } else if(var == DAYTIME_MODE_IN) {
         String value = lfs->read_file(DAYTIME_MODE_FS);
         if(value == "" || value == NULL) { value = "mix"; };
-        return helper.getHtmlSelect(modes, value);
+        return helper.getHtmlSelect(modes, sizeof_modes, value);
     } else if(var == SLEEP_MODE_IN) {
         String value = lfs->read_file(SLEEP_MODE_FS);
         if(value == "" || value == NULL) { value = "orange"; };
-        return helper.getHtmlSelect(modes, value);
+        return helper.getHtmlSelect(modes, sizeof_modes, value);
     } else if(var == TIMEZONE_IN) {
         String value = lfs->read_file(TIMEZONE_FS);
         if(value == "" || value == NULL) { value = "Europe_Berlin"; };
-        return helper.getHtmlSelect(timezones, value);
+        return helper.getHtmlSelect(timezones, sizeof_timezones, value);
     } else if(var == WAKEUP_BRIGHTNESS_IN) {
         return lfs->read_file(WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
@@ -480,15 +480,15 @@ String processor(const String &var) {
     } else if(var == SLEEP_BLINK_IN) {
         String value = lfs->read_file(SLEEP_BLINK_FS);
         if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
-        return helper.getHtmlSelect(blink_modes, value);
+        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
     } else if(var == WAKEUP_BLINK_IN) {
         String value = lfs->read_file(WAKEUP_BLINK_FS);
         if(value == "" || value == NULL) { value = D_LED_MODE_OFF; }
-        return helper.getHtmlSelect(blink_modes, value);
+        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
     } else if(var == DAYTIME_BLINK_IN) {
         String value = lfs->read_file(DAYTIME_BLINK_FS);
         if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
-        return helper.getHtmlSelect(blink_modes, value);
+        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
     } else if(var == BLINK_INTERVAL_IN) {
         return lfs->read_file(BLINK_INTERVAL_FS);
     } else if(var == SLEEP_BRIGHTNESS_IN) {

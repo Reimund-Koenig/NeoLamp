@@ -6,12 +6,12 @@ LampHelper::LampHelper(){
 
 };
 
-String LampHelper::getHtmlSelect(const char *a[][2], String selected_value) {
+String LampHelper::getHtmlSelect(const char *a[][2], int s, String val) {
     String tmp = "";
-    for(int i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
+    for(int i = 0; i < s; i++) {
         tmp += "<option value = '";
         tmp += a[i][1];
-        if(selected_value == a[i][1]) {
+        if(val == a[i][1]) {
             tmp += "' selected>";
         } else {
             tmp += "'>";
