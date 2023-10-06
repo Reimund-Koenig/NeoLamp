@@ -85,7 +85,7 @@ void setup() {
     // printServerInfo();
 
     // Load values from persistent storage or use default
-    db = new Doubleblink(lfs);
+    // PawPatrol Tower only: db = new Doubleblink(lfs);
 
     update_wakeup_brightness();
     update_daytime_brightness();
@@ -102,7 +102,7 @@ void setup() {
     updateUserTimes();
     updateStateAndTime();
 
-    db->updateBlinkState(state);
+    // PawPatrol Tower only: db->updateBlinkState(state);
 }
 
 void loop() {
@@ -573,7 +573,7 @@ void updateState(int new_state) {
     if(state == new_state) { return; }
     state = new_state;
     state_first_run = true;
-    db->updateBlinkState(state);
+    // PawPatrol Tower only: db->updateBlinkState(state);
 }
 
 void createRandomColor() {
@@ -670,21 +670,21 @@ void handle_server_get(AsyncWebServerRequest *request) {
     else if(request->hasParam(BLINK_INTERVAL_IN)) {
         tmp = request->getParam(BLINK_INTERVAL_IN)->value();
         lfs->write_file(BLINK_INTERVAL_FS, tmp.c_str());
-        db->set_interval((uint16_t)(tmp.toInt()));
+        // PawPatrol Tower only: db->set_interval((uint16_t)(tmp.toInt()));
     }
     // Blink LEDs
     else if(request->hasParam(WAKEUP_BLINK_IN)) {
         tmp = request->getParam(WAKEUP_BLINK_IN)->value();
         lfs->write_file(WAKEUP_BLINK_FS, tmp.c_str());
-        db->updateBlinkState(state);
+        // PawPatrol Tower only: db->updateBlinkState(state);
     } else if(request->hasParam(DAYTIME_BLINK_IN)) {
         tmp = request->getParam(DAYTIME_BLINK_IN)->value();
         lfs->write_file(DAYTIME_BLINK_FS, tmp.c_str());
-        db->updateBlinkState(state);
+        // PawPatrol Tower only: db->updateBlinkState(state);
     } else if(request->hasParam(SLEEP_BLINK_IN)) {
         tmp = request->getParam(SLEEP_BLINK_IN)->value();
         lfs->write_file(SLEEP_BLINK_FS, tmp.c_str());
-        db->updateBlinkState(state);
+        // PawPatrol Tower only: db->updateBlinkState(state);
     }
     // Color
     else if(request->hasParam(WAKEUP_COLOR_IN)) {
