@@ -33,9 +33,9 @@ void stateMachine();
 void animationStateMachine(String substate);
 
 void updateState(int new_state);
-void change_wakeup_state(String new_state);
-void change_daytime_state(String new_state);
-void change_sleep_state(String new_state);
+void updateWakeupState(String new_state);
+void updateDaytimeState(String new_state);
+void updateSleepState(String new_state);
 
 void run_colorPick_mode();
 void run_wakeupTime_mode();
@@ -56,21 +56,19 @@ bool colorPulse(unsigned long wait);
 bool rainbowCircle(int wait);
 
 void initTime();
+void initModes();
+void initBrightness();
+void initColors();
+void initUserTimes();
+void setLampBrightness(int b);
 
-void update_daytime_mode();
+void updateColorBrightness(uint8_t inputBrightness);
+void updateColorPicker(String state, const char *file);
 
-void update_color_brightness(uint8_t inputBrightness);
-void update_color_picker(String state, const char *file);
+void updateWakeupBrightness(String val);
+void updateDaytimeBrightness(String val);
+void updateSleepBrightness(String val);
 
-void update_wakeup_brightness();
-void update_daytime_brightness();
-void update_sleep_brightness();
-
-void update_sleep_color();
-void update_daytime_color();
-void update_wakeup_color();
-
-void updateUserTimes();
 void updateTimeZone();
 void async_wlan_setup();
 

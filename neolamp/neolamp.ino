@@ -58,7 +58,7 @@ void setup() {
     Serial.begin(115200);
     // this resets all the neopixels to an off state
     strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    strip.setBrightness(150);
+    setLampBrightness(100);
     strip.fill(strip.Color(255, 255, 255));
     strip.show();
     lfs = new LampFileSystem();
@@ -87,19 +87,10 @@ void setup() {
     // Load values from persistent storage or use default
     // PawPatrol Tower only: db = new Doubleblink(lfs);
 
-    update_wakeup_brightness();
-    update_daytime_brightness();
-    update_sleep_brightness();
-
-    update_wakeup_mode();
-    update_daytime_mode();
-    update_sleep_mode();
-
-    update_wakeup_color();
-    update_daytime_color();
-    update_sleep_color();
-
-    updateUserTimes();
+    initModes();
+    initBrightness();
+    initColors();
+    initUserTimes();
     updateStateAndTime();
 
     // PawPatrol Tower only: db->updateBlinkState(state);
@@ -135,7 +126,7 @@ void run_pulse() {
         color_pulse_helper_brightness = 2;
         color_pulse_helper_lighten = true;
         strip.fill(random_color);
-        strip.setBrightness(color_pulse_helper_brightness);
+        setLampBrightness(color_pulse_helper_brightness);
         strip.show();
         Serial.println("run_pulse");
         state_first_run = false;
@@ -180,7 +171,7 @@ void run_colorPick_mode() {
     for(int i = 0; i < strip.numPixels(); i++) {
         strip.setPixelColor(i, colorPicker_Color);
     }
-    strip.setBrightness(colorBrightness);
+    setLampBrightness(colorBrightness);
     strip.show();
     isColorUpdateNeeded = false;
     brightness_changed = false;
@@ -196,7 +187,7 @@ void run_wakeupTime_mode() {
         strip.setPixelColor(6, strip.Color(0, 255, 0, 0));
         strip.setPixelColor(7, strip.Color(0, 255, 0, 0));
         strip.setPixelColor(8, strip.Color(0, 255, 0, 0));
-        strip.setBrightness(colorBrightness);
+        setLampBrightness(colorBrightness);
         strip.show();
         state_first_run = false;
         brightness_changed = false;
@@ -213,7 +204,7 @@ void run_sleepingTime_mode() {
         strip.setPixelColor(6, strip.Color(255, 0, 0, 0));
         strip.setPixelColor(7, strip.Color(255, 0, 0, 0));
         strip.setPixelColor(8, strip.Color(255, 0, 0, 0));
-        strip.setBrightness(colorBrightness);
+        setLampBrightness(colorBrightness);
         strip.show();
         state_first_run = false;
         brightness_changed = false;
@@ -227,17 +218,17 @@ void run_sleepingTime_mode() {
 *************/
 
 void stateMachine() {
-    if(state == STATE_WAKEUP_TIME) {
-        update_color_brightness(wakeup_brightness);
-        update_color_picker(wakeup_state, DAYTIME_COLOR_FS);
+    if(state == STATE_WAKEUP) {
+        updateColorBrightness(wakeup_brightness);
+        updateColorPicker(wakeup_state, WAKEUP_COLOR_FS);
         animationStateMachine(wakeup_state);
-    } else if(state == STATE_DAYTIME_TIME) {
-        update_color_brightness(daytime_brightness);
-        update_color_picker(daytime_state, DAYTIME_COLOR_FS);
+    } else if(state == STATE_DAYTIME) {
+        updateColorBrightness(daytime_brightness);
+        updateColorPicker(daytime_state, DAYTIME_COLOR_FS);
         animationStateMachine(daytime_state);
-    } else if(state == STATE_SLEEPING_TIME) {
-        update_color_brightness(sleep_brightness);
-        update_color_picker(sleep_state, SLEEP_COLOR_FS);
+    } else if(state == STATE_SLEEPING) {
+        updateColorBrightness(sleep_brightness);
+        updateColorPicker(sleep_state, SLEEP_COLOR_FS);
         animationStateMachine(sleep_state);
     } else {
         strip.fill(strip.Color(255, 128, 0, 255));
@@ -274,161 +265,65 @@ void animationStateMachine(String substate) {
 /*
 *************/
 
+void setLampBrightness(int b) {
+    // Serial.print("Set Brightness: ");
+    // Serial.println(b);
+    strip.setBrightness(b);
+}
+
 void updateStateAndTime() {
     if(helper.is_sleeping(clock_sleep)) { return; }
     updateTime();
-    updateState(helper.get_state(
-        current_time, user_daytime_time, STATE_DAYTIME_TIME, user_sleep_time,
-        STATE_SLEEPING_TIME, user_wakeup_time, STATE_WAKEUP_TIME));
+    updateState(helper.get_state(current_time, user_daytime_time, STATE_DAYTIME,
+                                 user_sleep_time, STATE_SLEEPING,
+                                 user_wakeup_time, STATE_WAKEUP));
     helper.set_none_sleeping_delay(200, &clock_sleep);
 }
 
-void updateUserTimes() {
-    // Wakeup Time
-    String tmp_time = lfs->read_file(WAKEUP_TIME_FS);
-    if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "08:00";
-        lfs->write_file(WAKEUP_TIME_FS, tmp_time.c_str());
-    }
-    user_wakeup_time.setTime(tmp_time);
-    user_wakeup_time.print();
-    // Daytime Time
-    tmp_time = lfs->read_file(DAYTIME_TIME_FS);
-    if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "08:30";
-        lfs->write_file(DAYTIME_TIME_FS, tmp_time.c_str());
-    }
-    user_daytime_time.setTime(tmp_time);
-    user_daytime_time.print();
-    // Sleep Time
-    tmp_time = lfs->read_file(SLEEP_TIME_FS);
-    if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "19:00";
-        lfs->write_file(SLEEP_TIME_FS, tmp_time.c_str());
-    }
-    user_sleep_time.setTime(tmp_time);
-    user_sleep_time.print();
-}
-
-void update_color_picker(String state, const char *file) {
+void updateColorPicker(String state, const char *file) {
     if(!isColorUpdateNeeded) { return; }
     if(state != STATE_ANIMATION_PICK) { return; }
     String inputColor = lfs->read_file(file);
     inputColor.remove(0, 1);
     unsigned long in = strtoul(inputColor.c_str(), NULL, 16);
-    Serial.print("INPUT: ");
-    Serial.print(inputColor);
-    Serial.print(", Long: ");
-    Serial.println(in);
+    // Serial.print("INPUT: ");
+    // Serial.print(inputColor);
+    // Serial.print(", Long: ");
+    // Serial.println(in);
     colorPicker_Color = in;
 }
 
-void update_color_brightness(uint8_t inputBrightness) {
+void updateColorBrightness(uint8_t inputBrightness) {
     if(colorBrightness == inputBrightness) { return; }
     brightness_changed = true;
     colorBrightness = inputBrightness;
 }
 
-void update_wakeup_brightness() {
-    String value = lfs->read_file(WAKEUP_BRIGHTNESS_FS);
-    if(value == "" || value == NULL) {
-        value = "15";
-        lfs->write_file(WAKEUP_BRIGHTNESS_FS, value.c_str());
+uint8_t getLogicalBrightnessValue(String val) {
+    float value = val.toFloat(); // Should 0-100
+    // 0-20 will directly returned
+    for(uint8_t i = 0; i < 20; i++) {
+        if(value <= i) return value;
     }
-    float percent = value.toFloat() / 100.0;
-    if(percent > 1.0) { percent = 1.0; }
-    wakeup_brightness = (uint8_t)(255 * percent);
+    // value >= 20 from now on
+    float percent = ((value - 20) * (100 / 80)) / 100;
+    value = (235 * percent) + 20;
+    return (uint8_t)(value);
 }
 
-void update_daytime_brightness() {
-    String value = lfs->read_file(DAYTIME_BRIGHTNESS_FS);
-    if(value == "" || value == NULL) {
-        value = "100";
-        lfs->write_file(DAYTIME_BRIGHTNESS_FS, value.c_str());
-    }
-    float percent = value.toFloat() / 100.0;
-    if(percent > 1.0) { percent = 1.0; }
-    daytime_brightness = (uint8_t)(255 * percent);
+void updateWakeupBrightness(String val) {
+    lfs->write_file(WAKEUP_BRIGHTNESS_FS, val.c_str());
+    wakeup_brightness = getLogicalBrightnessValue(val);
 }
 
-void update_sleep_brightness() {
-    String value = lfs->read_file(SLEEP_BRIGHTNESS_FS);
-    if(value == "" || value == NULL) {
-        value = "15";
-        lfs->write_file(SLEEP_BRIGHTNESS_FS, value.c_str());
-    }
-    float percent = value.toFloat() / 100.0;
-    if(percent > 1.0) { percent = 1.0; }
-    sleep_brightness = (uint8_t)(255 * percent);
+void updateDaytimeBrightness(String val) {
+    lfs->write_file(DAYTIME_BRIGHTNESS_FS, val.c_str());
+    daytime_brightness = getLogicalBrightnessValue(val);
 }
 
-void update_wakeup_color() {
-    String value = lfs->read_file(WAKEUP_COLOR_FS);
-    if(value == "" || value == NULL) {
-        value = "#90EE90"; // lightgreen
-        lfs->write_file(WAKEUP_COLOR_FS, value.c_str());
-    }
-}
-
-void update_daytime_color() {
-    String value = lfs->read_file(DAYTIME_COLOR_FS);
-    if(value == "" || value == NULL) {
-        value = "#00FFFF"; // cyan
-        lfs->write_file(DAYTIME_COLOR_FS, value.c_str());
-    }
-}
-
-void update_sleep_color() {
-    String value = lfs->read_file(SLEEP_COLOR_FS);
-    if(value == "" || value == NULL) {
-        value = "#FF8C00"; // dark orange
-        lfs->write_file(SLEEP_COLOR_FS, value.c_str());
-    }
-}
-
-void update_wakeup_mode() {
-    String value = lfs->read_file(WAKEUP_MODE_FS);
-    if(value == "" || value == NULL) {
-        value = "green";
-        lfs->write_file(WAKEUP_MODE_FS, value.c_str());
-    }
-    for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-        if(value == modes[i][1]) {
-            change_wakeup_state(modes[i][1]);
-            wakeup_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
-            return;
-        }
-    }
-}
-
-void update_daytime_mode() {
-    String value = lfs->read_file(DAYTIME_MODE_FS);
-    if(value == "" || value == NULL) {
-        value = "mix";
-        lfs->write_file(DAYTIME_MODE_FS, value.c_str());
-    }
-    for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-        if(value == modes[i][1]) {
-            change_daytime_state(modes[i][1]);
-            daytime_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
-            return;
-        }
-    }
-}
-
-void update_sleep_mode() {
-    String value = lfs->read_file(SLEEP_MODE_FS);
-    if(value == "" || value == NULL) {
-        value = "orange";
-        lfs->write_file(SLEEP_MODE_FS, value.c_str());
-    }
-    for(int i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-        if(value == modes[i][1]) {
-            change_sleep_state(modes[i][1]);
-            sleep_isColorPickerNeeded = !(value == STATE_ANIMATION_PICK);
-            return;
-        }
-    }
+void updateSleepBrightness(String val) {
+    lfs->write_file(SLEEP_BRIGHTNESS_FS, val.c_str());
+    sleep_brightness = getLogicalBrightnessValue(val);
 }
 
 void updateTimeZone() {
@@ -451,38 +346,28 @@ String processor(const String &var) {
     if(var == "input_name") { return NAME; }
 
     // Times
-    if(var == WAKEUP_TIME_IN) {
-        return lfs->read_file(WAKEUP_TIME_FS);
-    } else if(var == DAYTIME_TIME_IN) {
-        return lfs->read_file(DAYTIME_TIME_FS);
-    } else if(var == SLEEP_TIME_IN) {
-        return lfs->read_file(SLEEP_TIME_FS);
-    }
+    if(var == WAKEUP_TIME_IN) { return lfs->read_file(WAKEUP_TIME_FS); }
+    if(var == DAYTIME_TIME_IN) { return lfs->read_file(DAYTIME_TIME_FS); }
+    if(var == SLEEP_TIME_IN) { return lfs->read_file(SLEEP_TIME_FS); }
     // Modes
-    else if(var == WAKEUP_MODE_IN) {
+    if(var == WAKEUP_MODE_IN) {
         String value = lfs->read_file(WAKEUP_MODE_FS);
         if(value == "" || value == NULL) { value = "green"; };
         return helper.getHtmlSelect(modes, sizeof_modes, value);
     } else if(var == DAYTIME_MODE_IN) {
         String value = lfs->read_file(DAYTIME_MODE_FS);
-        if(value == "" || value == NULL) { value = "mix"; };
         return helper.getHtmlSelect(modes, sizeof_modes, value);
     } else if(var == SLEEP_MODE_IN) {
         String value = lfs->read_file(SLEEP_MODE_FS);
-        if(value == "" || value == NULL) { value = "orange"; };
         return helper.getHtmlSelect(modes, sizeof_modes, value);
     }
     // Brightness
-    else if(var == WAKEUP_BRIGHTNESS_IN) {
+    if(var == WAKEUP_BRIGHTNESS_IN) {
         return lfs->read_file(WAKEUP_BRIGHTNESS_FS);
     } else if(var == DAYTIME_BRIGHTNESS_IN) {
         return lfs->read_file(DAYTIME_BRIGHTNESS_FS);
     } else if(var == SLEEP_BRIGHTNESS_IN) {
         return lfs->read_file(SLEEP_BRIGHTNESS_FS);
-    }
-    // Blink Interval
-    else if(var == BLINK_INTERVAL_IN) {
-        return lfs->read_file(BLINK_INTERVAL_FS);
     }
     // Blink LEDs
     else if(var == WAKEUP_BLINK_IN) {
@@ -508,14 +393,18 @@ String processor(const String &var) {
     }
     // Color
     else if(var == WAKEUP_COLOR_ROW_IN) {
-        if(wakeup_isColorPickerNeeded) { return "hidden"; }
+        if(!wakeup_isColorPickerNeeded) { return "hidden"; }
         return "";
     } else if(var == DAYTIME_COLOR_ROW_IN) {
-        if(daytime_isColorPickerNeeded) { return "hidden"; }
+        if(!daytime_isColorPickerNeeded) { return "hidden"; }
         return "";
     } else if(var == SLEEPTIME_COLOR_ROW_IN) {
-        if(sleep_isColorPickerNeeded) { return "hidden"; }
+        if(!sleep_isColorPickerNeeded) { return "hidden"; }
         return "";
+    }
+    // Blink Interval
+    if(var == BLINK_INTERVAL_IN) {
+        return lfs->read_file(BLINK_INTERVAL_FS);
     }
     // The current time
     else if(var == "input_time_on_load") {
@@ -552,28 +441,35 @@ void initTime() {
     updateTimeZone();
 }
 
-void change_wakeup_state(String new_state) {
-    if(new_state == wakeup_state) { return; }
-    wakeup_state = new_state;
-    state_first_run = true;
-}
-
-void change_daytime_state(String new_state) {
-    if(new_state == daytime_state) { return; }
-    daytime_state = new_state;
-    state_first_run = true;
-}
-
-void change_sleep_state(String new_state) {
-    if(new_state == sleep_state) { return; }
-    sleep_state = new_state;
-    state_first_run = true;
-}
 void updateState(int new_state) {
     if(state == new_state) { return; }
     state = new_state;
     state_first_run = true;
     // PawPatrol Tower only: db->updateBlinkState(state);
+}
+
+void updateWakeupState(String new_state) {
+    if(new_state == wakeup_state) { return; }
+    wakeup_state = new_state;
+    wakeup_isColorPickerNeeded = (wakeup_state == STATE_ANIMATION_PICK);
+    state_first_run = true;
+    lfs->write_file(WAKEUP_MODE_FS, new_state.c_str());
+}
+
+void updateDaytimeState(String new_state) {
+    if(new_state == daytime_state) { return; }
+    daytime_state = new_state;
+    daytime_isColorPickerNeeded = (daytime_state == STATE_ANIMATION_PICK);
+    state_first_run = true;
+    lfs->write_file(DAYTIME_MODE_FS, new_state.c_str());
+}
+
+void updateSleepState(String new_state) {
+    if(new_state == sleep_state) { return; }
+    sleep_state = new_state;
+    sleep_isColorPickerNeeded = (sleep_state == STATE_ANIMATION_PICK);
+    state_first_run = true;
+    lfs->write_file(SLEEP_MODE_FS, new_state.c_str());
 }
 
 void createRandomColor() {
@@ -641,30 +537,24 @@ void handle_server_get(AsyncWebServerRequest *request) {
     // Modes
     else if(request->hasParam(WAKEUP_MODE_IN)) {
         tmp = request->getParam(WAKEUP_MODE_IN)->value();
-        lfs->write_file(WAKEUP_MODE_FS, tmp.c_str());
-        change_wakeup_state(tmp.c_str());
+        updateWakeupState(tmp.c_str());
     } else if(request->hasParam(DAYTIME_MODE_IN)) {
         tmp = request->getParam(DAYTIME_MODE_IN)->value();
-        lfs->write_file(DAYTIME_MODE_FS, tmp.c_str());
-        change_daytime_state(tmp.c_str());
+        updateDaytimeState(tmp.c_str());
     } else if(request->hasParam(SLEEP_MODE_IN)) {
         tmp = request->getParam(SLEEP_MODE_IN)->value();
-        lfs->write_file(SLEEP_MODE_FS, tmp.c_str());
-        change_sleep_state(tmp.c_str());
+        updateSleepState(tmp.c_str());
     }
     // Brightness
     else if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
         tmp = request->getParam(WAKEUP_BRIGHTNESS_IN)->value();
-        lfs->write_file(WAKEUP_BRIGHTNESS_FS, tmp.c_str());
-        update_wakeup_brightness();
+        updateWakeupBrightness(tmp);
     } else if(request->hasParam(DAYTIME_BRIGHTNESS_IN)) {
         tmp = request->getParam(DAYTIME_BRIGHTNESS_IN)->value();
-        lfs->write_file(DAYTIME_BRIGHTNESS_FS, tmp.c_str());
-        update_daytime_brightness();
+        updateDaytimeBrightness(tmp);
     } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
         tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
-        lfs->write_file(SLEEP_BRIGHTNESS_FS, tmp.c_str());
-        update_sleep_brightness();
+        updateSleepBrightness(tmp);
     }
     // Blink Interval
     else if(request->hasParam(BLINK_INTERVAL_IN)) {
@@ -732,7 +622,7 @@ bool colorPulse(int wait) {
         if(color_pulse_helper_brightness <= 2) { return true; }
     }
     strip.fill(random_color);
-    strip.setBrightness(color_pulse_helper_brightness);
+    setLampBrightness(color_pulse_helper_brightness);
     strip.show();
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
@@ -745,7 +635,7 @@ bool colorCircle(int wait) {
         return true;
     }
     strip.setPixelColor(color_circle_mode_helper, random_color);
-    strip.setBrightness(colorBrightness);
+    setLampBrightness(colorBrightness);
     strip.show();
     color_circle_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
@@ -763,8 +653,108 @@ bool rainbowCircle(int wait) {
         strip.setPixelColor(i,
                             strip.gamma32(strip.ColorHSV(pixelHue, 255, 255)));
     }
-    strip.setBrightness(colorBrightness);
+    setLampBrightness(colorBrightness);
     strip.show();
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
+}
+
+/************************************************************************************************************
+/*
+/* HELPER  INITIALIZE
+/*
+*************/
+
+void initBrightness() {
+    // Wakeup
+    String value = lfs->read_file(WAKEUP_BRIGHTNESS_FS);
+    if(value == "" || value == NULL) { value = "15"; }
+    updateWakeupBrightness(value);
+
+    // Daytime
+    value = lfs->read_file(DAYTIME_BRIGHTNESS_FS);
+    if(value == "" || value == NULL) { value = "100"; }
+    updateDaytimeBrightness(value);
+
+    // Sleep
+    value = lfs->read_file(SLEEP_BRIGHTNESS_FS);
+    if(value == "" || value == NULL) { value = "15"; }
+    updateSleepBrightness(value);
+}
+
+void initWakeupBrightness() {}
+
+void initColors() {
+    // Wakeup
+    String value = lfs->read_file(WAKEUP_COLOR_FS);
+    if(value == "" || value == NULL) {
+        value = "#90EE90"; // lightgreen
+        lfs->write_file(WAKEUP_COLOR_FS, value.c_str());
+    }
+
+    // Daytime
+    value = lfs->read_file(DAYTIME_COLOR_FS);
+    if(value == "" || value == NULL) {
+        value = "#00FFFF"; // cyan
+        lfs->write_file(DAYTIME_COLOR_FS, value.c_str());
+    }
+
+    // Sleep
+    value = lfs->read_file(SLEEP_COLOR_FS);
+    if(value == "" || value == NULL) {
+        value = "#FF8C00"; // dark orange
+        lfs->write_file(SLEEP_COLOR_FS, value.c_str());
+    }
+}
+
+void initBlink() {
+    String value = lfs->read_file(WAKEUP_BLINK_FS);
+    if(value == "" || value == NULL) {
+        value = D_LED_MODE_OFF;
+        lfs->write_file(WAKEUP_BLINK_FS, value.c_str());
+    }
+}
+
+void initModes() {
+    // Wakeup
+    String value = lfs->read_file(WAKEUP_MODE_FS);
+    if(value == "" || value == NULL) { value = STATE_ANIMATION_GREEN; }
+    updateWakeupState(value);
+
+    // Daytime
+    value = lfs->read_file(DAYTIME_MODE_FS);
+    if(value == "" || value == NULL) { value = STATE_ANIMATION_MIX; }
+    updateDaytimeState(value);
+
+    // Sleep
+    value = lfs->read_file(SLEEP_MODE_FS);
+    if(value == "" || value == NULL) { value = STATE_ANIMATION_RED; }
+    updateSleepState(value);
+}
+
+void initUserTimes() {
+    // Wakeup Time
+    String tmp_time = lfs->read_file(WAKEUP_TIME_FS);
+    if(tmp_time == "" || tmp_time == NULL) {
+        tmp_time = "08:00";
+        lfs->write_file(WAKEUP_TIME_FS, tmp_time.c_str());
+    }
+    user_wakeup_time.setTime(tmp_time);
+    user_wakeup_time.print();
+    // Daytime Time
+    tmp_time = lfs->read_file(DAYTIME_TIME_FS);
+    if(tmp_time == "" || tmp_time == NULL) {
+        tmp_time = "08:30";
+        lfs->write_file(DAYTIME_TIME_FS, tmp_time.c_str());
+    }
+    user_daytime_time.setTime(tmp_time);
+    user_daytime_time.print();
+    // Sleep Time
+    tmp_time = lfs->read_file(SLEEP_TIME_FS);
+    if(tmp_time == "" || tmp_time == NULL) {
+        tmp_time = "19:00";
+        lfs->write_file(SLEEP_TIME_FS, tmp_time.c_str());
+    }
+    user_sleep_time.setTime(tmp_time);
+    user_sleep_time.print();
 }

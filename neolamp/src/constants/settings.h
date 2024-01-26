@@ -2,5 +2,5 @@
 #define LED_BLUE 0     // Wemos D1 mini: port D3
 #define LED_YELLOW 2   // Wemos D1 mini: port D4
 
-#define NAME "Nachtlicht"
-#define URL "nachtlicht"
+#define NAME "Bellas Nachtlicht"
+#define URL "bella"

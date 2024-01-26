@@ -7,13 +7,33 @@ const char index_html[] PROGMEM = R"rawliteral(
 
     <style>
       html {
-        font-family: Times New Roman;
         display: inline-block;
         text-align: center;
       }
       h2 {
         font-size: 1.5rem;
         color: #ffaa00;
+      }
+      table {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      td.left {
+        text-align: right;
+      }
+      td.middle {
+        text-align: left;
+        width: 128px;
+        padding-left: 0.5em;
+      }
+      td.right {
+        text-align: left;
+      }
+      input.table_input {
+        width: 128px;
+      }
+      select.table_input {
+        width: 128px;
       }
     </style>
 
@@ -30,136 +50,149 @@ const char index_html[] PROGMEM = R"rawliteral(
     <h2>%input_name%</h2>
     <!----------------------------------------------------->
     <!-- WakeUp Time -->
-    <table style="margin-left: auto; margin-right: auto; width: 20em">
+    <table>
       <tr>
+        <td><hr /></td>
         <td><hr /></td>
         <td><hr /></td>
       </tr>
       <tr>
-        <td style="text-align: right; padding-right: 1em">Aufstehzeit:</td>
-        <td>
+        <td class="left">Aufstehzeit:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getIWT">
             <input
               type="time"
-              name="input_wakeup_time"
-              value="%input_wakeup_time%"
-              style="width: 15em"
+              name="iWT"
+              value="%iWT%"
+              class="table_input"
               onchange="handle_onchange_and_reload('getIWT')"
             />
           </form>
         </td>
+        <td class="right"></td>
       </tr>
       <tr>
-        <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
-        <td>
+        <td class="left">Lichtmodus:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getIWM">
             <select
-              name="input_wakeup_mode"
-              style="width: 15em"
+              name="iWM"
+              class="table_input"
               onchange="handle_onchange_and_reload('getIWM')"
             >
-              %input_wakeup_mode%
+              %iWM%
             </select>
           </form>
         </td>
+        <td class="right"></td>
       </tr>
       <tr %wakeup_color_row%>
-        <td style="text-align: right; padding-right: 1em">Farbe:</td>
-        <td>
+        <td class="left">Farbe:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getIWC">
             <input
               type="color"
-              name="input_wakeup_color"
-              value="%input_wakeup_color%"
-              style="width: 15em"
+              name="iWC"
+              value="%iWC%"
+              class="table_input"
               onchange="handle_onchange_and_reload('getIWC')"
             />
           </form>
         </td>
+        <td class="right"></td>
       </tr>
       <tr>
-        <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
-        <td>
+        <td class="left">Helligkeit:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getIWB">
             <input
-              name="input_wakeup_brightness"
-              value="%input_wakeup_brightness%"
+              name="iWB"
+              value="%iWB%"
               type="range"
               orient="vertical"
               min="0"
               max="100"
-              style="width: 15em"
+              class="table_input"
               onchange="handle_onchange_and_reload('getIWB')"
+              oninput="valueIWB.innerHTML=iWB.value + ' &#0037;'"
             />
           </form>
         </td>
+        <td class="right" id="valueIWB">%iWB% &#0037;</td>
       </tr>
       <tr>
+        <td><hr /></td>
         <td><hr /></td>
         <td><hr /></td>
       </tr>
       <!----------------------------------------------------->
       <!-- Daytime -->
       <tr>
-        <td style="text-align: right; padding-right: 1em">Tags:</td>
-        <td>
+        <td class="left">Tags:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getIDT">
             <input
               type="time"
-              name="input_daytime_time"
-              value="%input_daytime_time%"
-              style="width: 15em"
+              name="iDT"
+              value="%iDT%"
+              class="table_input"
               onchange="handle_onchange_and_reload('getIDT')"
             />
           </form>
         </td>
+        <td class="right"></td>
       </tr>
       <tr>
-        <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
-        <td>
+        <td class="left">Lichtmodus:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getIDM">
             <select
-              name="input_daytime_mode"
-              style="width: 15em"
+              name="iDM"
+              class="table_input"
               onchange="handle_onchange_and_reload('getIDM')"
             >
-              %input_daytime_mode%
+              %iDM%
             </select>
           </form>
         </td>
+        <td class="right"></td>
       </tr>
       <tr %daytime_color_row%>
-        <td style="text-align: right; padding-right: 1em">Farbe:</td>
-        <td>
+        <td class="left">Farbe:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getIDC">
             <input
               type="color"
-              name="input_daytime_color"
-              value="%input_daytime_color%"
-              style="width: 15em"
+              name="iDC"
+              value="%iDC%"
+              class="table_input"
               onchange="handle_onchange_and_reload('getIDC')"
             />
           </form>
         </td>
+        <td class="right"></td>
       </tr>
-      <tr>
-        <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
+      <tr class="middle">
+        <td class="left">Helligkeit:</td>
         <td>
           <form action="/get" target="hidden-form" id="getIDB">
             <input
-              name="input_daytime_brightness"
-              value="%input_daytime_brightness%"
+              name="iDB"
+              value="%iDB%"
               type="range"
               orient="vertical"
               min="0"
               max="100"
-              style="width: 15em"
+              class="table_input"
               onchange="handle_onchange_and_reload('getIDB')"
+              oninput="valueIDB.innerHTML=iDB.value + ' &#0037;'"
             />
           </form>
         </td>
+        <td class="right" id="valueIDB">%iDB% &#0037;</td>
       </tr>
       <tr>
+        <td><hr /></td>
         <td><hr /></td>
         <td><hr /></td>
       </tr>
@@ -167,100 +200,110 @@ const char index_html[] PROGMEM = R"rawliteral(
       <!-- Sleep Time  -->
 
       <tr>
-        <td style="text-align: right; padding-right: 1em">Schlafenszeit:</td>
-        <td>
+        <td class="left">Schlafenszeit:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getIST">
             <input
               type="time"
-              name="input_sleep_time"
-              value="%input_sleep_time%"
-              style="width: 15em"
+              name="iST"
+              value="%iST%"
+              class="table_input"
               onchange="handle_onchange_and_reload('getIST')"
             />
           </form>
         </td>
+        <td class="right"></td>
       </tr>
       <tr>
-        <td style="text-align: right; padding-right: 1em">Lichtmodus:</td>
-        <td>
+        <td class="left">Lichtmodus:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getISM">
             <select
-              name="input_sleep_mode"
-              style="width: 15em"
+              name="iSM"
+              class="table_input"
               onchange="handle_onchange_and_reload('getISM')"
             >
-              %input_sleep_mode%
+              %iSM%
             </select>
           </form>
         </td>
+        <td class="right"></td>
       </tr>
       <tr %sleeptime_color_row%>
-        <td style="text-align: right; padding-right: 1em">Farbe:</td>
-        <td>
+        <td class="left">Farbe:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getISC">
             <input
               type="color"
-              name="input_sleep_color"
-              value="%input_sleep_color%"
-              style="width: 15em"
+              name="iSC"
+              value="%iSC%"
+              class="table_input"
               onchange="handle_onchange_and_reload('getISC')"
             />
           </form>
         </td>
+        <td class="right"></td>
       </tr>
       <tr>
-        <td style="text-align: right; padding-right: 1em">Helligkeit:</td>
-        <td>
+        <td class="left">Helligkeit:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getISB">
             <input
-              name="input_sleep_brightness"
-              value="%input_sleep_brightness%"
+              name="iSB"
+              value="%iSB%"
               type="range"
               orient="vertical"
               min="0"
               max="100"
-              style="width: 15em"
+              class="table_input"
               onchange="handle_onchange_and_reload('getISB')"
+              oninput="valueISB.innerHTML=iSB.value + ' &#0037;'"
             />
           </form>
         </td>
+        <td class="right" id="valueISB">%iSB% &#0037;</td>
       </tr>
       <tr>
+        <td><hr /></td>
         <td><hr /></td>
         <td><hr /></td>
       </tr>
       <!----------------------------------------------------->
       <!-- Time Zone -->
       <tr>
-        <td style="text-align: right; padding-right: 1em">Zeitzone:</td>
-        <td>
+        <td class="left">Zeitzone:</td>
+        <td class="middle">
           <form action="/get" target="hidden-form" id="getTZ">
             <select
               name="input_timezone"
-              style="width: 15em"
+              class="table_input"
               onchange="handle_onchange_and_reload('getTZ')"
             >
               %input_timezone%
             </select>
           </form>
         </td>
+        <td class="right"></td>
       </tr>
       <tr>
         <td><hr /></td>
         <td><hr /></td>
+        <td><hr /></td>
       </tr>
       <tr>
-        <td style="text-align: right; padding-right: 1em">
+        <td class="left">
           Uhrzeit:<br />
           <label style="font-size: 0.75em"> (der Lampe)</label>
         </td>
-        <td style="width: 15em">
+        <td class="middle">
           %input_time_on_load%
           <br />
           <label style="font-size: 0.75em"> (wird nicht aktualisiert)</label>
         </td>
+        <td class="right"></td>
       </tr>
       <tr>
+        <td><hr /></td>
         <td><hr /></td>
         <td><hr /></td>
       </tr>

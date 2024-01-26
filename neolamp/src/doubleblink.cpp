@@ -106,11 +106,11 @@ int Doubleblink::get_state_blink() {
 }
 
 void Doubleblink::updateBlinkState(uint8_t state) {
-    if(state == STATE_WAKEUP_TIME) {
+    if(state == STATE_WAKEUP) {
         updateBlink(lfs->read_file(WAKEUP_BLINK_FS));
-    } else if(state == STATE_DAYTIME_TIME) {
+    } else if(state == STATE_DAYTIME) {
         updateBlink(lfs->read_file(DAYTIME_BLINK_FS));
-    } else if(state == STATE_SLEEPING_TIME) {
+    } else if(state == STATE_SLEEPING) {
         updateBlink(lfs->read_file(SLEEP_BLINK_FS));
     } else {
         updateBlink("0");
