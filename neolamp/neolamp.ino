@@ -162,10 +162,7 @@ void run_colorPick_mode() {
         Serial.println("run_colorPick_mode");
     }
     if(!(isColorUpdateNeeded || brightness_changed)) { return; }
-    for(int i = 0; i < strip.numPixels(); i++) {
-        strip.setPixelColor(i, colorPicker_Color);
-    }
-    setLampBrightness(colorBrightness);
+    setLampColorAndBrightness(colorPicker_Color, colorBrightness);
     isColorUpdateNeeded = false;
     brightness_changed = false;
 }
@@ -243,10 +240,9 @@ uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b) {
     return strip.Color(r, g, b);
 }
 
-void setLampBrightness(uint32_t brightness) {
-    Serial.print("Brightness: ");
-    Serial.println(brightness);
+void setLampBrightness(uint8_t brightness) {
     if(brightness >= 9) {
+        Serial.println(brightness - 7);
         strip.setBrightness(brightness - 7);
         strip.show();
         return;
@@ -299,7 +295,7 @@ void setLampBrightness(uint32_t brightness) {
     strip.show();
 }
 
-void setLampColorAndBrightness(uint32_t color, uint32_t brightness) {
+void setLampColorAndBrightness(uint32_t color, uint8_t brightness) {
     strip.fill(color);
     setLampBrightness(brightness);
 }

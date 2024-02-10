@@ -52,8 +52,8 @@ void updateStateAndTime();
 
 void createRandomColor();
 uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b);
-void setLampBrightness(uint32_t brightness);
-void setLampColorAndBrightness(uint32_t color, uint32_t brightness);
+void setLampBrightness(uint8_t brightness);
+void setLampColorAndBrightness(uint32_t color, uint8_t brightness);
 void setLampError();
 bool colorCircle(unsigned long wait);
 bool colorPulse(unsigned long wait);
