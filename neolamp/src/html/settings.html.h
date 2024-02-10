@@ -1,4 +1,4 @@
-const char index_html[] PROGMEM = R"rawliteral(
+const char settings_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
   <head>
@@ -86,7 +86,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         </td>
         <td class="right"></td>
       </tr>
-      <tr %wakeup_color_row%>
+      <tr %hide_wakup_color%>
         <td class="left">Farbe:</td>
         <td class="middle">
           <form action="/get" target="hidden-form" id="getIWC">
@@ -119,6 +119,21 @@ const char index_html[] PROGMEM = R"rawliteral(
           </form>
         </td>
         <td class="right" id="valueIWB">%iWB% &#0037;</td>
+      </tr>
+      <tr %hide_blink%>
+        <td class="left">Blink:</td>
+        <td class="middle">
+          <form action="/get" target="hidden-form" id="getIBBlink">
+            <select
+              name="input_wakeup_blink"
+              class="table_input"
+              onchange="handle_onchange_and_reload('getIBBlink')"
+            >
+              %input_wakeup_blink%
+            </select>
+          </form>
+        </td>
+        <td class="right"></td>
       </tr>
       <tr>
         <td><hr /></td>
@@ -157,7 +172,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         </td>
         <td class="right"></td>
       </tr>
-      <tr %daytime_color_row%>
+      <tr %hide_daytime_color%>
         <td class="left">Farbe:</td>
         <td class="middle">
           <form action="/get" target="hidden-form" id="getIDC">
@@ -190,6 +205,21 @@ const char index_html[] PROGMEM = R"rawliteral(
           </form>
         </td>
         <td class="right" id="valueIDB">%iDB% &#0037;</td>
+      </tr>
+      <tr %hide_blink%>
+        <td class="left">Blink:</td>
+        <td class="middle">
+          <form action="/get" target="hidden-form" id="getIDBlink">
+            <select
+              name="input_daytime_blink"
+              class="table_input"
+              onchange="handle_onchange_and_reload('getIDBlink')"
+            >
+              %input_daytime_blink%
+            </select>
+          </form>
+        </td>
+        <td class="right"></td>
       </tr>
       <tr>
         <td><hr /></td>
@@ -229,7 +259,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         </td>
         <td class="right"></td>
       </tr>
-      <tr %sleeptime_color_row%>
+      <tr %hide_sleeptime_color%>
         <td class="left">Farbe:</td>
         <td class="middle">
           <form action="/get" target="hidden-form" id="getISC">
@@ -263,7 +293,49 @@ const char index_html[] PROGMEM = R"rawliteral(
         </td>
         <td class="right" id="valueISB">%iSB% &#0037;</td>
       </tr>
+      <tr %hide_blink%>
+        <td class="left">Blink:</td>
+        <td class="middle">
+          <form action="/get" target="hidden-form" id="getISBlink">
+            <select
+              name="input_sleep_blink"
+              class="table_input"
+              onchange="handle_onchange_and_reload('getISBlink')"
+            >
+              %input_sleep_blink%
+            </select>
+          </form>
+        </td>
+        <td class="right"></td>
+      </tr>
       <tr>
+        <td><hr /></td>
+        <td><hr /></td>
+        <td><hr /></td>
+      </tr>
+      <!----------------------------------------------------->
+      <!-- Blink Time -->
+      <tr %hide_blink%>
+        <td class="left">Blink Intervall:</td>
+        <td class="middle">
+          <form action="/get" target="hidden-form" id="getBlink">
+            <input
+              name="iBT"
+              value="%iBT%"
+              type="range"
+              orient="vertical"
+              min="500"
+              max="5000"
+              step="500"
+              class="table_input"
+              onchange="handle_onchange_and_reload('getBlink')"
+              oninput="valueIBT.innerHTML=iBT.value + ' ms;'"
+            />
+          </form>
+        </td>
+        <td class="right" id="valueIBT">%iBT% ms</td>
+      </tr>
+      <tr %hide_blink%>
         <td><hr /></td>
         <td><hr /></td>
         <td><hr /></td>

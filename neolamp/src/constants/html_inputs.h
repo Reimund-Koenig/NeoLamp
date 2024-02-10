@@ -26,9 +26,10 @@
 #define SLEEP_BRIGHTNESS_IN "iSB"
 #define SLEEP_BRIGHTNESS_FS "/iSB.txt"
 
-#define SLEEPTIME_COLOR_ROW_IN "sleeptime_color_row"
-#define DAYTIME_COLOR_ROW_IN "daytime_color_row"
-#define WAKEUP_COLOR_ROW_IN "wakeup_color_row"
+#define HIDE_BLINK_ROW_IN "hide_blink"
+#define SLEEPTIME_COLOR_ROW_IN "hide_sleeptime_color"
+#define DAYTIME_COLOR_ROW_IN "hide_daytime_color"
+#define WAKEUP_COLOR_ROW_IN "hide_wakup_color"
 
 #define SLEEP_COLOR_IN "iSC"
 #define SLEEP_COLOR_FS "/iSC.txt"
@@ -51,5 +52,5 @@
 #define SLEEP_BLINK_IN "input_sleep_blink"
 #define SLEEP_BLINK_FS "/input_sleep_blink.txt"
 
-#define BLINK_INTERVAL_IN "input_blink_time"
-#define BLINK_INTERVAL_FS "/input_blink_time.txt"
+#define BLINK_INTERVAL_IN "iBT"
+#define BLINK_INTERVAL_FS "/iBT.txt"

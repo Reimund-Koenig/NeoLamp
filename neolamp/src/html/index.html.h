@@ -1,3 +1,4 @@
+const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
   <head>
@@ -35,6 +36,15 @@
         width: 128px;
       }
     </style>
+
+    <script>
+      function handle_onchange_and_reload(x) {
+        document.getElementById(x).submit();
+        setTimeout(function () {
+          document.location.reload(false);
+        }, 1000);
+      }
+    </script>
   </head>
   <body>
     <h2>%input_name%</h2>
@@ -43,14 +53,18 @@
     <table>
       <tr>
         <td><hr /></td>
+        <td><hr /></td>
+        <td><hr /></td>
       </tr>
       <tr>
-        <td class="middle"><a href="/settings">Einstellungen</a></td>
+        <td class="left"><a href="#/settings.html">Settings</a></td>
+        <td class="middle"><a href="/settings.html">Settings</a></td>
+        <td class="right"><a href="./settings.html">Settings</a></td>
       </tr>
+
       <tr>
-        <td class="middle"><a href="/settings">Einstellungen</a></td>
-      </tr>
-      <tr>
+        <td><hr /></td>
+        <td><hr /></td>
         <td><hr /></td>
       </tr>
     </table>
@@ -61,3 +75,4 @@
     <iframe style="display: none" name="hidden-form"></iframe>
   </body>
 </html>
+)rawliteral";
