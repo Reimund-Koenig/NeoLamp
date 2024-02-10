@@ -3,8 +3,6 @@
 unsigned long db_clock_sleep = 0;
 
 Doubleblink::Doubleblink(LampFileSystem *lfs) {
-    pinMode(LED_BLUE, OUTPUT);
-    pinMode(LED_YELLOW, OUTPUT);
     this->lfs = lfs;
     String value = lfs->read_file(WAKEUP_BLINK_FS);
     if(value == "" || value == NULL) {
@@ -27,11 +25,15 @@ Doubleblink::Doubleblink(LampFileSystem *lfs) {
         lfs->write_file(BLINK_INTERVAL_FS, value.c_str());
     }
     set_interval((uint16_t)(value.toInt()));
+    if(!IS_BIG_LAMP_TOWER_BLINK) return;
+    pinMode(LED_BLUE, OUTPUT);
+    pinMode(LED_YELLOW, OUTPUT);
     digitalWrite(LED_BLUE, LOW);
     digitalWrite(LED_YELLOW, LOW);
 }
 
 void Doubleblink::loop() {
+    if(!IS_BIG_LAMP_TOWER_BLINK) return;
     int current_state = get_state();
     if(current_state == D_BLINK_DO_NOTHING) { return; }
     if(current_state == D_BLINK_SWITCH_BLUE_LED_ON) {
@@ -51,6 +53,7 @@ void Doubleblink::loop() {
 }
 
 void Doubleblink::start(String mode) {
+    if(!IS_BIG_LAMP_TOWER_BLINK) return;
     this->doNotBlink = false;
     this->setDoNotBlink = false;
     this->isStableColorReturned = false;
@@ -106,6 +109,7 @@ int Doubleblink::get_state_blink() {
 }
 
 void Doubleblink::updateBlinkState(uint8_t state) {
+    if(!IS_BIG_LAMP_TOWER_BLINK) return;
     if(state == STATE_WAKEUP) {
         updateBlink(lfs->read_file(WAKEUP_BLINK_FS));
     } else if(state == STATE_DAYTIME) {
@@ -118,6 +122,7 @@ void Doubleblink::updateBlinkState(uint8_t state) {
 }
 
 void Doubleblink::updateBlink(String value) {
+    if(!IS_BIG_LAMP_TOWER_BLINK) return;
     if(value == D_LED_MODE_OFF) {
         stop();
     } else {
