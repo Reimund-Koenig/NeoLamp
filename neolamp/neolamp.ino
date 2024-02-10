@@ -247,8 +247,10 @@ uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b) {
     return strip.Color(r, g, b);
 }
 void setLampBrightness(uint32_t brightness) {
+    Serial.print("Brightness: ");
+    Serial.println(brightness);
     if(brightness == 0 || brightness >= 9) {
-        strip.setBrightness(brightness - 7);
+        strip.setBrightness(brightness);
         strip.show();
         return;
     }
@@ -275,7 +277,7 @@ void setLampBrightness(uint32_t brightness) {
     }
     if(brightness <= 4) {
         // 6 LED on
-        strip.setPixelColor(4, 0);
+        strip.setPixelColor(6, 0);
         strip.setPixelColor(14, 0);
     }
     if(brightness <= 3) {
@@ -296,9 +298,8 @@ void setLampBrightness(uint32_t brightness) {
 }
 
 void setLampColorAndBrightness(uint32_t color, uint32_t brightness) {
-    strip.setBrightness(brightness);
     strip.fill(color);
-    strip.show();
+    setLampBrightness(brightness);
 }
 
 void updateStateAndTime() {
