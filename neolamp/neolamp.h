@@ -11,13 +11,14 @@
 #include "src/clocktime.h"
 #include "src/constants/blink_mode_array.h"
 #include "src/constants/html_inputs.h"
-#include "src/constants/index.html.h"
 #include "src/constants/modes.h"
 #include "src/constants/modes_array.h"
 #include "src/constants/secrets.h"
 #include "src/constants/settings.h"
 #include "src/constants/timezones.h"
 #include "src/doubleblink.h"
+#include "src/html/index.html.h"
+#include "src/html/settings.html.h"
 #include "src/lampfilesystem.h"
 #include "src/lamphelper.h"
 #include "time.h"
@@ -50,6 +51,11 @@ void run_lamp_off();
 void updateStateAndTime();
 
 void createRandomColor();
+uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b, uint8_t v);
+uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b, );
+void setLampBrightness(uint32_t brightness);
+void setLampColorAndBrightness(uint32_t color, uint32_t brightness);
+void neo_stripe_fill(uint32_t color);
 
 bool colorCircle(unsigned long wait);
 bool colorPulse(unsigned long wait);
@@ -60,7 +66,6 @@ void initModes();
 void initBrightness();
 void initColors();
 void initUserTimes();
-void setLampBrightness(int b);
 
 void updateColorBrightness(uint8_t inputBrightness);
 void updateColorPicker(String state, const char *file);
