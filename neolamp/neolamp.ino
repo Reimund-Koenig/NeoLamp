@@ -173,7 +173,7 @@ void run_colorPick_mode() {
 void run_wakeupTime_mode() {
     if(!(state_first_run || brightness_changed)) return;
     Serial.println("run_wakeupTime_mode");
-    setLampColorAndBrightness(getRgbColor(0, 75, 0, 0), colorBrightness);
+    setLampColorAndBrightness(getRgbColor(0, 255, 0), colorBrightness);
     state_first_run = false;
     brightness_changed = false;
 }
@@ -181,7 +181,7 @@ void run_wakeupTime_mode() {
 void run_sleepingTime_mode() {
     if(!(state_first_run || brightness_changed)) return;
     Serial.println("run_sleepingTime_mode");
-    setLampColorAndBrightness(getRgbColor(255, 75, 0, 255), colorBrightness);
+    setLampColorAndBrightness(getRgbColor(255, 75, 0), colorBrightness);
     state_first_run = false;
     brightness_changed = false;
 }
@@ -237,19 +237,21 @@ void animationStateMachine(String substate) {
 /* HELPER
 /*
 *************/
-void setLampError() {
-    setLampColorAndBrightness(getRgbColor(0, 0, 128, 255), 255);
-}
-uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b, uint8_t v) {
-    return strip.Color(r, g, b, v);
-}
+void setLampError() { setLampColorAndBrightness(getRgbColor(0, 0, 128), 255); }
+
 uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b) {
     return strip.Color(r, g, b);
 }
+
 void setLampBrightness(uint32_t brightness) {
     Serial.print("Brightness: ");
     Serial.println(brightness);
-    if(brightness == 0 || brightness >= 9) {
+    if(brightness >= 9) {
+        strip.setBrightness(brightness - 7);
+        strip.show();
+        return;
+    }
+    if(brightness == 0) {
         strip.setBrightness(brightness);
         strip.show();
         return;

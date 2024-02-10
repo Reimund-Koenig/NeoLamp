@@ -51,7 +51,6 @@ void run_lamp_off();
 void updateStateAndTime();
 
 void createRandomColor();
-uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b, uint8_t v);
 uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b);
 void setLampBrightness(uint32_t brightness);
 void setLampColorAndBrightness(uint32_t color, uint32_t brightness);
