@@ -58,9 +58,7 @@ void setup() {
     Serial.begin(115200);
     // this resets all the neopixels to an off state
     strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    setLampBrightness(100);
-    strip.fill(strip.Color(255, 255, 255));
-    strip.show();
+    setLampColorAndBrightness(getRgbColor(255, 255, 255), 100);
     lfs = new LampFileSystem();
 
     // start wifi manager
@@ -79,27 +77,26 @@ void setup() {
     }
     MDNS.addService("http", "tcp", 80);
     server.on("/", HTTP_GET, handle_server_root);
+    server.on("/settings", HTTP_GET, handle_server_settings);
     server.on("/get", HTTP_GET, handle_server_get);
     server.onNotFound(handle_server_notFound);
     server.begin(); // Actually start the server
     // printServerInfo();
+    db = new Doubleblink(lfs);
 
     // Load values from persistent storage or use default
-    // PawPatrol Tower only: db = new Doubleblink(lfs);
-
     initModes();
     initBrightness();
     initColors();
     initUserTimes();
     updateStateAndTime();
-
-    // PawPatrol Tower only: db->updateBlinkState(state);
+    db->updateBlinkState(state);
 }
 
 void loop() {
     MDNS.update();
     stateMachine();
-    // db->loop();
+    db->loop();
     updateStateAndTime();
 }
 
@@ -125,9 +122,7 @@ void run_pulse() {
         createRandomColor();
         color_pulse_helper_brightness = 2;
         color_pulse_helper_lighten = true;
-        strip.fill(random_color);
-        setLampBrightness(color_pulse_helper_brightness);
-        strip.show();
+        setLampColorAndBrightness(random_color, color_pulse_helper_brightness);
         Serial.println("run_pulse");
         state_first_run = false;
     }
@@ -155,8 +150,7 @@ void run_rainbow() {
 void run_lamp_off() {
     if(state_first_run) {
         Serial.println("run_lamp_off");
-        strip.fill(strip.Color(0, 0, 0, 0));
-        strip.show();
+        setLampColor(getRgbColor(0, 0, 0, 0));
         state_first_run = false;
     }
 }
@@ -172,43 +166,24 @@ void run_colorPick_mode() {
         strip.setPixelColor(i, colorPicker_Color);
     }
     setLampBrightness(colorBrightness);
-    strip.show();
     isColorUpdateNeeded = false;
     brightness_changed = false;
 }
 
 void run_wakeupTime_mode() {
-    if(state_first_run || brightness_changed) {
-        Serial.println("run_wakeupTime_mode");
-        strip.fill(strip.Color(0, 75, 0, 0));
-        strip.setPixelColor(3, strip.Color(0, 255, 0, 0));
-        strip.setPixelColor(4, strip.Color(0, 255, 0, 0));
-        strip.setPixelColor(5, strip.Color(0, 255, 0, 0));
-        strip.setPixelColor(6, strip.Color(0, 255, 0, 0));
-        strip.setPixelColor(7, strip.Color(0, 255, 0, 0));
-        strip.setPixelColor(8, strip.Color(0, 255, 0, 0));
-        setLampBrightness(colorBrightness);
-        strip.show();
-        state_first_run = false;
-        brightness_changed = false;
-    }
+    if(!(state_first_run || brightness_changed)) return;
+    Serial.println("run_wakeupTime_mode");
+    setLampColorAndBrightness(getRgbColor(0, 75, 0, 0), colorBrightness);
+    state_first_run = false;
+    brightness_changed = false;
 }
 
 void run_sleepingTime_mode() {
-    if(state_first_run || brightness_changed) {
-        Serial.println("run_sleepingTime_mode");
-        strip.fill(strip.Color(255, 75, 0, 255));
-        strip.setPixelColor(3, strip.Color(255, 9, 0, 0));
-        strip.setPixelColor(4, strip.Color(255, 18, 0, 0));
-        strip.setPixelColor(5, strip.Color(255, 37, 0, 0));
-        strip.setPixelColor(6, strip.Color(255, 0, 0, 0));
-        strip.setPixelColor(7, strip.Color(255, 0, 0, 0));
-        strip.setPixelColor(8, strip.Color(255, 0, 0, 0));
-        setLampBrightness(colorBrightness);
-        strip.show();
-        state_first_run = false;
-        brightness_changed = false;
-    }
+    if(!(state_first_run || brightness_changed)) return;
+    Serial.println("run_sleepingTime_mode");
+    setLampColorAndBrightness(getRgbColor(255, 75, 0, 255), colorBrightness);
+    state_first_run = false;
+    brightness_changed = false;
 }
 
 /************************************************************************************************************
@@ -231,8 +206,7 @@ void stateMachine() {
         updateColorPicker(sleep_state, SLEEP_COLOR_FS);
         animationStateMachine(sleep_state);
     } else {
-        strip.fill(strip.Color(255, 128, 0, 255));
-        strip.show();
+        setLampColor(getRgbColor(255, 128, 0, 255));
     }
 }
 
@@ -254,8 +228,7 @@ void animationStateMachine(String substate) {
     } else if(substate == STATE_ANIMATION_OFF) {
         run_lamp_off();
     } else {
-        strip.fill(strip.Color(0, 0, 128, 255));
-        strip.show();
+        setLampColor(getRgbColor(0, 0, 128, 255));
     }
 }
 
@@ -265,10 +238,25 @@ void animationStateMachine(String substate) {
 /*
 *************/
 
-void setLampBrightness(int b) {
-    // Serial.print("Set Brightness: ");
-    // Serial.println(b);
-    strip.setBrightness(b);
+uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b, uint8_t v) {
+    return strip.Color(r, g, b, v);
+}
+uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b) {
+    return strip.Color(r, g, b);
+}
+void setLampBrightness(uint32_t brightness) {
+    strip.setBrightness(brightness);
+    strip.show();
+}
+
+void setLampColorAndBrightness(uint32_t color, uint32_t brightness) {
+    strip.setBrightness(brightness);
+    setLampColor(color);
+}
+
+void setLampColor(uint32_t color) {
+    strip.fill(color);
+    strip.show();
 }
 
 void updateStateAndTime() {
@@ -372,15 +360,13 @@ String processor(const String &var) {
     // Blink LEDs
     else if(var == WAKEUP_BLINK_IN) {
         String value = lfs->read_file(WAKEUP_BLINK_FS);
-        if(value == "" || value == NULL) { value = D_LED_MODE_OFF; }
         return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
     } else if(var == DAYTIME_BLINK_IN) {
         String value = lfs->read_file(DAYTIME_BLINK_FS);
-        if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
+
         return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
     } else if(var == SLEEP_BLINK_IN) {
         String value = lfs->read_file(SLEEP_BLINK_FS);
-        if(value == "" || value == NULL) { value = D_LED_MODE_BLINK; }
         return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
     }
     // Color
@@ -400,6 +386,9 @@ String processor(const String &var) {
         return "";
     } else if(var == SLEEPTIME_COLOR_ROW_IN) {
         if(!sleep_isColorPickerNeeded) { return "hidden"; }
+        return "";
+    } else if(var == HIDE_BLINK_ROW_IN) {
+        if(!IS_BIG_LAMP_TOWER_BLINK) { return "hidden"; }
         return "";
     }
     // Blink Interval
@@ -445,7 +434,7 @@ void updateState(int new_state) {
     if(state == new_state) { return; }
     state = new_state;
     state_first_run = true;
-    // PawPatrol Tower only: db->updateBlinkState(state);
+    db->updateBlinkState(state);
 }
 
 void updateWakeupState(String new_state) {
@@ -481,21 +470,21 @@ void createRandomColor() {
     createRandomColor_helper = r2;
     if(r1 == 0) {
         if(createRandomColor_helper == 0) {
-            random_color = strip.Color(random(150, 256), random(0, 150), 0);
+            random_color = getRgbColor(random(150, 256), random(0, 150), 0);
         } else {
-            random_color = strip.Color(random(150, 256), 0, random(0, 150));
+            random_color = getRgbColor(random(150, 256), 0, random(0, 150));
         }
     } else if(r1 == 1) {
         if(createRandomColor_helper == 0) {
-            random_color = strip.Color(0, random(150, 256), random(0, 150));
+            random_color = getRgbColor(0, random(150, 256), random(0, 150));
         } else {
-            random_color = strip.Color(random(0, 150), random(150, 256), 0);
+            random_color = getRgbColor(random(0, 150), random(150, 256), 0);
         }
     } else {
         if(createRandomColor_helper == 0) {
-            random_color = strip.Color(0, random(0, 150), random(30, 256));
+            random_color = getRgbColor(0, random(0, 150), random(30, 256));
         } else {
-            random_color = strip.Color(random(0, 150), 0, random(30, 256));
+            random_color = getRgbColor(random(0, 150), 0, random(30, 256));
         }
     }
 }
@@ -512,6 +501,10 @@ void printServerInfo() {
     Serial.println(WiFi.SSID()); // Tell us what network we're connected to
     Serial.print("IP address:\t");
     Serial.println(WiFi.localIP());
+}
+
+void handle_server_settings(AsyncWebServerRequest *request) {
+    request->send_P(200, "text/html", settings_html, processor);
 }
 
 void handle_server_root(AsyncWebServerRequest *request) {
@@ -560,21 +553,21 @@ void handle_server_get(AsyncWebServerRequest *request) {
     else if(request->hasParam(BLINK_INTERVAL_IN)) {
         tmp = request->getParam(BLINK_INTERVAL_IN)->value();
         lfs->write_file(BLINK_INTERVAL_FS, tmp.c_str());
-        // PawPatrol Tower only: db->set_interval((uint16_t)(tmp.toInt()));
+        db->set_interval((uint16_t)(tmp.toInt()));
     }
     // Blink LEDs
     else if(request->hasParam(WAKEUP_BLINK_IN)) {
         tmp = request->getParam(WAKEUP_BLINK_IN)->value();
         lfs->write_file(WAKEUP_BLINK_FS, tmp.c_str());
-        // PawPatrol Tower only: db->updateBlinkState(state);
+        db->updateBlinkState(state);
     } else if(request->hasParam(DAYTIME_BLINK_IN)) {
         tmp = request->getParam(DAYTIME_BLINK_IN)->value();
         lfs->write_file(DAYTIME_BLINK_FS, tmp.c_str());
-        // PawPatrol Tower only: db->updateBlinkState(state);
+        db->updateBlinkState(state);
     } else if(request->hasParam(SLEEP_BLINK_IN)) {
         tmp = request->getParam(SLEEP_BLINK_IN)->value();
         lfs->write_file(SLEEP_BLINK_FS, tmp.c_str());
-        // PawPatrol Tower only: db->updateBlinkState(state);
+        db->updateBlinkState(state);
     }
     // Color
     else if(request->hasParam(WAKEUP_COLOR_IN)) {
@@ -621,9 +614,7 @@ bool colorPulse(int wait) {
         color_pulse_helper_brightness--;
         if(color_pulse_helper_brightness <= 2) { return true; }
     }
-    strip.fill(random_color);
-    setLampBrightness(color_pulse_helper_brightness);
-    strip.show();
+    setLampColorAndBrightness(random_color, color_pulse_helper_brightness);
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }
@@ -636,7 +627,6 @@ bool colorCircle(int wait) {
     }
     strip.setPixelColor(color_circle_mode_helper, random_color);
     setLampBrightness(colorBrightness);
-    strip.show();
     color_circle_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
@@ -654,7 +644,6 @@ bool rainbowCircle(int wait) {
                             strip.gamma32(strip.ColorHSV(pixelHue, 255, 255)));
     }
     setLampBrightness(colorBrightness);
-    strip.show();
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }
@@ -682,8 +671,6 @@ void initBrightness() {
     updateSleepBrightness(value);
 }
 
-void initWakeupBrightness() {}
-
 void initColors() {
     // Wakeup
     String value = lfs->read_file(WAKEUP_COLOR_FS);
@@ -704,14 +691,6 @@ void initColors() {
     if(value == "" || value == NULL) {
         value = "#FF8C00"; // dark orange
         lfs->write_file(SLEEP_COLOR_FS, value.c_str());
-    }
-}
-
-void initBlink() {
-    String value = lfs->read_file(WAKEUP_BLINK_FS);
-    if(value == "" || value == NULL) {
-        value = D_LED_MODE_OFF;
-        lfs->write_file(WAKEUP_BLINK_FS, value.c_str());
     }
 }
 
@@ -741,6 +720,7 @@ void initUserTimes() {
     }
     user_wakeup_time.setTime(tmp_time);
     user_wakeup_time.print();
+
     // Daytime Time
     tmp_time = lfs->read_file(DAYTIME_TIME_FS);
     if(tmp_time == "" || tmp_time == NULL) {
@@ -749,6 +729,7 @@ void initUserTimes() {
     }
     user_daytime_time.setTime(tmp_time);
     user_daytime_time.print();
+
     // Sleep Time
     tmp_time = lfs->read_file(SLEEP_TIME_FS);
     if(tmp_time == "" || tmp_time == NULL) {
