@@ -150,7 +150,7 @@ void run_rainbow() {
 void run_lamp_off() {
     if(state_first_run) {
         Serial.println("run_lamp_off");
-        setLampColor(getRgbColor(0, 0, 0, 0));
+        setLampColorAndBrightness(0, 0);
         state_first_run = false;
     }
 }
@@ -206,7 +206,7 @@ void stateMachine() {
         updateColorPicker(sleep_state, SLEEP_COLOR_FS);
         animationStateMachine(sleep_state);
     } else {
-        setLampColor(getRgbColor(255, 128, 0, 255));
+        setLampError();
     }
 }
 
@@ -228,7 +228,7 @@ void animationStateMachine(String substate) {
     } else if(substate == STATE_ANIMATION_OFF) {
         run_lamp_off();
     } else {
-        setLampColor(getRgbColor(0, 0, 128, 255));
+        setLampError();
     }
 }
 
@@ -237,7 +237,9 @@ void animationStateMachine(String substate) {
 /* HELPER
 /*
 *************/
-
+void setLampError() {
+    setLampColorAndBrightness(getRgbColor(0, 0, 128, 255), 255);
+}
 uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b, uint8_t v) {
     return strip.Color(r, g, b, v);
 }
@@ -245,16 +247,56 @@ uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b) {
     return strip.Color(r, g, b);
 }
 void setLampBrightness(uint32_t brightness) {
-    strip.setBrightness(brightness);
+    if(brightness == 0 || brightness >= 9) {
+        strip.setBrightness(brightness - 7);
+        strip.show();
+        return;
+    }
+    strip.setBrightness(1);
+    if(brightness <= 8) {
+        // 14 LED on
+        strip.setPixelColor(7, 0);
+        strip.setPixelColor(15, 0);
+    }
+    if(brightness <= 7) {
+        // 12 LED on
+        strip.setPixelColor(5, 0);
+        strip.setPixelColor(13, 0);
+    }
+    if(brightness <= 6) {
+        // 10 LED on
+        strip.setPixelColor(3, 0);
+        strip.setPixelColor(11, 0);
+    }
+    if(brightness <= 5) {
+        // 8 LED on
+        strip.setPixelColor(1, 0);
+        strip.setPixelColor(9, 0);
+    }
+    if(brightness <= 4) {
+        // 6 LED on
+        strip.setPixelColor(4, 0);
+        strip.setPixelColor(14, 0);
+    }
+    if(brightness <= 3) {
+        // 4 LED on
+        strip.setPixelColor(2, 0);
+        strip.setPixelColor(10, 0);
+    }
+    if(brightness <= 2) {
+        // 2 LED on
+        strip.setPixelColor(4, 0);
+        strip.setPixelColor(12, 0);
+    }
+    if(brightness == 1) {
+        // only one LED on
+        strip.setPixelColor(8, 0);
+    }
     strip.show();
 }
 
 void setLampColorAndBrightness(uint32_t color, uint32_t brightness) {
     strip.setBrightness(brightness);
-    setLampColor(color);
-}
-
-void setLampColor(uint32_t color) {
     strip.fill(color);
     strip.show();
 }
