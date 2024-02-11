@@ -80,7 +80,6 @@ void LampTimer::timerFinish() {
     }
 }
 void LampTimer::setTimerSeconds(String t) {
-    // Use hours as minutes and minutes as seconds
     timerTime.setTime(t.c_str());
     timerSeconds = (timerTime.getHour() * 60 * 60) +
                    (timerTime.getMinutes() * 60) + timerTime.getSeconds();
