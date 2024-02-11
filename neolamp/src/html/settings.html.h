@@ -35,6 +35,22 @@ const char settings_html[] PROGMEM = R"rawliteral(
       select.table_input {
         width: 128px;
       }
+      button,
+      a {
+        font-family: "Cooper Black", serif;
+        background-color: #3522dd; /* Green */
+        border: solid;
+        border-color: white;
+        color: white;
+        /* padding: 15px 32px; */
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: auto;
+        width: 256px;
+        height: 64px;
+        font-size: 1.2rem;
+      }
     </style>
 
     <script>
@@ -380,7 +396,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
         <td><hr /></td>
       </tr>
     </table>
-    <a href="/">Startseite</a>
+    <a href="/"><br />Zur Startseite</a>
     <br />
     <br />
     <br />

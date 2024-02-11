@@ -372,8 +372,8 @@ String processor(const String &var) {
     if(var == "input_name") { return NAME; }
     if(var == TIMER_START_IN) {
 
-        if(lt->getIsTimerRunning()) return "Stop";
-        return "Start";
+        if(lt->getIsTimerRunning()) return "Restart Timer";
+        return "Start Timer";
     }
     if(var == TIMER_TIME_IN) { return lfs->read_file(TIMER_TIME_FS); }
     if(var == WAKEUP_TIME_IN) { return lfs->read_file(WAKEUP_TIME_FS); }

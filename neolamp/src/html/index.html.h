@@ -35,6 +35,24 @@ const char index_html[] PROGMEM = R"rawliteral(
       select.table_input {
         width: 128px;
       }
+      button.bigfont {
+        font-size: 1.6rem;
+      }
+      a {
+        font-family: "Cooper Black", serif;
+        background-color: #3522dd; /* Green */
+        border: solid;
+        border-color: white;
+        color: white;
+        /* padding: 15px 32px; */
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        margin-right: auto;
+        width: 256px;
+        height: 64px;
+        font-size: 1.2rem;
+      }
     </style>
   </head>
   <body>
@@ -46,10 +64,14 @@ const char index_html[] PROGMEM = R"rawliteral(
         <td><hr /></td>
       </tr>
       <tr>
-        <td class="middle"><a href="/timer">Timer</a></td>
+        <td class="middle">
+          <a href="/timer"><br />Timer</a>
+        </td>
       </tr>
       <tr>
-        <td class="middle"><a href="/settings">Einstellungen</a></td>
+        <td class="middle">
+          <a href="/settings"><br />Einstellungen</a>
+        </td>
       </tr>
       <tr>
         <td><hr /></td>

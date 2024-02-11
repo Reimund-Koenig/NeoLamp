@@ -38,7 +38,8 @@ const char timer_html[] PROGMEM = R"rawliteral(
       button.bigfont {
         font-size: 1.6rem;
       }
-      button {
+      button,
+      a {
         font-family: "Cooper Black", serif;
         background-color: #3522dd; /* Green */
         border: solid;
@@ -86,6 +87,7 @@ const char timer_html[] PROGMEM = R"rawliteral(
         <td class="right"></td>
       </tr>
     </table>
+    <br />
     <form action="/get" target="hidden-form" id="sT">
       <button
         class="bigfont"
@@ -99,7 +101,7 @@ const char timer_html[] PROGMEM = R"rawliteral(
     </form>
     <br />
     <br />
-    <a href="/">Startseite</a>
+    <a href="/"><br />Zur Startseite</a>
     <br />
     <br />
     <br />
