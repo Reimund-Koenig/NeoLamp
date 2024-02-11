@@ -2,6 +2,7 @@
 #define LAMPTIMER
 #include "clocktime.h"
 #include "constants/html_inputs.h"
+#include "constants/settings.h"
 #include "lampfilesystem.h"
 #include "lamphelper.h"
 #include <Adafruit_NeoPixel.h>

@@ -315,7 +315,7 @@ void updateColorPicker(String state, const char *file) {
     if(state != STATE_ANIMATION_PICK) { return; }
     String inputColor = lfs->read_file(file);
     inputColor.remove(0, 1);
-    unsigned long in = strtoul(inputColor.c_str(), NULL, 16);
+    unsigned long in = strtoul(inputColor.c_str(), NULL, NEOPIXEL_COUNT);
     colorPicker_Color = in;
 }
 
@@ -708,7 +708,7 @@ bool rainbowCircle(int wait) {
 void initBrightness() {
     // Wakeup
     String value = lfs->read_file(WAKEUP_BRIGHTNESS_FS);
-    if(value == "" || value == NULL) { value = "15"; }
+    if(value == "" || value == NULL) { value = "1"; }
     updateWakeupBrightness(value);
 
     // Daytime
@@ -718,7 +718,7 @@ void initBrightness() {
 
     // Sleep
     value = lfs->read_file(SLEEP_BRIGHTNESS_FS);
-    if(value == "" || value == NULL) { value = "15"; }
+    if(value == "" || value == NULL) { value = "4"; }
     updateSleepBrightness(value);
 }
 

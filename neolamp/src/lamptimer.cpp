@@ -25,7 +25,7 @@ void LampTimer::toggleIsRunning() {
     isTimerRunning = !isTimerRunning;
     timerCount = 0;
     timerLastPixelBrightness = 255;
-    timerPixel = 15;
+    timerPixel = NEOPIXEL_COUNT - 1;
 }
 
 bool LampTimer::getIsTimerRunning() { return isTimerRunning; }
@@ -54,7 +54,7 @@ void LampTimer::run() {
         timerLastPixelBrightness = 255;
         timerSubCount -= timerSteps;
     }
-    for(int i = 0; i < 16; i++) {
+    for(int i = 0; i < NEOPIXEL_COUNT; i++) {
         if(i < timerPixel) {
             strip->setPixelColor(i, strip->Color(0, 255, 0));
         } else if(i == timerPixel) {
@@ -87,7 +87,7 @@ void LampTimer::setTimerSeconds(String t) {
         timerSteps = 0;
         timerSubSteps = 0;
     } else {
-        timerSteps = timerSeconds / 16.0;
+        timerSteps = timerSeconds / NEOPIXEL_COUNT;
         timerSubSteps = 255.0 / timerSteps;
     }
 }
