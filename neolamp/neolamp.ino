@@ -1,8 +1,8 @@
 #include "neolamp.h"
 
+AsyncWebServer server(80);
 DNSServer dns;
 
-AsyncWebServer *server;
 Adafruit_NeoPixel *strip;
 
 Doubleblink *db;
@@ -64,7 +64,6 @@ void setup() {
     // this resets all the neopixels to an off state
     strip->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
     setLampColorAndBrightness(getRgbColor(255, 255, 255), 100);
-    server = new AsyncWebServer(80);
     lfs = new LampFileSystem();
     lt = new LampTimer(lfs, strip);
     // start wifi manager
@@ -82,12 +81,12 @@ void setup() {
         Serial.println("Error setting up MDNS responder!");
     }
     MDNS.addService("http", "tcp", 80);
-    server->on("/", HTTP_GET, handle_server_root);
-    server->on("/timer", HTTP_GET, handle_server_timer);
-    server->on("/settings", HTTP_GET, handle_server_settings);
-    server->on("/get", HTTP_GET, handle_server_get);
-    server->onNotFound(handle_server_notFound);
-    server->begin(); // Actually start the server
+    server.on("/", HTTP_GET, handle_server_root);
+    server.on("/timer", HTTP_GET, handle_server_timer);
+    server.on("/settings", HTTP_GET, handle_server_settings);
+    server.on("/get", HTTP_GET, handle_server_get);
+    server.onNotFound(handle_server_notFound);
+    server.begin(); // Actually start the server
     // printServerInfo();
     db = new Doubleblink(lfs);
 
