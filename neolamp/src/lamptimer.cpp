@@ -49,7 +49,7 @@ void LampTimer::run() {
     } else {
         timerLastPixelBrightness = 0;
     }
-    if(timerSubCount >= timerSteps && timerPixel > 0) {
+    while(timerSubCount >= timerSteps && timerPixel > 0) {
         timerPixel -= 1;
         timerLastPixelBrightness = 255;
         timerSubCount -= timerSteps;
