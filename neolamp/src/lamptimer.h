@@ -20,12 +20,12 @@ class LampTimer {
     bool isTimerRunning;
     uint32_t timerCount;
     uint32_t timerSeconds;
-    uint32_t timerSteps;
     uint32_t timerColor;
+    float timerSubCount;
+    float timerSteps;
     float timerSubSteps;
-    float timerLastPixelBrightnessFloat;
-    uint8_t timerLastPixelBrightness;
-    uint8_t numPixelOn;
+    float timerLastPixelBrightness;
+    uint8_t timerPixel;
     unsigned long clock_sleep;
     LampHelper helper;
     Adafruit_NeoPixel *strip;

@@ -470,7 +470,7 @@ void async_wlan_setup() {
 
 void updateTime() {
     if(!getLocalTime(&timeinfo)) { return; }
-    current_time.setTime(timeinfo.tm_hour, timeinfo.tm_min);
+    current_time.setTime(timeinfo.tm_hour, timeinfo.tm_min, 0);
 }
 
 void initTime() {

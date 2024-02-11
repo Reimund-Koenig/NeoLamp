@@ -78,6 +78,7 @@ const char timer_html[] PROGMEM = R"rawliteral(
               name="iTimer"
               value="%iTimer%"
               class="table_input"
+              step="1"
               onchange="handle_onchange_and_reload('getTimer')"
             />
           </form>
@@ -91,7 +92,6 @@ const char timer_html[] PROGMEM = R"rawliteral(
         name="sTimer"
         value="sTimer"
         orient="vertical"
-        step="1"
         onclick="handle_onchange_and_reload('sT')"
       >
         %sTimer%
