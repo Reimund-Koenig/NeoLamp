@@ -1,11 +1,21 @@
 #include "neolamp.h"
 
-AsyncWebServer server(80);
 DNSServer dns;
 
+AsyncWebServer *server;
 Adafruit_NeoPixel *strip;
 
+Doubleblink *db;
+LampFileSystem *lfs;
+LampTimer *lt;
+
 struct tm timeinfo;
+
+Clocktime user_wakeup_time;
+Clocktime user_sleep_time;
+Clocktime user_daytime_time;
+Clocktime current_time;
+LampHelper helper;
 
 uint8_t wakeup_brightness = 25;
 uint8_t daytime_brightness = 100;
@@ -36,15 +46,6 @@ bool color_pulse_helper_lighten = true;
 uint32_t mix_mode_helper = 0;
 uint32_t rainbow_mode_helper = 0;
 
-Clocktime user_wakeup_time;
-Clocktime user_sleep_time;
-Clocktime user_daytime_time;
-Clocktime current_time;
-LampHelper helper;
-Doubleblink *db;
-LampFileSystem *lfs;
-LampTimer *lt;
-
 /************************************************************************************************************
 /*
 /* Arduino Functions
@@ -63,6 +64,7 @@ void setup() {
     // this resets all the neopixels to an off state
     strip->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
     setLampColorAndBrightness(getRgbColor(255, 255, 255), 100);
+    server = new AsyncWebServer(80);
     lfs = new LampFileSystem();
     lt = new LampTimer(lfs, strip);
     // start wifi manager
@@ -80,12 +82,12 @@ void setup() {
         Serial.println("Error setting up MDNS responder!");
     }
     MDNS.addService("http", "tcp", 80);
-    server.on("/", HTTP_GET, handle_server_root);
-    server.on("/timer", HTTP_GET, handle_server_timer);
-    server.on("/settings", HTTP_GET, handle_server_settings);
-    server.on("/get", HTTP_GET, handle_server_get);
-    server.onNotFound(handle_server_notFound);
-    server.begin(); // Actually start the server
+    server->on("/", HTTP_GET, handle_server_root);
+    server->on("/timer", HTTP_GET, handle_server_timer);
+    server->on("/settings", HTTP_GET, handle_server_settings);
+    server->on("/get", HTTP_GET, handle_server_get);
+    server->onNotFound(handle_server_notFound);
+    server->begin(); // Actually start the server
     // printServerInfo();
     db = new Doubleblink(lfs);
 
@@ -260,37 +262,30 @@ void setLampBrightness(uint8_t brightness) {
     }
     strip->setBrightness(1);
     if(brightness <= 8) {
-        // 14 LED on
         strip->setPixelColor(7, 0);
         strip->setPixelColor(15, 0);
     }
     if(brightness <= 7) {
-        // 12 LED on
         strip->setPixelColor(5, 0);
         strip->setPixelColor(13, 0);
     }
     if(brightness <= 6) {
-        // 10 LED on
         strip->setPixelColor(3, 0);
         strip->setPixelColor(11, 0);
     }
     if(brightness <= 5) {
-        // 8 LED on
         strip->setPixelColor(1, 0);
         strip->setPixelColor(9, 0);
     }
     if(brightness <= 4) {
-        // 6 LED on
         strip->setPixelColor(6, 0);
         strip->setPixelColor(14, 0);
     }
     if(brightness <= 3) {
-        // 4 LED on
         strip->setPixelColor(2, 0);
         strip->setPixelColor(10, 0);
     }
     if(brightness <= 2) {
-        // 2 LED on
         strip->setPixelColor(4, 0);
         strip->setPixelColor(12, 0);
     }
@@ -322,10 +317,6 @@ void updateColorPicker(String state, const char *file) {
     String inputColor = lfs->read_file(file);
     inputColor.remove(0, 1);
     unsigned long in = strtoul(inputColor.c_str(), NULL, 16);
-    // Serial.print("INPUT: ");
-    // Serial.print(inputColor);
-    // Serial.print(", Long: ");
-    // Serial.println(in);
     colorPicker_Color = in;
 }
 
