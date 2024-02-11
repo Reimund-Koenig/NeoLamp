@@ -1,3 +1,7 @@
+#define TIMER_START_IN "sTimer"
+
+#define TIMER_TIME_IN "iTimer"
+#define TIMER_TIME_FS "/iTimer.txt"
 
 #define WAKEUP_TIME_IN "iWT"
 #define WAKEUP_TIME_FS "/iWT.txt"

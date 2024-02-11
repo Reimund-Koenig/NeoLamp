@@ -380,6 +380,7 @@ const char settings_html[] PROGMEM = R"rawliteral(
         <td><hr /></td>
       </tr>
     </table>
+    <a href="/">Startseite</a>
     <br />
     <br />
     <br />

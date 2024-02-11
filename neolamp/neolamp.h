@@ -19,8 +19,10 @@
 #include "src/doubleblink.h"
 #include "src/html/index.html.h"
 #include "src/html/settings.html.h"
+#include "src/html/timer.html.h"
 #include "src/lampfilesystem.h"
 #include "src/lamphelper.h"
+#include "src/lamptimer.h"
 #include "time.h"
 
 #define NEOPIXEL_COUNT 16

@@ -46,7 +46,7 @@ const char index_html[] PROGMEM = R"rawliteral(
         <td><hr /></td>
       </tr>
       <tr>
-        <td class="middle"><a href="/settings">Einstellungen</a></td>
+        <td class="middle"><a href="/timer">Timer</a></td>
       </tr>
       <tr>
         <td class="middle"><a href="/settings">Einstellungen</a></td>

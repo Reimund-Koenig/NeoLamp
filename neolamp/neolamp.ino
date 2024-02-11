@@ -3,7 +3,7 @@
 AsyncWebServer server(80);
 DNSServer dns;
 
-Adafruit_NeoPixel strip(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel *strip;
 
 struct tm timeinfo;
 
@@ -43,6 +43,7 @@ Clocktime current_time;
 LampHelper helper;
 Doubleblink *db;
 LampFileSystem *lfs;
+LampTimer *lt;
 
 /************************************************************************************************************
 /*
@@ -56,11 +57,14 @@ void setup() {
     clock_prescale_set(clock_div_1);
 #endif
     Serial.begin(115200);
+    strip = new Adafruit_NeoPixel(NEOPIXEL_COUNT, NEOPIXEL_PIN,
+                                  NEO_GRB + NEO_KHZ800);
+
     // this resets all the neopixels to an off state
-    strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+    strip->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
     setLampColorAndBrightness(getRgbColor(255, 255, 255), 100);
     lfs = new LampFileSystem();
-
+    lt = new LampTimer(lfs, strip);
     // start wifi manager
     WiFi.mode(WIFI_STA);
     WiFi.hostname(URL);
@@ -77,6 +81,7 @@ void setup() {
     }
     MDNS.addService("http", "tcp", 80);
     server.on("/", HTTP_GET, handle_server_root);
+    server.on("/timer", HTTP_GET, handle_server_timer);
     server.on("/settings", HTTP_GET, handle_server_settings);
     server.on("/get", HTTP_GET, handle_server_get);
     server.onNotFound(handle_server_notFound);
@@ -190,7 +195,9 @@ void run_sleepingTime_mode() {
 *************/
 
 void stateMachine() {
-    if(state == STATE_WAKEUP) {
+    if(lt->getIsTimerRunning()) {
+        lt->timer_loop();
+    } else if(state == STATE_WAKEUP) {
         updateColorBrightness(wakeup_brightness);
         updateColorPicker(wakeup_state, WAKEUP_COLOR_FS);
         animationStateMachine(wakeup_state);
@@ -237,68 +244,67 @@ void animationStateMachine(String substate) {
 void setLampError() { setLampColorAndBrightness(getRgbColor(0, 0, 128), 255); }
 
 uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b) {
-    return strip.Color(r, g, b);
+    return strip->Color(r, g, b);
 }
 
 void setLampBrightness(uint8_t brightness) {
     if(brightness >= 9) {
-        Serial.println(brightness - 7);
-        strip.setBrightness(brightness - 7);
-        strip.show();
+        strip->setBrightness(brightness - 7);
+        strip->show();
         return;
     }
     if(brightness == 0) {
-        strip.setBrightness(brightness);
-        strip.show();
+        strip->setBrightness(brightness);
+        strip->show();
         return;
     }
-    strip.setBrightness(1);
+    strip->setBrightness(1);
     if(brightness <= 8) {
         // 14 LED on
-        strip.setPixelColor(7, 0);
-        strip.setPixelColor(15, 0);
+        strip->setPixelColor(7, 0);
+        strip->setPixelColor(15, 0);
     }
     if(brightness <= 7) {
         // 12 LED on
-        strip.setPixelColor(5, 0);
-        strip.setPixelColor(13, 0);
+        strip->setPixelColor(5, 0);
+        strip->setPixelColor(13, 0);
     }
     if(brightness <= 6) {
         // 10 LED on
-        strip.setPixelColor(3, 0);
-        strip.setPixelColor(11, 0);
+        strip->setPixelColor(3, 0);
+        strip->setPixelColor(11, 0);
     }
     if(brightness <= 5) {
         // 8 LED on
-        strip.setPixelColor(1, 0);
-        strip.setPixelColor(9, 0);
+        strip->setPixelColor(1, 0);
+        strip->setPixelColor(9, 0);
     }
     if(brightness <= 4) {
         // 6 LED on
-        strip.setPixelColor(6, 0);
-        strip.setPixelColor(14, 0);
+        strip->setPixelColor(6, 0);
+        strip->setPixelColor(14, 0);
     }
     if(brightness <= 3) {
         // 4 LED on
-        strip.setPixelColor(2, 0);
-        strip.setPixelColor(10, 0);
+        strip->setPixelColor(2, 0);
+        strip->setPixelColor(10, 0);
     }
     if(brightness <= 2) {
         // 2 LED on
-        strip.setPixelColor(4, 0);
-        strip.setPixelColor(12, 0);
+        strip->setPixelColor(4, 0);
+        strip->setPixelColor(12, 0);
     }
     if(brightness == 1) {
         // only one LED on
-        strip.setPixelColor(8, 0);
+        strip->setPixelColor(8, 0);
     }
-    strip.show();
+    strip->show();
 }
 
 void setLampColorAndBrightness(uint32_t color, uint8_t brightness) {
     setLampBrightness(brightness);
-    strip.fill(color);
-    strip.show();
+    strip->fill(color);
+    strip->show();
 }
 
 void updateStateAndTime() {
@@ -374,8 +380,12 @@ void updateTimeZone() {
 
 String processor(const String &var) {
     if(var == "input_name") { return NAME; }
+    if(var == TIMER_START_IN) {
 
-    // Times
+        if(lt->getIsTimerRunning()) return "Stop";
+        return "Start";
+    }
+    if(var == TIMER_TIME_IN) { return lfs->read_file(TIMER_TIME_FS); }
     if(var == WAKEUP_TIME_IN) { return lfs->read_file(WAKEUP_TIME_FS); }
     if(var == DAYTIME_TIME_IN) { return lfs->read_file(DAYTIME_TIME_FS); }
     if(var == SLEEP_TIME_IN) { return lfs->read_file(SLEEP_TIME_FS); }
@@ -545,6 +555,10 @@ void printServerInfo() {
     Serial.println(WiFi.localIP());
 }
 
+void handle_server_timer(AsyncWebServerRequest *request) {
+    request->send_P(200, "text/html", timer_html, processor);
+}
+
 void handle_server_settings(AsyncWebServerRequest *request) {
     request->send_P(200, "text/html", settings_html, processor);
 }
@@ -556,7 +570,12 @@ void handle_server_root(AsyncWebServerRequest *request) {
 void handle_server_get(AsyncWebServerRequest *request) {
     String tmp;
     // Times
-    if(request->hasParam(WAKEUP_TIME_IN)) {
+    if(request->hasParam(TIMER_START_IN)) { lt->toggleIsRunning(); }
+    if(request->hasParam(TIMER_TIME_IN)) {
+        tmp = request->getParam(TIMER_TIME_IN)->value();
+        lfs->write_file(TIMER_TIME_FS, tmp.c_str());
+        lt->setTimerSeconds(tmp);
+    } else if(request->hasParam(WAKEUP_TIME_IN)) {
         tmp = request->getParam(WAKEUP_TIME_IN)->value();
         lfs->write_file(WAKEUP_TIME_FS, tmp.c_str());
         user_wakeup_time.setTime(tmp.c_str());
@@ -663,12 +682,12 @@ bool colorPulse(int wait) {
 
 bool colorCircle(int wait) {
     if(helper.is_sleeping(substate_sleep)) { return false; }
-    if(color_circle_mode_helper >= strip.numPixels()) {
+    if(color_circle_mode_helper >= strip->numPixels()) {
         color_circle_mode_helper = 0;
         return true;
     }
     setLampBrightness(colorBrightness);
-    strip.setPixelColor(color_circle_mode_helper, random_color);
+    strip->setPixelColor(color_circle_mode_helper, random_color);
     color_circle_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
@@ -679,11 +698,11 @@ bool rainbowCircle(int wait) {
 
     rainbow_mode_helper += 256;
     if(rainbow_mode_helper >= 65536) { return true; }
-    for(int i = 0; i < strip.numPixels(); i++) {
+    for(int i = 0; i < strip->numPixels(); i++) {
         uint32_t pixelHue =
-            rainbow_mode_helper + (i * 65536L / strip.numPixels());
-        strip.setPixelColor(i,
-                            strip.gamma32(strip.ColorHSV(pixelHue, 255, 255)));
+            rainbow_mode_helper + (i * 65536L / strip->numPixels());
+        strip->setPixelColor(
+            i, strip->gamma32(strip->ColorHSV(pixelHue, 255, 255)));
     }
     setLampBrightness(colorBrightness);
     helper.set_none_sleeping_delay(wait, &substate_sleep);
@@ -754,6 +773,7 @@ void initModes() {
 }
 
 void initUserTimes() {
+
     // Wakeup Time
     String tmp_time = lfs->read_file(WAKEUP_TIME_FS);
     if(tmp_time == "" || tmp_time == NULL) {
