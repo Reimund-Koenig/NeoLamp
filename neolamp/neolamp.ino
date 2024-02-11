@@ -296,8 +296,9 @@ void setLampBrightness(uint8_t brightness) {
 }
 
 void setLampColorAndBrightness(uint32_t color, uint8_t brightness) {
-    strip.fill(color);
     setLampBrightness(brightness);
+    strip.fill(color);
+    strip.show();
 }
 
 void updateStateAndTime() {
@@ -666,8 +667,8 @@ bool colorCircle(int wait) {
         color_circle_mode_helper = 0;
         return true;
     }
-    strip.setPixelColor(color_circle_mode_helper, random_color);
     setLampBrightness(colorBrightness);
+    strip.setPixelColor(color_circle_mode_helper, random_color);
     color_circle_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
