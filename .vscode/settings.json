@@ -18,7 +18,9 @@
     "tuple": "cpp",
     "type_traits": "cpp",
     "utility": "cpp",
-    "random": "cpp"
+    "random": "cpp",
+    "list": "cpp",
+    "ranges": "cpp"
   },
   "cSpell.words": [
     "Adafruit",

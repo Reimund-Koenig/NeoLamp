@@ -7,6 +7,7 @@ Adafruit_NeoPixel *strip;
 
 Doubleblink *db;
 LampFileSystem *lfs;
+LampUpdater *lupdater;
 LampTimer *lt;
 
 struct tm timeinfo;
@@ -64,8 +65,6 @@ void setup() {
     // this resets all the neopixels to an off state
     strip->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
     setLampColorAndBrightness(getRgbColor(255, 255, 255), 100);
-    lfs = new LampFileSystem();
-    lt = new LampTimer(lfs, strip);
     // start wifi manager
     WiFi.mode(WIFI_STA);
     WiFi.hostname(URL);
@@ -74,6 +73,9 @@ void setup() {
         delay(1000);
         Serial.println("Connecting to WiFi..");
     }
+    lfs = new LampFileSystem();
+    lupdater = new LampUpdater(lfs);
+    lt = new LampTimer(lfs, strip);
     initTime();
     if(MDNS.begin(URL)) { // browser: url.local
         Serial.println("mDNS responder started");
@@ -86,6 +88,10 @@ void setup() {
     server.on("/settings", HTTP_GET, handle_server_settings);
     server.on("/get", HTTP_GET, handle_server_get);
     server.onNotFound(handle_server_notFound);
+    /*
+     ToDo Remove for HTTP Update:
+     AsyncElegantOTA.begin(&server);
+     */
     server.begin(); // Actually start the server
     // printServerInfo();
     db = new Doubleblink(lfs);

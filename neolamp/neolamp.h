@@ -2,6 +2,11 @@
 #ifdef __AVR__
 #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
+/*
+ ToDo Remove for HTTP Update:
+#include <AsyncElegantOTA.h> // https://github.com/me-no-dev/ESPAsyncWebServer
+*/
+
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ESPAsyncTCP.h>
@@ -23,6 +28,7 @@
 #include "src/lampfilesystem.h"
 #include "src/lamphelper.h"
 #include "src/lamptimer.h"
+#include "src/lampupdater.h"
 #include "time.h"
 
 /************************************************************************************************************

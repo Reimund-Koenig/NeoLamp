@@ -7,4 +7,5 @@
 #define NAME "Nachtlicht"
 #define URL "nachtlicht"
 
-#define IS_BIG_LAMP_TOWER_BLINK false
+#define FILENAME_VERSION "NeoLamp_v1.0.0.bin"
+#define IS_BIG_LAMP_TOWER_BLINK true
