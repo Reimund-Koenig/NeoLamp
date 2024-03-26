@@ -2,7 +2,8 @@
 #include "lamptimer.h"
 #include <Arduino.h>
 
-LampTimer::LampTimer(LampFileSystem *lfs, Adafruit_NeoPixel *strip) {
+LampTimer::LampTimer(Adafruit_NeoPixel *strip, uint8_t pixel_count,
+                     String init_time) {
     isTimerRunning = 0;
     timerCount = 0;
     timerSeconds = 0;
@@ -11,21 +12,17 @@ LampTimer::LampTimer(LampFileSystem *lfs, Adafruit_NeoPixel *strip) {
     timerLastPixelBrightness = 0;
     clock_sleep = 0;
     this->strip = strip;
-    // Timer Time
-    String tmp_time = lfs->read_file(TIMER_TIME_FS);
-    if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "00:05:00";
-        lfs->write_file(TIMER_TIME_FS, tmp_time.c_str());
-    }
+    PIXEL_COUNT = pixel_count;
     timerColor = strip->Color(255, 0, 0);
-    setTimerSeconds(tmp_time);
+    setTimerSeconds(init_time);
 }
 
 void LampTimer::toggleIsRunning() {
     isTimerRunning = !isTimerRunning;
+    resetTimerSteps();
     timerCount = 0;
     timerLastPixelBrightness = 255;
-    timerPixel = NEOPIXEL_COUNT - 1;
+    timerPixel = PIXEL_COUNT - 1;
 }
 
 bool LampTimer::getIsTimerRunning() { return isTimerRunning; }
@@ -36,7 +33,6 @@ void LampTimer::timer_loop() {
     timerSubCount++;
     if(timerCount >= timerSeconds) {
         timerFinish();
-        toggleIsRunning();
     } else {
         run();
     }
@@ -54,7 +50,7 @@ void LampTimer::run() {
         timerLastPixelBrightness = 255;
         timerSubCount -= timerSteps;
     }
-    for(int i = 0; i < NEOPIXEL_COUNT; i++) {
+    for(int i = 0; i < PIXEL_COUNT; i++) {
         if(i < timerPixel) {
             strip->setPixelColor(i, strip->Color(0, 255, 0));
         } else if(i == timerPixel) {
@@ -78,16 +74,22 @@ void LampTimer::timerFinish() {
         strip->show();
         delay(200);
     }
+    toggleIsRunning();
 }
-void LampTimer::setTimerSeconds(String t) {
-    timerTime.setTime(t.c_str());
-    timerSeconds = (timerTime.getHour() * 60 * 60) +
-                   (timerTime.getMinutes() * 60) + timerTime.getSeconds();
+
+void LampTimer::resetTimerSteps() {
     if(timerSeconds == 0) {
         timerSteps = 0;
         timerSubSteps = 0;
     } else {
-        timerSteps = timerSeconds / NEOPIXEL_COUNT;
+        timerSteps = timerSeconds / PIXEL_COUNT;
         timerSubSteps = 255.0 / timerSteps;
     }
+}
+
+void LampTimer::setTimerSeconds(String t) {
+    timerTime.setTime(t.c_str());
+    timerSeconds = (timerTime.getHour() * 60 * 60) +
+                   (timerTime.getMinutes() * 60) + timerTime.getSeconds();
+    resetTimerSteps();
 }

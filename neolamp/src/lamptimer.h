@@ -3,14 +3,13 @@
 #include "clocktime.h"
 #include "constants/html_inputs.h"
 #include "constants/settings.h"
-#include "lampfilesystem.h"
 #include "lamphelper.h"
 #include <Adafruit_NeoPixel.h>
 #include <Arduino.h>
 
 class LampTimer {
   public:
-    LampTimer(LampFileSystem *lfs, Adafruit_NeoPixel *strip);
+    LampTimer(Adafruit_NeoPixel *strip, uint8_t pixel_count, String initTime);
     void timer_loop();
     void toggleIsRunning();
     void setTimerSeconds(String t);
@@ -30,7 +29,9 @@ class LampTimer {
     unsigned long clock_sleep;
     LampHelper helper;
     Adafruit_NeoPixel *strip;
+    uint8_t PIXEL_COUNT;
     void timerFinish();
     void run();
+    void resetTimerSteps();
 };
 #endif // LAMPTIMER

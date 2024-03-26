@@ -47,6 +47,11 @@ bool color_pulse_helper_lighten = true;
 uint32_t mix_mode_helper = 0;
 uint32_t rainbow_mode_helper = 0;
 
+String SETTING_LAMP_NAME = "";
+String SETTING_LAMP_URL = "";
+uint8_t SETTING_NEOPIXEL_PIN;
+uint8_t SETTING_NEOPIXEL_COUNT;
+
 /************************************************************************************************************
 /*
 /* Arduino Functions
@@ -59,48 +64,32 @@ void setup() {
     clock_prescale_set(clock_div_1);
 #endif
     Serial.begin(115200);
-    strip = new Adafruit_NeoPixel(NEOPIXEL_COUNT, NEOPIXEL_PIN,
+    lfs = new LampFileSystem();
+    initSettings();
+    strip = new Adafruit_NeoPixel(SETTING_NEOPIXEL_COUNT, SETTING_NEOPIXEL_PIN,
                                   NEO_GRB + NEO_KHZ800);
 
     // this resets all the neopixels to an off state
     strip->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    setLampColorAndBrightness(getRgbColor(255, 255, 255), 100);
+    setLampColorAndBrightness(getRgbColor(255, 255, 255), 20);
     // start wifi manager
     WiFi.mode(WIFI_STA);
-    WiFi.hostname(URL);
+    WiFi.hostname(SETTING_LAMP_URL);
     async_wlan_setup();
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
         Serial.println("Connecting to WiFi..");
     }
-    lfs = new LampFileSystem();
     lupdater = new LampUpdater(lfs);
-    lt = new LampTimer(lfs, strip);
-    initTime();
-    if(MDNS.begin(URL)) { // browser: url.local
-        Serial.println("mDNS responder started");
-    } else {
-        Serial.println("Error setting up MDNS responder!");
-    }
-    MDNS.addService("http", "tcp", 80);
-    server.on("/", HTTP_GET, handle_server_root);
-    server.on("/timer", HTTP_GET, handle_server_timer);
-    server.on("/settings", HTTP_GET, handle_server_settings);
-    server.on("/get", HTTP_GET, handle_server_get);
-    server.onNotFound(handle_server_notFound);
-    /*
-     ToDo Remove for HTTP Update:
-     AsyncElegantOTA.begin(&server);
-     */
-    server.begin(); // Actually start the server
-    // printServerInfo();
     db = new Doubleblink(lfs);
-
+    initTime();
+    initServer();
     // Load values from persistent storage or use default
     initModes();
     initBrightness();
     initColors();
     initUserTimes();
+    initLampTimer();
     updateStateAndTime();
     db->updateBlinkState(state);
 }
@@ -108,7 +97,7 @@ void setup() {
 void loop() {
     MDNS.update();
     stateMachine();
-    db->loop();
+    runSpecialModes();
     updateStateAndTime();
 }
 
@@ -201,6 +190,8 @@ void run_sleepingTime_mode() {
 /*
 *************/
 
+void runSpecialModes() { db->loop(); }
+
 void stateMachine() {
     if(lt->getIsTimerRunning()) {
         lt->timer_loop();
@@ -248,6 +239,41 @@ void animationStateMachine(String substate) {
 /* HELPER
 /*
 *************/
+void saveSpecialSettingDoubleBlinkToMakeThemUpdateResistant() {
+    if(!SPECIAL_LAMP_WITH_DOUBLEBLINK) return;
+    lfs->write_file(SETTING_SPECIAL_LAMP_WITH_DOUBLEBLINK_FS, "on");
+}
+
+void initSettings() {
+    SETTING_LAMP_NAME = lfs->read_file(SETTING_NAME_FS);
+    if(SETTING_LAMP_NAME == "" || SETTING_LAMP_NAME == NULL) {
+        SETTING_LAMP_NAME = NAME;
+        lfs->write_file(SETTING_NAME_FS, SETTING_LAMP_NAME.c_str());
+    }
+    SETTING_LAMP_URL = lfs->read_file(SETTING_URL_FS);
+    if(SETTING_LAMP_URL == "" || SETTING_LAMP_URL == NULL) {
+        SETTING_LAMP_URL = URL;
+        lfs->write_file(SETTING_URL_FS, SETTING_LAMP_URL.c_str());
+    }
+    String tmp = lfs->read_file(SETTING_NEOPIXEL_PIN_FS);
+    if(tmp == "" || tmp == NULL) {
+        SETTING_NEOPIXEL_PIN = NEOPIXEL_PIN;
+        lfs->write_file(SETTING_NEOPIXEL_PIN_FS,
+                        String(SETTING_NEOPIXEL_PIN).c_str());
+    } else {
+        SETTING_NEOPIXEL_PIN = (uint8_t)tmp.toInt();
+    }
+    tmp = lfs->read_file(SETTING_NEOPIXEL_COUNT_FS);
+    if(tmp == "" || tmp == NULL) {
+        SETTING_NEOPIXEL_COUNT = NEOPIXEL_COUNT;
+        lfs->write_file(SETTING_NEOPIXEL_COUNT_FS,
+                        String(SETTING_NEOPIXEL_COUNT).c_str());
+    } else {
+        SETTING_NEOPIXEL_COUNT = (uint8_t)tmp.toInt();
+    }
+    saveSpecialSettingDoubleBlinkToMakeThemUpdateResistant();
+}
+
 void setLampError() { setLampColorAndBrightness(getRgbColor(0, 0, 128), 255); }
 
 uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b) {
@@ -321,7 +347,8 @@ void updateColorPicker(String state, const char *file) {
     if(state != STATE_ANIMATION_PICK) { return; }
     String inputColor = lfs->read_file(file);
     inputColor.remove(0, 1);
-    unsigned long in = strtoul(inputColor.c_str(), NULL, NEOPIXEL_COUNT);
+    unsigned long in =
+        strtoul(inputColor.c_str(), NULL, SETTING_NEOPIXEL_COUNT);
     colorPicker_Color = in;
 }
 
@@ -375,10 +402,9 @@ void updateTimeZone() {
 }
 
 String processor(const String &var) {
-    if(var == "input_name") { return NAME; }
+    if(var == "input_name") { return SETTING_LAMP_NAME; }
     if(var == TIMER_START_IN) {
-
-        if(lt->getIsTimerRunning()) return "Restart Timer";
+        if(lt->getIsTimerRunning()) return "Stop Timer";
         return "Start Timer";
     }
     if(var == TIMER_TIME_IN) { return lfs->read_file(TIMER_TIME_FS); }
@@ -436,7 +462,7 @@ String processor(const String &var) {
         if(!sleep_isColorPickerNeeded) { return "hidden"; }
         return "";
     } else if(var == HIDE_BLINK_ROW_IN) {
-        if(!IS_BIG_LAMP_TOWER_BLINK) { return "hidden"; }
+        if(!db->isActive()) { return "hidden"; }
         return "";
     }
     // Blink Interval
@@ -461,7 +487,7 @@ void async_wlan_setup() {
     AsyncWiFiManager wifiManager(&server, &dns);
     // reset saved settings >> USED TO TEST
     // wifiManager.resetSettings();
-    wifiManager.autoConnect(NAME);
+    wifiManager.autoConnect(SETTING_LAMP_NAME.c_str());
 }
 
 void updateTime() {
@@ -766,6 +792,30 @@ void initModes() {
     value = lfs->read_file(SLEEP_MODE_FS);
     if(value == "" || value == NULL) { value = STATE_ANIMATION_RED; }
     updateSleepState(value);
+}
+
+void initLampTimer() {
+    String tmp_time = lfs->read_file(TIMER_TIME_FS);
+    if(tmp_time == "" || tmp_time == NULL) {
+        tmp_time = "00:05:00";
+        lfs->write_file(TIMER_TIME_FS, tmp_time.c_str());
+    }
+    lt = new LampTimer(strip, SETTING_NEOPIXEL_COUNT, tmp_time);
+}
+
+void initServer() {
+    if(MDNS.begin(SETTING_LAMP_URL)) { // browser: url.local
+        Serial.println("mDNS responder started");
+    } else {
+        Serial.println("Error setting up MDNS responder!");
+    }
+    MDNS.addService("http", "tcp", 80);
+    server.on("/", HTTP_GET, handle_server_root);
+    server.on("/timer", HTTP_GET, handle_server_timer);
+    server.on("/settings", HTTP_GET, handle_server_settings);
+    server.on("/get", HTTP_GET, handle_server_get);
+    server.onNotFound(handle_server_notFound);
+    server.begin(); // Actually start the server
 }
 
 void initUserTimes() {
