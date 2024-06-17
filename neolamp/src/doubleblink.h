@@ -18,10 +18,11 @@ class Doubleblink {
     Doubleblink(LampFileSystem *lfs);
     void loop();
     void set_interval(uint16_t interval);
-
+    bool isActive();
     void updateBlinkState(uint8_t state);
 
   private:
+    bool is_led_connected;
     int get_state();
     void start(String mode);
     void stop();

@@ -1,3 +1,4 @@
+const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
   <head>
@@ -83,3 +84,4 @@
     <iframe style="display: none" name="hidden-form"></iframe>
   </body>
 </html>
+)rawliteral";

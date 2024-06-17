@@ -1,3 +1,4 @@
+const char timer_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
   <head>
@@ -37,6 +38,7 @@
       button.bigfont {
         font-size: 1.6rem;
       }
+      button,
       a {
         font-family: "Cooper Black", serif;
         background-color: #3522dd; /* Green */
@@ -53,6 +55,15 @@
         font-size: 1.2rem;
       }
     </style>
+
+    <script>
+      function handle_onchange_and_reload(x) {
+        document.getElementById(x).submit();
+        setTimeout(function () {
+          document.location.reload(false);
+        }, 1000);
+      }
+    </script>
   </head>
   <body>
     <h2>%input_name%</h2>
@@ -60,22 +71,37 @@
     <!-- WakeUp Time -->
     <table>
       <tr>
-        <td><hr /></td>
-      </tr>
-      <tr>
+        <td class="left">Timer:</td>
         <td class="middle">
-          <a href="/timer"><br />Timer</a>
+          <form action="/get" target="hidden-form" id="getTimer">
+            <input
+              type="time"
+              name="iTimer"
+              value="%iTimer%"
+              class="table_input"
+              step="1"
+              onchange="handle_onchange_and_reload('getTimer')"
+            />
+          </form>
         </td>
-      </tr>
-      <tr>
-        <td class="middle">
-          <a href="/settings"><br />Einstellungen</a>
-        </td>
-      </tr>
-      <tr>
-        <td><hr /></td>
+        <td class="right"></td>
       </tr>
     </table>
+    <br />
+    <form action="/get" target="hidden-form" id="sT">
+      <button
+        class="bigfont"
+        name="sTimer"
+        value="sTimer"
+        orient="vertical"
+        onclick="handle_onchange_and_reload('sT')"
+      >
+        %sTimer%
+      </button>
+    </form>
+    <br />
+    <br />
+    <a href="/"><br />Zur Startseite</a>
     <br />
     <br />
     <br />
@@ -83,3 +109,4 @@
     <iframe style="display: none" name="hidden-form"></iframe>
   </body>
 </html>
+)rawliteral";

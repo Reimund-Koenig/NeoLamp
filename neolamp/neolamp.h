@@ -2,6 +2,11 @@
 #ifdef __AVR__
 #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
+/*
+ ToDo Remove for HTTP Update:
+#include <AsyncElegantOTA.h> // https://github.com/me-no-dev/ESPAsyncWebServer
+*/
+
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ESPAsyncTCP.h>
@@ -11,18 +16,20 @@
 #include "src/clocktime.h"
 #include "src/constants/blink_mode_array.h"
 #include "src/constants/html_inputs.h"
-#include "src/constants/index.html.h"
 #include "src/constants/modes.h"
 #include "src/constants/modes_array.h"
 #include "src/constants/secrets.h"
 #include "src/constants/settings.h"
 #include "src/constants/timezones.h"
 #include "src/doubleblink.h"
+#include "src/html/index.html.h"
+#include "src/html/settings.html.h"
+#include "src/html/timer.html.h"
 #include "src/lampfilesystem.h"
 #include "src/lamphelper.h"
+#include "src/lamptimer.h"
+#include "src/lampupdater.h"
 #include "time.h"
-
-#define NEOPIXEL_COUNT 16
 
 /************************************************************************************************************
 /*
@@ -33,9 +40,9 @@ void stateMachine();
 void animationStateMachine(String substate);
 
 void updateState(int new_state);
-void change_wakeup_state(String new_state);
-void change_daytime_state(String new_state);
-void change_sleep_state(String new_state);
+void updateWakeupState(String new_state);
+void updateDaytimeState(String new_state);
+void updateSleepState(String new_state);
 
 void run_colorPick_mode();
 void run_wakeupTime_mode();
@@ -50,27 +57,27 @@ void run_lamp_off();
 void updateStateAndTime();
 
 void createRandomColor();
-
+uint32_t getRgbColor(uint8_t r, uint8_t g, uint8_t b);
+void setLampBrightness(uint8_t brightness);
+void setLampColorAndBrightness(uint32_t color, uint8_t brightness);
+void setLampError();
 bool colorCircle(unsigned long wait);
 bool colorPulse(unsigned long wait);
 bool rainbowCircle(int wait);
 
 void initTime();
+void initModes();
+void initBrightness();
+void initColors();
+void initUserTimes();
 
-void update_daytime_mode();
+void updateColorBrightness(uint8_t inputBrightness);
+void updateColorPicker(String state, const char *file);
 
-void update_color_brightness(uint8_t inputBrightness);
-void update_color_picker(String state, const char *file);
+void updateWakeupBrightness(String val);
+void updateDaytimeBrightness(String val);
+void updateSleepBrightness(String val);
 
-void update_wakeup_brightness();
-void update_daytime_brightness();
-void update_sleep_brightness();
-
-void update_sleep_color();
-void update_daytime_color();
-void update_wakeup_color();
-
-void updateUserTimes();
 void updateTimeZone();
 void async_wlan_setup();
 

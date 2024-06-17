@@ -3,10 +3,18 @@
 unsigned long db_clock_sleep = 0;
 
 Doubleblink::Doubleblink(LampFileSystem *lfs) {
+    this->lfs = lfs;
+    String value = lfs->read_file(SETTING_SPECIAL_LAMP_WITH_DOUBLEBLINK_FS);
+    if(value == "" || value == NULL) {
+        is_led_connected = false;
+        return;
+    }
+    is_led_connected = true;
     pinMode(LED_BLUE, OUTPUT);
     pinMode(LED_YELLOW, OUTPUT);
-    this->lfs = lfs;
-    String value = lfs->read_file(WAKEUP_BLINK_FS);
+    digitalWrite(LED_BLUE, LOW);
+    digitalWrite(LED_YELLOW, LOW);
+    value = lfs->read_file(WAKEUP_BLINK_FS);
     if(value == "" || value == NULL) {
         value = D_LED_MODE_OFF;
         lfs->write_file(WAKEUP_BLINK_FS, value.c_str());
@@ -27,11 +35,10 @@ Doubleblink::Doubleblink(LampFileSystem *lfs) {
         lfs->write_file(BLINK_INTERVAL_FS, value.c_str());
     }
     set_interval((uint16_t)(value.toInt()));
-    digitalWrite(LED_BLUE, LOW);
-    digitalWrite(LED_YELLOW, LOW);
 }
 
 void Doubleblink::loop() {
+    if(!is_led_connected) return;
     int current_state = get_state();
     if(current_state == D_BLINK_DO_NOTHING) { return; }
     if(current_state == D_BLINK_SWITCH_BLUE_LED_ON) {
@@ -50,7 +57,10 @@ void Doubleblink::loop() {
     }
 }
 
+bool Doubleblink::isActive() { return is_led_connected; }
+
 void Doubleblink::start(String mode) {
+    if(!is_led_connected) return;
     this->doNotBlink = false;
     this->setDoNotBlink = false;
     this->isStableColorReturned = false;
@@ -106,11 +116,12 @@ int Doubleblink::get_state_blink() {
 }
 
 void Doubleblink::updateBlinkState(uint8_t state) {
-    if(state == STATE_WAKEUP_TIME) {
+    if(!is_led_connected) return;
+    if(state == STATE_WAKEUP) {
         updateBlink(lfs->read_file(WAKEUP_BLINK_FS));
-    } else if(state == STATE_DAYTIME_TIME) {
+    } else if(state == STATE_DAYTIME) {
         updateBlink(lfs->read_file(DAYTIME_BLINK_FS));
-    } else if(state == STATE_SLEEPING_TIME) {
+    } else if(state == STATE_SLEEPING) {
         updateBlink(lfs->read_file(SLEEP_BLINK_FS));
     } else {
         updateBlink("0");
@@ -118,6 +129,7 @@ void Doubleblink::updateBlinkState(uint8_t state) {
 }
 
 void Doubleblink::updateBlink(String value) {
+    if(!is_led_connected) return;
     if(value == D_LED_MODE_OFF) {
         stop();
     } else {

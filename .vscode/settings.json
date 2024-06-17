@@ -9,7 +9,18 @@
     "unordered_map": "cpp",
     "vector": "cpp",
     "string_view": "cpp",
-    "initializer_list": "cpp"
+    "initializer_list": "cpp",
+    "optional": "cpp",
+    "istream": "cpp",
+    "ostream": "cpp",
+    "functional": "cpp",
+    "regex": "cpp",
+    "tuple": "cpp",
+    "type_traits": "cpp",
+    "utility": "cpp",
+    "random": "cpp",
+    "list": "cpp",
+    "ranges": "cpp"
   },
   "cSpell.words": [
     "Adafruit",
