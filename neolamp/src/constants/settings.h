@@ -1,5 +1,5 @@
 // Rename for Update over the air
-#define FILENAME_VERSION "NeoLamp_v1.0.1.bin"
+#define FILENAME_VERSION "NeoLamp_v1.0.6.bin"
 
 // Change this names to your need
 #define NAME "Nachtlicht"

@@ -328,9 +328,9 @@ void setLampBrightness(uint8_t brightness) {
 }
 
 void setLampColorAndBrightness(uint32_t color, uint8_t brightness) {
-    setLampBrightness(brightness);
     strip->fill(color);
     strip->show();
+    setLampBrightness(brightness);
 }
 
 void updateStateAndTime() {
