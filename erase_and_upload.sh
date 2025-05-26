@@ -7,9 +7,8 @@ PORT="COM3"
 
 ESPTOOL="$HOME/.arduino15/packages/esp8266/tools/esptool/0.5.0/esptool.exe"
 
-echo "🧹 Lösche gesamten Flash (inkl. WLAN-Stack)..."
-"$ESPTOOL" --port "$PORT" erase_flash
-
+echo "🧽 Lösche Flash auf $PORT..."
+python3 -m esptool --port "$PORT" erase_flash
 if [ $? -ne 0 ]; then
   echo "❌ Flash-Löschung fehlgeschlagen."
   exit 1
