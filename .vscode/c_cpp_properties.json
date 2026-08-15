@@ -1,15 +1,55 @@
 {
-    "configurations": [
-        {
-            "name": "Linux",
-            "includePath": [
-                "${workspaceFolder}/**"
-            ],
-            "defines": [],
-            "cStandard": "c11",
-            "cppStandard": "gnu++14",
-            "intelliSenseMode": "linux-gcc-x64"
-        }
-    ],
-    "version": 4
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Arduino ESP8266",
+      "compilerPath": "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\3.1.0-gcc10.3-e5f9fec\\bin\\xtensa-lx106-elf-g++",
+      "compilerArgs": [
+        "-U__STRICT_ANSI__",
+        "-Werror=return-type",
+        "-mlongcalls",
+        "-mtext-section-literals",
+        "-fno-rtti",
+        "-falign-functions=4",
+        "-std=gnu++17"
+      ],
+      "intelliSenseMode": "gcc-x86",
+      "includePath": [
+        "${workspaceFolder}/neolamp/libraries/Adafruit_NeoPixel",
+        "${workspaceFolder}/neolamp/libraries/ESPAsyncTCP/src",
+        "${workspaceFolder}/neolamp/libraries/ESPAsyncWebServer/src",
+        "${workspaceFolder}/neolamp/libraries/ESPAsyncWifiManager",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\tools\\sdk\\include",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\tools\\sdk\\lwip2\\include",
+        "C:\\Users\\katha\\AppData\\Local\\arduino\\sketches\\D32C3C4A812F75DE582786E379B9A6A4\\core",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\cores\\esp8266",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\variants\\d1",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\libraries\\ESP8266WiFi\\src",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\libraries\\ESP8266mDNS\\src",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\libraries\\Hash\\src",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\libraries\\DNSServer\\src",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\libraries\\ESP8266HTTPClient\\src",
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\libraries\\ESP8266httpUpdate\\src",
+        "c:\\Users\\katha\\appdata\\local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\3.1.0-gcc10.3-e5f9fec\\xtensa-lx106-elf\\include\\c++\\10.3.0",
+        "c:\\Users\\katha\\appdata\\local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\3.1.0-gcc10.3-e5f9fec\\xtensa-lx106-elf\\include\\c++\\10.3.0\\xtensa-lx106-elf",
+        "c:\\Users\\katha\\appdata\\local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\3.1.0-gcc10.3-e5f9fec\\xtensa-lx106-elf\\include\\c++\\10.3.0\\backward",
+        "c:\\Users\\katha\\appdata\\local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\3.1.0-gcc10.3-e5f9fec\\lib\\gcc\\xtensa-lx106-elf\\10.3.0\\include",
+        "c:\\Users\\katha\\appdata\\local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\3.1.0-gcc10.3-e5f9fec\\lib\\gcc\\xtensa-lx106-elf\\10.3.0\\include-fixed",
+        "c:\\Users\\katha\\appdata\\local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\3.1.0-gcc10.3-e5f9fec\\xtensa-lx106-elf\\include"
+      ],
+      "forcedInclude": [
+        "C:\\Users\\katha\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\3.1.2\\cores\\esp8266\\Arduino.h"
+      ],
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "defines": [
+        "ESP8266",
+        "ARDUINO=10805",
+        "ARDUINO_ARCH_ESP8266",
+        "ARDUINO_ESP8266_WEMOS_D1R1",
+        "ICACHE_FLASH",
+        "F_CPU=80000000L"
+      ]
+    }
+  ]
 }

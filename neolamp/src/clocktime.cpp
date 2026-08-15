@@ -5,9 +5,10 @@ Clocktime::Clocktime(){
 
 };
 
-bool Clocktime::setTime(int hour, int minutes) {
-    this->minutes = minutes;
+bool Clocktime::setTime(int hour, int minutes, int seconds) {
     this->hours = hour;
+    this->minutes = minutes;
+    this->seconds = seconds;
     return true;
 }
 
@@ -34,7 +35,7 @@ boolean Clocktime::isValidNumber(String str) {
 }
 
 bool Clocktime::setTime(String timestring) {
-    if(timestring.length() < 3 || timestring.length() > 5) { return false; }
+    if(timestring.length() < 3) { return false; }
     String timestring_minutes = getValue(timestring, ':', 1);
     String timestring_hours = getValue(timestring, ':', 0);
     if(timestring_hours == "" || timestring_minutes == "") { return false; }
@@ -46,6 +47,14 @@ bool Clocktime::setTime(String timestring) {
     if(tmp_min < 0 || tmp_min > 60) { return false; }
     this->minutes = tmp_min;
     this->hours = tmp_hour;
+    if(timestring.length() > 5) {
+        // with seconds
+        String timestring_seconds = getValue(timestring, ':', 2);
+        if(!isValidNumber(timestring_seconds)) { return false; }
+        int tmp_sec = timestring_seconds.toInt();
+        if(tmp_sec < 0 || tmp_sec > 60) { return false; }
+        this->seconds = tmp_sec;
+    }
     return true;
 }
 
@@ -64,3 +73,4 @@ String Clocktime::getTimeString() {
 
 int Clocktime::getHour() { return hours; }
 int Clocktime::getMinutes() { return minutes; };
+int Clocktime::getSeconds() { return seconds; };
