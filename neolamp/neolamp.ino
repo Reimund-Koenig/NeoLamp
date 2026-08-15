@@ -63,10 +63,15 @@ unsigned long lastRawButtonChangeMs = 0;
 unsigned long lastStableSwitchChangeMs = 0;
 
 int color_circle_mode_helper = 0;
+int color_circle_filled_mode_helper = 0;
 int color_pulse_helper_brightness = 255;
 bool color_pulse_helper_lighten = true;
 uint32_t mix_mode_helper = 0;
 uint32_t rainbow_mode_helper = 0;
+uint8_t mixed_mode_index = 0;
+unsigned long mixed_next_switch_ms = 0;
+unsigned long mixed_hold_until_ms = 0;
+bool mixed_hold_active = false;
 
 String SETTING_LAMP_NAME = "";
 String SETTING_LAMP_URL = "";
@@ -125,14 +130,50 @@ void loop() {
 /*
 *************/
 void run_mixed() {
-    if(state_first_run) { mix_mode_helper++; }
-    if(mix_mode_helper >= 65) { mix_mode_helper = 0; }
-    if(mix_mode_helper <= 40) {
-        run_circle();
-    } else if(mix_mode_helper <= 47) {
-        run_pulse();
-    } else {
-        run_rainbow();
+    if(state_first_run) {
+        mixed_mode_index = random(0, 3);
+        mixed_next_switch_ms = millis() + random(5000, 15001);
+        mixed_hold_until_ms = millis() + 800;
+        mixed_hold_active = true;
+        color_circle_mode_helper = 0;
+        color_circle_filled_mode_helper = 0;
+        rainbow_mode_helper = 0;
+        state_first_run = false;
+        Serial.println("run_mixed start");
+        return;
+    }
+
+    if(mixed_hold_active) {
+        if(millis() < mixed_hold_until_ms) { return; }
+        mixed_hold_active = false;
+    }
+
+    if(millis() >= mixed_next_switch_ms) {
+        mixed_mode_index = random(0, 3);
+        mixed_next_switch_ms = millis() + random(5000, 15001);
+        mixed_hold_until_ms = millis() + 800;
+        mixed_hold_active = true;
+        color_circle_mode_helper = 0;
+        color_circle_filled_mode_helper = 0;
+        rainbow_mode_helper = 0;
+        Serial.println("run_mixed switch");
+        return;
+    }
+
+    switch(mixed_mode_index) {
+    case 0:
+        if(colorCircle(100)) { color_circle_mode_helper = 0; }
+        break;
+    case 1:
+        if(colorCircleFilled(40)) { color_circle_filled_mode_helper = 0; }
+        break;
+    case 2:
+        if(rainbowCircle(20)) { rainbow_mode_helper = 0; }
+        break;
+    default:
+        setLampColorAndBrightness(getRgbColor(255, 0, 0),
+                                  lampBrightnessPercent);
+        break;
     }
 }
 
@@ -155,6 +196,15 @@ void run_circle() {
         Serial.println("run_circle");
     }
     if(colorCircle(100)) { state_first_run = true; }
+}
+
+void run_circle_filled() {
+    if(state_first_run) {
+        color_circle_filled_mode_helper = 0;
+        state_first_run = false;
+        Serial.println("run_circle_filled");
+    }
+    if(colorCircleFilled(40)) { state_first_run = true; }
 }
 
 void run_rainbow() {
@@ -239,6 +289,8 @@ void animationStateMachine(String substate) {
         run_pulse();
     } else if(substate == STATE_ANIMATION_CIRCLE) {
         run_circle();
+    } else if(substate == STATE_ANIMATION_CIRCLE_FILLED) {
+        run_circle_filled();
     } else if(substate == STATE_ANIMATION_RAINBOW) {
         run_rainbow();
     } else if(substate == STATE_ANIMATION_PICK) {
@@ -481,8 +533,14 @@ void renderLamp() {
         setLampColorAndBrightness(getRgbColor(255, 255, 255),
                                   lampBrightnessPercent);
         break;
+    case LAMP_MODE_MIX:
+        run_mixed();
+        break;
     case LAMP_MODE_CIRCLE:
         run_circle();
+        break;
+    case LAMP_MODE_CIRCLE_FILLED:
+        run_circle_filled();
         break;
     case LAMP_MODE_RAINBOW:
         run_rainbow();
@@ -878,6 +936,27 @@ bool colorCircle(int wait) {
     strip->setPixelColor(color_circle_mode_helper, random_color);
     strip->show();
     color_circle_mode_helper++;
+    helper.set_none_sleeping_delay(wait, &substate_sleep);
+    return false;
+}
+
+bool colorCircleFilled(int wait) {
+    if(helper.is_sleeping(substate_sleep)) { return false; }
+
+    color_circle_filled_mode_helper += 256;
+    if(color_circle_filled_mode_helper >= 65536) {
+        color_circle_filled_mode_helper = 0;
+        return true;
+    }
+
+    strip->clear();
+    strip->setBrightness((lampBrightnessPercent * 255) / 100);
+    for(int i = 0; i < strip->numPixels(); i++) {
+        uint32_t pixelHue =
+            color_circle_filled_mode_helper + (i * 65536L / strip->numPixels());
+        strip->setPixelColor(i, strip->ColorHSV(pixelHue, 255, 255));
+    }
+    strip->show();
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }
