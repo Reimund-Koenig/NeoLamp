@@ -10,7 +10,6 @@ const char *modes[][2] = {{"Konstant Rot", MODE_COLOR_RED},
                           {"Konstant Lila", MODE_COLOR_PURPLE},
                           {"Konstant Magenta", MODE_COLOR_MAGENTA},
                           {"Konstant Weiss", MODE_COLOR_WHITE},
-                          {"Mode Pulsieren", MODE_COLOR_PULSE},
                           {"Mode Farbkreise", MODE_COLOR_CIRCLE},
                           {"Mode Regenbogen", MODE_COLOR_RAINBOW}};
 

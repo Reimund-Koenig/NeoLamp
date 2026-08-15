@@ -441,53 +441,50 @@ void renderLamp() {
     }
 
     switch(currentModeIndex) {
-    case 0:
+    case LAMP_MODE_RED:
         setLampColorAndBrightness(getRgbColor(255, 0, 0),
                                   lampBrightnessPercent);
         break;
-    case 1:
-        setLampColorAndBrightness(getRgbColor(255, 128, 0),
+    case LAMP_MODE_ORANGE:
+        setLampColorAndBrightness(getRgbColor(255, 64, 0),
                                   lampBrightnessPercent);
         break;
-    case 2:
+    case LAMP_MODE_YELLOW:
+        setLampColorAndBrightness(getRgbColor(255, 140, 0),
+                                  lampBrightnessPercent);
+        break;
+    case LAMP_MODE_LIGHT_GREEN:
         setLampColorAndBrightness(getRgbColor(255, 255, 0),
                                   lampBrightnessPercent);
         break;
-    case 3:
-        setLampColorAndBrightness(getRgbColor(180, 255, 100),
-                                  lampBrightnessPercent);
-        break;
-    case 4:
+    case LAMP_MODE_GREEN:
         setLampColorAndBrightness(getRgbColor(0, 255, 0),
                                   lampBrightnessPercent);
         break;
-    case 5:
+    case LAMP_MODE_TURQUOISE:
         setLampColorAndBrightness(getRgbColor(0, 255, 255),
                                   lampBrightnessPercent);
         break;
-    case 6:
+    case LAMP_MODE_BLUE:
         setLampColorAndBrightness(getRgbColor(0, 0, 255),
                                   lampBrightnessPercent);
         break;
-    case 7:
+    case LAMP_MODE_PURPLE:
         setLampColorAndBrightness(getRgbColor(128, 0, 255),
                                   lampBrightnessPercent);
         break;
-    case 8:
+    case LAMP_MODE_MAGENTA:
         setLampColorAndBrightness(getRgbColor(255, 0, 255),
                                   lampBrightnessPercent);
         break;
-    case 9:
+    case LAMP_MODE_WHITE:
         setLampColorAndBrightness(getRgbColor(255, 255, 255),
                                   lampBrightnessPercent);
         break;
-    case 10:
-        run_pulse();
-        break;
-    case 11:
+    case LAMP_MODE_CIRCLE:
         run_circle();
         break;
-    case 12:
+    case LAMP_MODE_RAINBOW:
         run_rainbow();
         break;
     default:
@@ -876,8 +873,10 @@ bool colorCircle(int wait) {
         color_circle_mode_helper = 0;
         return true;
     }
-    setLampBrightness(colorBrightness);
+    strip->clear();
+    strip->setBrightness((lampBrightnessPercent * 255) / 100);
     strip->setPixelColor(color_circle_mode_helper, random_color);
+    strip->show();
     color_circle_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
@@ -887,14 +886,18 @@ bool rainbowCircle(int wait) {
     if(helper.is_sleeping(substate_sleep)) { return false; }
 
     rainbow_mode_helper += 256;
-    if(rainbow_mode_helper >= 65536) { return true; }
+    if(rainbow_mode_helper >= 65536) {
+        rainbow_mode_helper = 0;
+        return true;
+    }
+    strip->clear();
+    strip->setBrightness((lampBrightnessPercent * 255) / 100);
     for(int i = 0; i < strip->numPixels(); i++) {
         uint32_t pixelHue =
             rainbow_mode_helper + (i * 65536L / strip->numPixels());
-        strip->setPixelColor(
-            i, strip->gamma32(strip->ColorHSV(pixelHue, 255, 255)));
+        strip->setPixelColor(i, strip->ColorHSV(pixelHue, 255, 255));
     }
-    setLampBrightness(colorBrightness);
+    strip->show();
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }
