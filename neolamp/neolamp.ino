@@ -137,7 +137,7 @@ void run_circle_filled() {
     if(state_first_run) {
         createRandomColor();
         state_first_run = false;
-        Serial.println("run_circle");
+        Serial.println("run_circle_filled");
     }
     if(colorCircleFilled(100)) { state_first_run = true; }
 }
@@ -727,13 +727,11 @@ bool colorCircle(int wait) {
         color_circle_mode_helper = 0;
         return true;
     }
-
     strip->clear();
+    setLampBrightness(colorBrightness);
     int pixelIndex = strip->numPixels() - 1 - color_circle_mode_helper;
     strip->setPixelColor(pixelIndex, random_color);
-    setLampBrightness(colorBrightness);
     strip->show();
-
     color_circle_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
@@ -743,27 +741,20 @@ bool colorCircleFilled(int wait) {
     if(helper.is_sleeping(substate_sleep)) { return false; }
 
     if(color_circle_filled_mode_helper >= strip->numPixels()) {
-        strip->clear();
         for(int i = 0; i < strip->numPixels(); i++) {
             strip->setPixelColor(i, random_color);
         }
-        setLampBrightness(colorBrightness);
         strip->show();
         color_circle_filled_mode_helper = 0;
         return true;
     }
 
-    strip->clear();
-    int lastIndex = strip->numPixels() - 1;
-    int fillFrom = lastIndex - color_circle_filled_mode_helper;
-
-    for(int i = lastIndex; i >= fillFrom; i--) {
+    for(int i = strip->numPixels() - 1;
+        i >= strip->numPixels() - 1 - color_circle_filled_mode_helper; i--) {
         strip->setPixelColor(i, random_color);
     }
-
     setLampBrightness(colorBrightness);
     strip->show();
-
     color_circle_filled_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
