@@ -77,6 +77,13 @@ if [ -z "$PYTHON_WITH_SERIAL" ] || [ -z "$ESPTOOL_BIN" ]; then
   exit 1
 fi
 
+echo "🔎 Verifiziere und baue Sketch neu..."
+./verify.sh
+if [ $? -ne 0 ]; then
+  echo "❌ Build/Verifizierung fehlgeschlagen."
+  exit 1
+fi
+
 echo "🧽 Lösche Flash auf $PORT..."
 if [ "$PYTHON_WITH_SERIAL" = "py -3" ]; then
   py -3 "$ESPTOOL_BIN" --port "$PORT" erase_flash
