@@ -62,6 +62,7 @@ void setLampBrightness(uint8_t brightness);
 void setLampColorAndBrightness(uint32_t color, uint8_t brightness);
 void setLampError();
 bool colorCircle(unsigned long wait);
+bool colorCircleFilled(unsigned long wait);
 bool colorPulse(unsigned long wait);
 bool rainbowCircle(int wait);
 

@@ -42,6 +42,7 @@ uint32_t random_color;
 int createRandomColor_helper;
 
 int color_circle_mode_helper = 0;
+int color_circle_filled_mode_helper = 0;
 int color_pulse_helper_brightness = 255;
 bool color_pulse_helper_lighten = true;
 uint32_t mix_mode_helper = 0;
@@ -109,9 +110,11 @@ void loop() {
 void run_mixed() {
     if(state_first_run) { mix_mode_helper++; }
     if(mix_mode_helper >= 65) { mix_mode_helper = 0; }
-    if(mix_mode_helper <= 40) {
+    if(mix_mode_helper <= 30) {
         run_circle();
-    } else if(mix_mode_helper <= 47) {
+    } else if(mix_mode_helper <= 45) {
+        run_circle_filled();
+    } else if(mix_mode_helper <= 55) {
         run_pulse();
     } else {
         run_rainbow();
@@ -130,6 +133,14 @@ void run_pulse() {
     if(colorPulse(17)) { state_first_run = true; }
 }
 
+void run_circle_filled() {
+    if(state_first_run) {
+        createRandomColor();
+        state_first_run = false;
+        Serial.println("run_circle");
+    }
+    if(colorCircleFilled(100)) { state_first_run = true; }
+}
 void run_circle() {
     if(state_first_run) {
         createRandomColor();
@@ -219,6 +230,8 @@ void animationStateMachine(String substate) {
         run_pulse();
     } else if(substate == STATE_ANIMATION_CIRCLE) {
         run_circle();
+    } else if(substate == STATE_ANIMATION_CIRCLE_FILLED) {
+        run_circle_filled();
     } else if(substate == STATE_ANIMATION_RAINBOW) {
         run_rainbow();
     } else if(substate == STATE_ANIMATION_PICK) {
@@ -705,12 +718,53 @@ bool colorPulse(int wait) {
 bool colorCircle(int wait) {
     if(helper.is_sleeping(substate_sleep)) { return false; }
     if(color_circle_mode_helper >= strip->numPixels()) {
+        strip->clear();
+        for(int i = 0; i < strip->numPixels(); i++) {
+            strip->setPixelColor(i, random_color);
+        }
+        setLampBrightness(colorBrightness);
+        strip->show();
         color_circle_mode_helper = 0;
         return true;
     }
+
+    strip->clear();
+    int pixelIndex = strip->numPixels() - 1 - color_circle_mode_helper;
+    strip->setPixelColor(pixelIndex, random_color);
     setLampBrightness(colorBrightness);
-    strip->setPixelColor(color_circle_mode_helper, random_color);
+    strip->show();
+
     color_circle_mode_helper++;
+    helper.set_none_sleeping_delay(wait, &substate_sleep);
+    return false;
+}
+
+bool colorCircleFilled(int wait) {
+    if(helper.is_sleeping(substate_sleep)) { return false; }
+
+    if(color_circle_filled_mode_helper >= strip->numPixels()) {
+        strip->clear();
+        for(int i = 0; i < strip->numPixels(); i++) {
+            strip->setPixelColor(i, random_color);
+        }
+        setLampBrightness(colorBrightness);
+        strip->show();
+        color_circle_filled_mode_helper = 0;
+        return true;
+    }
+
+    strip->clear();
+    int lastIndex = strip->numPixels() - 1;
+    int fillFrom = lastIndex - color_circle_filled_mode_helper;
+
+    for(int i = lastIndex; i >= fillFrom; i--) {
+        strip->setPixelColor(i, random_color);
+    }
+
+    setLampBrightness(colorBrightness);
+    strip->show();
+
+    color_circle_filled_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }

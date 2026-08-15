@@ -2,7 +2,8 @@
 
 const char *modes[][2] = {{"Mixed", STATE_ANIMATION_MIX},
                           {"Pulsieren", STATE_ANIMATION_PULSE},
-                          {"Farbkeise", STATE_ANIMATION_CIRCLE},
+                          {"Kreise", STATE_ANIMATION_CIRCLE},
+                          {"Farbkreise", STATE_ANIMATION_CIRCLE_FILLED},
                           {"Regenbogen", STATE_ANIMATION_RAINBOW},
                           {"Farbauswahl", STATE_ANIMATION_PICK},
                           {"Gruen", STATE_ANIMATION_GREEN},

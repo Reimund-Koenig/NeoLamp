@@ -6,6 +6,7 @@
 #define STATE_ANIMATION_MIX "mix"
 #define STATE_ANIMATION_PULSE "pulse"
 #define STATE_ANIMATION_CIRCLE "circle"
+#define STATE_ANIMATION_CIRCLE_FILLED "circle_filled"
 #define STATE_ANIMATION_RAINBOW "rainbow"
 #define STATE_ANIMATION_PICK "pick"
 #define STATE_ANIMATION_GREEN "green"
