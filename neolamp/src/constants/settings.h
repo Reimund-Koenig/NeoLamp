@@ -1,9 +1,9 @@
 // Rename for Update over the air
-#define FILENAME_VERSION "NeoLamp_v1.0.1.bin"
+#define FILENAME_VERSION "NeoLamp_v1.1.0.bin"
 
 // Change this names to your need
-#define NAME "Isabella"
-#define URL "isabella"
+#define NAME "Bella"
+#define URL "bella"
 #define NEOPIXEL_PIN 4 // Wemos D1 mini: port D2
 #define NEOPIXEL_COUNT 16
 
