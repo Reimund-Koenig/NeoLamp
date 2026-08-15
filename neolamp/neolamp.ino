@@ -1,21 +1,7 @@
 #include "neolamp.h"
 
-AsyncWebServer server(80);
-DNSServer dns;
-
 Adafruit_NeoPixel *strip;
-
-Doubleblink *db;
 LampFileSystem *lfs;
-LampUpdater *lupdater;
-LampTimer *lt;
-
-struct tm timeinfo;
-
-Clocktime user_wakeup_time;
-Clocktime user_sleep_time;
-Clocktime user_daytime_time;
-Clocktime current_time;
 LampHelper helper;
 
 uint8_t wakeup_brightness = 25;
@@ -42,10 +28,7 @@ uint32_t random_color;
 int createRandomColor_helper;
 
 int last_a0;
-int buttonState = false;
-int lastButtonState = LOW;
-unsigned long lastDebounceTime = 0; // the last time the output pin was toggled
-unsigned long debounceDelay = 50;   // the debounce time
+unsigned long debounceDelay = 50; // the debounce time
 
 #define LAMP_MODE_FS "/lamp_mode.txt"
 #define LAMP_ON_FS "/lamp_on.txt"
@@ -99,10 +82,6 @@ void setup() {
     strip->clear();
     strip->show();
 
-    WiFi.mode(WIFI_OFF);
-    WiFi.disconnect(true);
-    WiFi.mode(WIFI_OFF);
-
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     int a0 = analogRead(A0);
     last_a0 = a0 - (a0 % STEPS);
@@ -121,7 +100,7 @@ void setup() {
 void loop() {
     handlePotiBrightnessInput();
     handleButton();
-    renderLamp();
+    stateMachine();
 }
 
 /************************************************************************************************************
@@ -202,7 +181,7 @@ void run_rainbow() {
         state_first_run = false;
         Serial.println("run_rainbow");
     }
-    if(rainbowCircle(10)) { state_first_run = true; }
+    if(rainbowCircle(20)) { state_first_run = true; }
 }
 
 void run_lamp_off() {
@@ -247,14 +226,14 @@ void run_sleepingTime_mode() {
 /*
 *************/
 
-void runSpecialModes() { db->loop(); }
-
 void stateMachine() {
-    if(state == STATE_OFF) {
-        run_lamp_off();
-    } else if(lt->getIsTimerRunning()) {
-        lt->timer_loop();
-    } else if(state == STATE_WAKEUP) {
+    if(!lampOn) {
+        strip->clear();
+        strip->show();
+        return;
+    }
+
+    if(state == STATE_WAKEUP) {
         updateColorBrightness(wakeup_brightness);
         updateColorPicker(wakeup_state, WAKEUP_COLOR_FS);
         animationStateMachine(wakeup_state);
@@ -269,6 +248,8 @@ void stateMachine() {
     } else {
         setLampError();
     }
+
+    renderLamp();
 }
 
 void animationStateMachine(String substate) {
@@ -475,12 +456,6 @@ void cycleMode() {
 }
 
 void renderLamp() {
-    if(!lampOn) {
-        strip->clear();
-        strip->show();
-        return;
-    }
-
     switch(currentModeIndex) {
     case LAMP_MODE_RED:
         setLampColorAndBrightness(getRgbColor(255, 0, 0),
@@ -541,21 +516,6 @@ void renderLamp() {
     }
 }
 
-void updateStateAndTime() {
-    if(helper.is_sleeping(clock_sleep)) { return; }
-    helper.set_none_sleeping_delay(200, &clock_sleep);
-    handlePotiBrightnessInput();
-    handleButton();
-    updateTime();
-    if(buttonState == HIGH) {
-        updateState(STATE_OFF);
-        return;
-    }
-    updateState(helper.get_state(current_time, user_daytime_time, STATE_DAYTIME,
-                                 user_sleep_time, STATE_SLEEPING,
-                                 user_wakeup_time, STATE_WAKEUP));
-}
-
 void updateColorPicker(String state, const char *file) {
     if(!isColorUpdateNeeded) { return; }
     if(state != STATE_ANIMATION_PICK) { return; }
@@ -599,128 +559,10 @@ void updateSleepBrightness(String val) {
     sleep_brightness = getLogicalBrightnessValue(val);
 }
 
-void updateTimeZone() {
-    String value = lfs->read_file(TIMEZONE_FS);
-    if(value == "" || value == NULL) {
-        value = "Berlin";
-        lfs->write_file(TIMEZONE_FS, value.c_str());
-    };
-    for(int i = 0; i < sizeof(timezones) / sizeof(timezones[0]); i++) {
-        if(value == timezones[i][0]) {
-            setenv("TZ", timezones[i][1], 1);
-            tzset();
-            updateTime();
-            return;
-        }
-    }
-}
-
-String processor(const String &var) {
-    if(var == "input_name") { return SETTING_LAMP_NAME; }
-    if(var == TIMER_START_IN) {
-        if(lt->getIsTimerRunning()) return "Stop Timer";
-        return "Start Timer";
-    }
-    if(var == TIMER_TIME_IN) { return lfs->read_file(TIMER_TIME_FS); }
-    if(var == WAKEUP_TIME_IN) { return lfs->read_file(WAKEUP_TIME_FS); }
-    if(var == DAYTIME_TIME_IN) { return lfs->read_file(DAYTIME_TIME_FS); }
-    if(var == SLEEP_TIME_IN) { return lfs->read_file(SLEEP_TIME_FS); }
-    // Modes
-    if(var == WAKEUP_MODE_IN) {
-        String value = lfs->read_file(WAKEUP_MODE_FS);
-        if(value == "" || value == NULL) { value = "green"; };
-        return helper.getHtmlSelect(modes, sizeof_modes, value);
-    } else if(var == DAYTIME_MODE_IN) {
-        String value = lfs->read_file(DAYTIME_MODE_FS);
-        return helper.getHtmlSelect(modes, sizeof_modes, value);
-    } else if(var == SLEEP_MODE_IN) {
-        String value = lfs->read_file(SLEEP_MODE_FS);
-        return helper.getHtmlSelect(modes, sizeof_modes, value);
-    }
-    // Brightness
-    if(var == WAKEUP_BRIGHTNESS_IN) {
-        return lfs->read_file(WAKEUP_BRIGHTNESS_FS);
-    } else if(var == DAYTIME_BRIGHTNESS_IN) {
-        return lfs->read_file(DAYTIME_BRIGHTNESS_FS);
-    } else if(var == SLEEP_BRIGHTNESS_IN) {
-        return lfs->read_file(SLEEP_BRIGHTNESS_FS);
-    }
-    // Blink LEDs
-    else if(var == WAKEUP_BLINK_IN) {
-        String value = lfs->read_file(WAKEUP_BLINK_FS);
-        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
-    } else if(var == DAYTIME_BLINK_IN) {
-        String value = lfs->read_file(DAYTIME_BLINK_FS);
-
-        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
-    } else if(var == SLEEP_BLINK_IN) {
-        String value = lfs->read_file(SLEEP_BLINK_FS);
-        return helper.getHtmlSelect(blink_modes, sizeof_blink_modes, value);
-    }
-    // Color
-    else if(var == WAKEUP_COLOR_IN) {
-        return lfs->read_file(WAKEUP_COLOR_FS);
-    } else if(var == DAYTIME_COLOR_IN) {
-        return lfs->read_file(DAYTIME_COLOR_FS);
-    } else if(var == SLEEP_COLOR_IN) {
-        return lfs->read_file(SLEEP_COLOR_FS);
-    } else if(var == WAKEUP_COLOR_ROW_IN) {
-        if(!wakeup_isColorPickerNeeded) { return "hidden"; }
-        return "";
-    } else if(var == DAYTIME_COLOR_ROW_IN) {
-        if(!daytime_isColorPickerNeeded) { return "hidden"; }
-        return "";
-    } else if(var == SLEEPTIME_COLOR_ROW_IN) {
-        if(!sleep_isColorPickerNeeded) { return "hidden"; }
-        return "";
-    } else if(var == HIDE_BLINK_ROW_IN) {
-        if(!db->isActive()) { return "hidden"; }
-        return "";
-    }
-    // Blink Interval
-    if(var == BLINK_INTERVAL_IN) {
-        return lfs->read_file(BLINK_INTERVAL_FS);
-    }
-    // The current time
-    else if(var == "input_time_on_load") {
-        updateTime();
-        return current_time.getTimeString();
-    }
-    // Timezone
-    else if(var == TIMEZONE_IN) {
-        String value = lfs->read_file(TIMEZONE_FS);
-        if(value == "" || value == NULL) { value = "Europe_Berlin"; };
-        return helper.getHtmlSelect(timezones, sizeof_timezones, value);
-    }
-    return "";
-}
-
-void async_wlan_setup() {
-    AsyncWiFiManager wifiManager(&server, &dns);
-    // reset saved settings >> USED TO TEST
-    // wifiManager.resetSettings();
-    wifiManager.autoConnect(SETTING_LAMP_NAME.c_str());
-}
-
-void updateTime() {
-    if(!getLocalTime(&timeinfo)) { return; }
-    current_time.setTime(timeinfo.tm_hour, timeinfo.tm_min, 0);
-}
-
-void initTime() {
-    configTime(0, 0, "pool.ntp.org");
-    updateTime();
-    // Now we can set the real timezone
-    // https://randomnerdtutorials.com/esp32-ntp-timezones-daylight-saving/
-    // https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
-    updateTimeZone();
-}
-
 void updateState(int new_state) {
     if(state == new_state) { return; }
     state = new_state;
     state_first_run = true;
-    db->updateBlinkState(state);
 }
 
 void updateWakeupState(String new_state) {
@@ -780,116 +622,6 @@ void createRandomColor() {
 /* Server Handler
 /*
 *************/
-void printServerInfo() {
-    Serial.print("Default hostname: ");
-    Serial.println(WiFi.hostname().c_str());
-    Serial.print("Connected to ");
-    Serial.println(WiFi.SSID()); // Tell us what network we're connected to
-    Serial.print("IP address:\t");
-    Serial.println(WiFi.localIP());
-}
-
-void handle_server_timer(AsyncWebServerRequest *request) {
-    request->send_P(200, "text/html", timer_html, processor);
-}
-
-void handle_server_settings(AsyncWebServerRequest *request) {
-    request->send_P(200, "text/html", settings_html, processor);
-}
-
-void handle_server_root(AsyncWebServerRequest *request) {
-    request->send_P(200, "text/html", index_html, processor);
-}
-
-void handle_server_get(AsyncWebServerRequest *request) {
-    String tmp;
-    // Times
-    if(request->hasParam(TIMER_START_IN)) { lt->toggleIsRunning(); }
-    if(request->hasParam(TIMER_TIME_IN)) {
-        tmp = request->getParam(TIMER_TIME_IN)->value();
-        lfs->write_file(TIMER_TIME_FS, tmp.c_str());
-        lt->setTimerSeconds(tmp);
-    } else if(request->hasParam(WAKEUP_TIME_IN)) {
-        tmp = request->getParam(WAKEUP_TIME_IN)->value();
-        lfs->write_file(WAKEUP_TIME_FS, tmp.c_str());
-        user_wakeup_time.setTime(tmp.c_str());
-    } else if(request->hasParam(DAYTIME_TIME_IN)) {
-        tmp = request->getParam(DAYTIME_TIME_IN)->value();
-        lfs->write_file(DAYTIME_TIME_FS, tmp.c_str());
-        user_daytime_time.setTime(tmp.c_str());
-    } else if(request->hasParam(SLEEP_TIME_IN)) {
-        tmp = request->getParam(SLEEP_TIME_IN)->value();
-        lfs->write_file(SLEEP_TIME_FS, tmp.c_str());
-        user_sleep_time.setTime(tmp.c_str());
-    }
-    // Modes
-    else if(request->hasParam(WAKEUP_MODE_IN)) {
-        tmp = request->getParam(WAKEUP_MODE_IN)->value();
-        updateWakeupState(tmp.c_str());
-    } else if(request->hasParam(DAYTIME_MODE_IN)) {
-        tmp = request->getParam(DAYTIME_MODE_IN)->value();
-        updateDaytimeState(tmp.c_str());
-    } else if(request->hasParam(SLEEP_MODE_IN)) {
-        tmp = request->getParam(SLEEP_MODE_IN)->value();
-        updateSleepState(tmp.c_str());
-    }
-    // Brightness
-    else if(request->hasParam(WAKEUP_BRIGHTNESS_IN)) {
-        tmp = request->getParam(WAKEUP_BRIGHTNESS_IN)->value();
-        updateWakeupBrightness(tmp);
-    } else if(request->hasParam(DAYTIME_BRIGHTNESS_IN)) {
-        tmp = request->getParam(DAYTIME_BRIGHTNESS_IN)->value();
-        updateDaytimeBrightness(tmp);
-    } else if(request->hasParam(SLEEP_BRIGHTNESS_IN)) {
-        tmp = request->getParam(SLEEP_BRIGHTNESS_IN)->value();
-        updateSleepBrightness(tmp);
-    }
-    // Blink Interval
-    else if(request->hasParam(BLINK_INTERVAL_IN)) {
-        tmp = request->getParam(BLINK_INTERVAL_IN)->value();
-        lfs->write_file(BLINK_INTERVAL_FS, tmp.c_str());
-        db->set_interval((uint16_t)(tmp.toInt()));
-    }
-    // Blink LEDs
-    else if(request->hasParam(WAKEUP_BLINK_IN)) {
-        tmp = request->getParam(WAKEUP_BLINK_IN)->value();
-        lfs->write_file(WAKEUP_BLINK_FS, tmp.c_str());
-        db->updateBlinkState(state);
-    } else if(request->hasParam(DAYTIME_BLINK_IN)) {
-        tmp = request->getParam(DAYTIME_BLINK_IN)->value();
-        lfs->write_file(DAYTIME_BLINK_FS, tmp.c_str());
-        db->updateBlinkState(state);
-    } else if(request->hasParam(SLEEP_BLINK_IN)) {
-        tmp = request->getParam(SLEEP_BLINK_IN)->value();
-        lfs->write_file(SLEEP_BLINK_FS, tmp.c_str());
-        db->updateBlinkState(state);
-    }
-    // Color
-    else if(request->hasParam(WAKEUP_COLOR_IN)) {
-        tmp = request->getParam(WAKEUP_COLOR_IN)->value();
-        lfs->write_file(WAKEUP_COLOR_FS, tmp.c_str());
-        isColorUpdateNeeded = true;
-    } else if(request->hasParam(DAYTIME_COLOR_IN)) {
-        tmp = request->getParam(DAYTIME_COLOR_IN)->value();
-        isColorUpdateNeeded = true;
-        lfs->write_file(DAYTIME_COLOR_FS, tmp.c_str());
-    } else if(request->hasParam(SLEEP_COLOR_IN)) {
-        tmp = request->getParam(SLEEP_COLOR_IN)->value();
-        lfs->write_file(SLEEP_COLOR_FS, tmp.c_str());
-        isColorUpdateNeeded = true;
-    }
-    // Timezone
-    else if(request->hasParam(TIMEZONE_IN)) {
-        tmp = request->getParam(TIMEZONE_IN)->value();
-        lfs->write_file(TIMEZONE_FS, tmp.c_str());
-        updateTimeZone();
-    }
-    request->send(200, "text/text", "ok");
-}
-
-void handle_server_notFound(AsyncWebServerRequest *request) {
-    request->send(404, "text/plain", "Not found");
-}
 
 /************************************************************************************************************
 /*
@@ -932,20 +664,18 @@ bool colorCircle(int wait) {
 bool colorCircleFilled(int wait) {
     if(helper.is_sleeping(substate_sleep)) { return false; }
 
-    color_circle_filled_mode_helper += 256;
-    if(color_circle_filled_mode_helper >= 65536) {
+    if(color_circle_filled_mode_helper >= strip->numPixels()) {
         color_circle_filled_mode_helper = 0;
         return true;
     }
 
     strip->clear();
-    strip->setBrightness((lampBrightnessPercent * 255) / 100);
-    for(int i = 0; i < strip->numPixels(); i++) {
-        uint32_t pixelHue =
-            color_circle_filled_mode_helper + (i * 65536L / strip->numPixels());
-        strip->setPixelColor(i, strip->ColorHSV(pixelHue, 255, 255));
+    for(int i = 0; i <= color_circle_filled_mode_helper; i++) {
+        strip->setPixelColor(i, random_color);
     }
+    setLampBrightness(colorBrightness);
     strip->show();
+    color_circle_filled_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }
@@ -958,14 +688,14 @@ bool rainbowCircle(int wait) {
         rainbow_mode_helper = 0;
         return true;
     }
-    strip->clear();
-    strip->setBrightness((lampBrightnessPercent * 255) / 100);
+
     for(int i = 0; i < strip->numPixels(); i++) {
         uint32_t pixelHue =
             rainbow_mode_helper + (i * 65536L / strip->numPixels());
-        strip->setPixelColor(i, strip->ColorHSV(pixelHue, 255, 255));
+        strip->setPixelColor(
+            i, strip->gamma32(strip->ColorHSV(pixelHue, 255, 255)));
     }
-    strip->show();
+    setLampBrightness(colorBrightness);
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
 }
@@ -1031,58 +761,4 @@ void initModes() {
     value = lfs->read_file(SLEEP_MODE_FS);
     if(value == "" || value == NULL) { value = STATE_ANIMATION_RED; }
     updateSleepState(value);
-}
-
-void initLampTimer() {
-    String tmp_time = lfs->read_file(TIMER_TIME_FS);
-    if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "00:05:00";
-        lfs->write_file(TIMER_TIME_FS, tmp_time.c_str());
-    }
-    lt = new LampTimer(strip, SETTING_NEOPIXEL_COUNT, tmp_time);
-}
-
-void initServer() {
-    if(MDNS.begin(SETTING_LAMP_URL)) { // browser: url.local
-        Serial.println("mDNS responder started");
-    } else {
-        Serial.println("Error setting up MDNS responder!");
-    }
-    MDNS.addService("http", "tcp", 80);
-    server.on("/", HTTP_GET, handle_server_root);
-    server.on("/timer", HTTP_GET, handle_server_timer);
-    server.on("/settings", HTTP_GET, handle_server_settings);
-    server.on("/get", HTTP_GET, handle_server_get);
-    server.onNotFound(handle_server_notFound);
-    server.begin(); // Actually start the server
-}
-
-void initUserTimes() {
-
-    // Wakeup Time
-    String tmp_time = lfs->read_file(WAKEUP_TIME_FS);
-    if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "08:00";
-        lfs->write_file(WAKEUP_TIME_FS, tmp_time.c_str());
-    }
-    user_wakeup_time.setTime(tmp_time);
-    user_wakeup_time.print();
-
-    // Daytime Time
-    tmp_time = lfs->read_file(DAYTIME_TIME_FS);
-    if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "08:30";
-        lfs->write_file(DAYTIME_TIME_FS, tmp_time.c_str());
-    }
-    user_daytime_time.setTime(tmp_time);
-    user_daytime_time.print();
-
-    // Sleep Time
-    tmp_time = lfs->read_file(SLEEP_TIME_FS);
-    if(tmp_time == "" || tmp_time == NULL) {
-        tmp_time = "19:00";
-        lfs->write_file(SLEEP_TIME_FS, tmp_time.c_str());
-    }
-    user_sleep_time.setTime(tmp_time);
-    user_sleep_time.print();
 }
