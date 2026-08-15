@@ -202,7 +202,7 @@ void run_rainbow() {
         state_first_run = false;
         Serial.println("run_rainbow");
     }
-    if(rainbowCircle(20)) { state_first_run = true; }
+    if(rainbowCircle(10)) { state_first_run = true; }
 }
 
 void run_lamp_off() {
