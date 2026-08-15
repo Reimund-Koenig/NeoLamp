@@ -718,19 +718,12 @@ bool colorPulse(int wait) {
 bool colorCircle(int wait) {
     if(helper.is_sleeping(substate_sleep)) { return false; }
     if(color_circle_mode_helper >= strip->numPixels()) {
-        strip->clear();
-        for(int i = 0; i < strip->numPixels(); i++) {
-            strip->setPixelColor(i, random_color);
-        }
-        setLampBrightness(colorBrightness);
-        strip->show();
         color_circle_mode_helper = 0;
         return true;
     }
     strip->clear();
     setLampBrightness(colorBrightness);
-    int pixelIndex = strip->numPixels() - 1 - color_circle_mode_helper;
-    strip->setPixelColor(pixelIndex, random_color);
+    strip->setPixelColor(color_circle_mode_helper, random_color);
     strip->show();
     color_circle_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
