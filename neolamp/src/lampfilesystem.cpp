@@ -4,16 +4,15 @@ LampFileSystem::LampFileSystem() {
     const uint8_t maxAttempts = 10;
 
     for(uint8_t attempt = 0; attempt < maxAttempts; ++attempt) {
-        if(SPIFFS.begin()) {
-            return;
-        }
+        if(SPIFFS.begin()) { return; }
 
         Serial.println("SPIFFS mount failed, retrying...");
         delay(100);
         yield();
     }
 
-    Serial.println("SPIFFS mount failed permanently; continuing without filesystem access.");
+    Serial.println("SPIFFS mount failed permanently; continuing without "
+                   "filesystem access.");
 }
 
 void LampFileSystem::write_file(const char *path, const char *message) {
