@@ -33,14 +33,10 @@ void handlePotiBrightnessInput();
 void stateMachine();
 void animationStateMachine(String substate);
 
-void updateState(int new_state);
-void updateWakeupState(String new_state);
-void updateDaytimeState(String new_state);
-void updateSleepState(String new_state);
+void updateState(String new_state);
+void updateBrightness(String val);
 
 void run_colorPick_mode();
-void run_wakeupTime_mode();
-void run_sleepingTime_mode();
 
 void run_mixed();
 void run_circle();

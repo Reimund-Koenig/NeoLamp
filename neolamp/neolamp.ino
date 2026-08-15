@@ -4,24 +4,16 @@ Adafruit_NeoPixel *strip;
 LampFileSystem *lfs;
 LampHelper helper;
 
-uint8_t wakeup_brightness = 25;
-uint8_t daytime_brightness = 100;
-uint8_t sleep_brightness = 15;
+uint8_t brightness = 100;
 uint8_t colorBrightness = 0; // (max = 255)
 
-bool wakeup_isColorPickerNeeded = false;
-bool daytime_isColorPickerNeeded = false;
-bool sleep_isColorPickerNeeded = false;
 unsigned long colorPicker_Color = 0;
 bool isColorUpdateNeeded = true;
 
 unsigned long clock_sleep = 0;
 unsigned long substate_sleep = 0;
 
-uint8_t state = 0;
-String wakeup_state = "";
-String sleep_state = "";
-String daytime_state = "";
+String state = STATE_DAYTIME;
 bool state_first_run = true;
 bool brightness_changed = false;
 uint32_t random_color;
@@ -190,34 +182,6 @@ void run_lamp_off() {
     }
 }
 
-void run_colorPick_mode() {
-    if(state_first_run) {
-        isColorUpdateNeeded = true;
-        state_first_run = false;
-        Serial.println("run_colorPick_mode");
-    }
-    if(!(isColorUpdateNeeded || brightness_changed)) { return; }
-    setLampColorAndBrightness(colorPicker_Color, colorBrightness);
-    isColorUpdateNeeded = false;
-    brightness_changed = false;
-}
-
-void run_wakeupTime_mode() {
-    if(!(state_first_run || brightness_changed)) return;
-    Serial.println("run_wakeupTime_mode");
-    setLampColorAndBrightness(getRgbColor(0, 255, 0), colorBrightness);
-    state_first_run = false;
-    brightness_changed = false;
-}
-
-void run_sleepingTime_mode() {
-    if(!(state_first_run || brightness_changed)) return;
-    Serial.println("run_sleepingTime_mode");
-    setLampColorAndBrightness(getRgbColor(255, 75, 0), colorBrightness);
-    state_first_run = false;
-    brightness_changed = false;
-}
-
 /************************************************************************************************************
 /*
 /* Main Functions
@@ -231,23 +195,23 @@ void stateMachine() {
         return;
     }
 
-    if(state == STATE_WAKEUP) {
-        updateColorBrightness(wakeup_brightness);
-        updateColorPicker(wakeup_state, WAKEUP_COLOR_FS);
-        animationStateMachine(wakeup_state);
-    } else if(state == STATE_DAYTIME) {
-        updateColorBrightness(daytime_brightness);
-        updateColorPicker(daytime_state, DAYTIME_COLOR_FS);
-        animationStateMachine(daytime_state);
-    } else if(state == STATE_SLEEPING) {
-        updateColorBrightness(sleep_brightness);
-        updateColorPicker(sleep_state, SLEEP_COLOR_FS);
-        animationStateMachine(sleep_state);
-    } else {
-        setLampError();
+    switch(currentModeIndex) {
+    case LAMP_MODE_MIX:
+        animationStateMachine(STATE_ANIMATION_MIX);
+        return;
+    case LAMP_MODE_CIRCLE:
+        animationStateMachine(STATE_ANIMATION_CIRCLE);
+        return;
+    case LAMP_MODE_CIRCLE_FILLED:
+        animationStateMachine(STATE_ANIMATION_CIRCLE_FILLED);
+        return;
+    case LAMP_MODE_RAINBOW:
+        animationStateMachine(STATE_ANIMATION_RAINBOW);
+        return;
+    default:
+        renderLamp();
+        return;
     }
-
-    renderLamp();
 }
 
 void animationStateMachine(String substate) {
@@ -261,12 +225,6 @@ void animationStateMachine(String substate) {
         run_circle_filled();
     } else if(substate == STATE_ANIMATION_RAINBOW) {
         run_rainbow();
-    } else if(substate == STATE_ANIMATION_PICK) {
-        run_colorPick_mode();
-    } else if(substate == STATE_ANIMATION_GREEN) {
-        run_wakeupTime_mode();
-    } else if(substate == STATE_ANIMATION_RED) {
-        run_sleepingTime_mode();
     } else if(substate == STATE_ANIMATION_OFF) {
         run_lamp_off();
     } else {
@@ -499,13 +457,8 @@ void renderLamp() {
 }
 
 void updateColorPicker(String state, const char *file) {
-    if(!isColorUpdateNeeded) { return; }
-    if(state != STATE_ANIMATION_PICK) { return; }
-    String inputColor = lfs->read_file(file);
-    inputColor.remove(0, 1);
-    unsigned long in =
-        strtoul(inputColor.c_str(), NULL, SETTING_NEOPIXEL_COUNT);
-    colorPicker_Color = in;
+    (void)state;
+    (void)file;
 }
 
 void updateColorBrightness(uint8_t inputBrightness) {
@@ -526,49 +479,16 @@ uint8_t getLogicalBrightnessValue(String val) {
     return (uint8_t)(value);
 }
 
-void updateWakeupBrightness(String val) {
-    lfs->write_file(WAKEUP_BRIGHTNESS_FS, val.c_str());
-    wakeup_brightness = getLogicalBrightnessValue(val);
+void updateBrightness(String val) {
+    brightness = getLogicalBrightnessValue(val);
+    lampBrightnessPercent = brightness;
+    lfs->write_file(LAMP_BRIGHTNESS_FS, String(brightness).c_str());
 }
 
-void updateDaytimeBrightness(String val) {
-    lfs->write_file(DAYTIME_BRIGHTNESS_FS, val.c_str());
-    daytime_brightness = getLogicalBrightnessValue(val);
-}
-
-void updateSleepBrightness(String val) {
-    lfs->write_file(SLEEP_BRIGHTNESS_FS, val.c_str());
-    sleep_brightness = getLogicalBrightnessValue(val);
-}
-
-void updateState(int new_state) {
+void updateState(String new_state) {
     if(state == new_state) { return; }
     state = new_state;
     state_first_run = true;
-}
-
-void updateWakeupState(String new_state) {
-    if(new_state == wakeup_state) { return; }
-    wakeup_state = new_state;
-    wakeup_isColorPickerNeeded = (wakeup_state == STATE_ANIMATION_PICK);
-    state_first_run = true;
-    lfs->write_file(WAKEUP_MODE_FS, new_state.c_str());
-}
-
-void updateDaytimeState(String new_state) {
-    if(new_state == daytime_state) { return; }
-    daytime_state = new_state;
-    daytime_isColorPickerNeeded = (daytime_state == STATE_ANIMATION_PICK);
-    state_first_run = true;
-    lfs->write_file(DAYTIME_MODE_FS, new_state.c_str());
-}
-
-void updateSleepState(String new_state) {
-    if(new_state == sleep_state) { return; }
-    sleep_state = new_state;
-    sleep_isColorPickerNeeded = (sleep_state == STATE_ANIMATION_PICK);
-    state_first_run = true;
-    lfs->write_file(SLEEP_MODE_FS, new_state.c_str());
 }
 
 void createRandomColor() {
@@ -681,3 +601,20 @@ bool rainbowCircle(int wait) {
 /* HELPER  INITIALIZE
 /*
 *************/
+
+void initBrightness() {
+    String value = lfs->read_file(LAMP_BRIGHTNESS_FS);
+    if(value == "" || value == NULL) { value = "100"; }
+    updateBrightness(value);
+}
+
+void initColors() {
+    // Intentionally kept for compatibility with the current color handling.
+}
+
+void initModes() {
+    String value = lfs->read_file(LAMP_MODE_FS);
+    if(value == "" || value == NULL) { value = String(currentModeIndex); }
+    currentModeIndex = constrain(value.toInt(), 0, MODE_COUNT - 1);
+    state = STATE_ANIMATION_MIX;
+}
