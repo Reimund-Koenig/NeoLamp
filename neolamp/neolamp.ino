@@ -112,7 +112,11 @@ void run_mixed() {
 
     if(millis() >= mixed_next_switch_ms) {
         createRandomColor();
-        mixed_mode_index = random(0, 3);
+        uint8_t next_mode = random(0, 3);
+        while(next_mode == mixed_mode_index) {
+            next_mode = random(0, 3);
+        }
+        mixed_mode_index = next_mode;
         mixed_next_switch_ms = millis() + random(5000, 15001);
         color_circle_mode_helper = 0;
         color_circle_filled_mode_helper = 0;
