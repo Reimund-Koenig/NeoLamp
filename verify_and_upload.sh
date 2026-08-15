@@ -1,8 +1,10 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
 # === Kompilieren ===
 echo "🔎 Starte Verifizierung mit verify.sh..."
-./verify.sh
+bash "$SCRIPT_DIR/verify.sh"
 
 # Prüfe, ob Kompilierung erfolgreich war
 if [ $? -ne 0 ]; then
@@ -12,7 +14,7 @@ fi
 
 # === Upload ===
 echo "🚀 Verifizierung erfolgreich – starte Upload..."
-./upload.sh
+bash "$SCRIPT_DIR/upload.sh"
 
 # Prüfe Upload-Erfolg
 if [ $? -ne 0 ]; then
