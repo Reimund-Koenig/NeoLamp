@@ -54,8 +54,13 @@ unsigned long debounceDelay = 50;   // the debounce time
 bool lampOn = true;
 uint8_t currentModeIndex = 0;
 uint8_t lampBrightnessPercent = 100;
-bool buttonPressed = false;
-unsigned long buttonPressStartedAt = 0;
+
+int rawButtonState = HIGH;
+int lastRawButtonState = HIGH;
+bool stableSwitchOn = false;
+bool lastStableSwitchOn = false;
+unsigned long lastRawButtonChangeMs = 0;
+unsigned long lastStableSwitchChangeMs = 0;
 
 int color_circle_mode_helper = 0;
 int color_pulse_helper_brightness = 255;
@@ -96,6 +101,13 @@ void setup() {
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     int a0 = analogRead(A0);
     last_a0 = a0 - (a0 % STEPS);
+
+    rawButtonState = digitalRead(BUTTON_PIN);
+    lastRawButtonState = rawButtonState;
+    stableSwitchOn = (rawButtonState == LOW);
+    lastStableSwitchOn = stableSwitchOn;
+    lastRawButtonChangeMs = millis();
+    lastStableSwitchChangeMs = millis();
 
     loadLampState();
     renderLamp();
@@ -261,26 +273,28 @@ void handleButton() {
     int reading = digitalRead(BUTTON_PIN);
     unsigned long now = millis();
 
-    if(reading == LOW && !buttonPressed) {
-        buttonPressed = true;
-        buttonPressStartedAt = now;
+    if(reading != lastRawButtonState) {
+        lastRawButtonState = reading;
+        lastRawButtonChangeMs = now;
     }
 
-    if(reading == HIGH && buttonPressed) {
-        unsigned long duration = now - buttonPressStartedAt;
-        if(duration <= 5) {
+    if((now - lastRawButtonChangeMs) < debounceDelay) { return; }
+
+    bool switchOn = (reading == LOW);
+    if(switchOn != lastStableSwitchOn) {
+        unsigned long delta = now - lastStableSwitchChangeMs;
+        lastStableSwitchOn = switchOn;
+        lastStableSwitchChangeMs = now;
+
+        if(switchOn && !lampOn && delta <= 1000UL) {
             cycleMode();
-        } else {
-            lampOn = !lampOn;
+            lampOn = true;
             saveLampState();
+            return;
         }
-        buttonPressed = false;
-        buttonPressStartedAt = 0;
-    }
 
-    if(reading != lastButtonState) {
-        lastButtonState = reading;
-        lastDebounceTime = now;
+        lampOn = switchOn;
+        saveLampState();
     }
 }
 
