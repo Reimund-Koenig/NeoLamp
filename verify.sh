@@ -1,15 +1,10 @@
 #!/bin/bash
 
-# Projektverzeichnis (Sketch)
-SKETCH_DIR="/c/Users/katha/Desktop/Reimund/Arduino/NeoLamp/neolamp"
-
-# Lokale Bibliotheken
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKETCH_DIR="$SCRIPT_DIR/neolamp"
 LIB_DIR="$SKETCH_DIR/libraries"
+BOARD="${BOARD:-esp8266:esp8266:d1}"
 
-# FQBN für ESP32 Dev
-BOARD="esp8266:esp8266:d1"
-
-# Kompilieren mit lokalen Libs + Debug
 arduino-cli compile \
   --fqbn "$BOARD" \
   --libraries "$LIB_DIR" \

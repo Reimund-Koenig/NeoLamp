@@ -1,10 +1,17 @@
 #!/bin/bash
 
-SKETCH_DIR="$HOME/Desktop/Reimund/Arduino/NeoLamp/neolamp"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKETCH_DIR="$SCRIPT_DIR/neolamp"
 BUILD_DIR="$SKETCH_DIR/build"
 FQBN="esp8266:esp8266:d1"
-PORT="COM3" # Adapt to your COM Port of ESP32
+PORT="COM3"
+
 echo "🚀 Lade bereits kompilierte Sketch-Dateien aus $BUILD_DIR auf $PORT hoch..."
+
+if [ ! -d "$BUILD_DIR" ]; then
+  echo "❌ Build-Verzeichnis nicht gefunden: $BUILD_DIR"
+  exit 1
+fi
 
 arduino-cli upload \
   -p "$PORT" \

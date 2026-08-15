@@ -3,11 +3,27 @@
 #define STATE_WAKEUP 1
 #define STATE_DAYTIME 2
 
+#define MODE_COLOR_RED "red"
+#define MODE_COLOR_ORANGE "orange"
+#define MODE_COLOR_YELLOW "yellow"
+#define MODE_COLOR_LIGHT_GREEN "light_green"
+#define MODE_COLOR_GREEN "green"
+#define MODE_COLOR_TURQUOISE "turquoise"
+#define MODE_COLOR_BLUE "blue"
+#define MODE_COLOR_PURPLE "purple"
+#define MODE_COLOR_MAGENTA "magenta"
+#define MODE_COLOR_WHITE "white"
+#define MODE_COLOR_PULSE "pulse"
+#define MODE_COLOR_CIRCLE "circle"
+#define MODE_COLOR_RAINBOW "rainbow"
+
 #define STATE_ANIMATION_MIX "mix"
-#define STATE_ANIMATION_PULSE "pulse"
-#define STATE_ANIMATION_CIRCLE "circle"
-#define STATE_ANIMATION_RAINBOW "rainbow"
+#define STATE_ANIMATION_PULSE MODE_COLOR_PULSE
+#define STATE_ANIMATION_CIRCLE MODE_COLOR_CIRCLE
+#define STATE_ANIMATION_RAINBOW MODE_COLOR_RAINBOW
 #define STATE_ANIMATION_PICK "pick"
-#define STATE_ANIMATION_GREEN "green"
-#define STATE_ANIMATION_RED "orange"
+#define STATE_ANIMATION_GREEN MODE_COLOR_GREEN
+#define STATE_ANIMATION_RED MODE_COLOR_RED
 #define STATE_ANIMATION_OFF "off"
+
+#define MODE_COUNT 13

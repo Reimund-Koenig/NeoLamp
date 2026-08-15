@@ -1,12 +1,17 @@
 #include "modes.h"
 
-const char *modes[][2] = {{"Mixed", STATE_ANIMATION_MIX},
-                          {"Pulsieren", STATE_ANIMATION_PULSE},
-                          {"Farbkeise", STATE_ANIMATION_CIRCLE},
-                          {"Regenbogen", STATE_ANIMATION_RAINBOW},
-                          {"Farbauswahl", STATE_ANIMATION_PICK},
-                          {"Gruen", STATE_ANIMATION_GREEN},
-                          {"Orange", STATE_ANIMATION_RED},
-                          {"Lampe Ausgeschaltet", STATE_ANIMATION_OFF}};
+const char *modes[][2] = {{"Konstant Rot", MODE_COLOR_RED},
+                          {"Konstant Orange", MODE_COLOR_ORANGE},
+                          {"Konstant Gelb", MODE_COLOR_YELLOW},
+                          {"Konstant Hellgruen", MODE_COLOR_LIGHT_GREEN},
+                          {"Konstant Gruen", MODE_COLOR_GREEN},
+                          {"Konstant Turkis", MODE_COLOR_TURQUOISE},
+                          {"Konstant Blau", MODE_COLOR_BLUE},
+                          {"Konstant Lila", MODE_COLOR_PURPLE},
+                          {"Konstant Magenta", MODE_COLOR_MAGENTA},
+                          {"Konstant Weiss", MODE_COLOR_WHITE},
+                          {"Mode Pulsieren", MODE_COLOR_PULSE},
+                          {"Mode Farbkreise", MODE_COLOR_CIRCLE},
+                          {"Mode Regenbogen", MODE_COLOR_RAINBOW}};
 
 const int sizeof_modes = sizeof(modes) / sizeof(modes[0]);

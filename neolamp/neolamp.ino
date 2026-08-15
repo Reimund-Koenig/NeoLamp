@@ -47,6 +47,16 @@ int lastButtonState = LOW;
 unsigned long lastDebounceTime = 0; // the last time the output pin was toggled
 unsigned long debounceDelay = 50;   // the debounce time
 
+#define LAMP_MODE_FS "/lamp_mode.txt"
+#define LAMP_ON_FS "/lamp_on.txt"
+#define LAMP_BRIGHTNESS_FS "/lamp_brightness.txt"
+
+bool lampOn = true;
+uint8_t currentModeIndex = 0;
+uint8_t lampBrightnessPercent = 100;
+bool buttonPressed = false;
+unsigned long buttonPressStartedAt = 0;
+
 int color_circle_mode_helper = 0;
 int color_pulse_helper_brightness = 255;
 bool color_pulse_helper_lighten = true;
@@ -75,40 +85,26 @@ void setup() {
     strip = new Adafruit_NeoPixel(SETTING_NEOPIXEL_COUNT, SETTING_NEOPIXEL_PIN,
                                   NEO_GRB + NEO_KHZ800);
 
-    // this resets all the neopixels to an off state
-    strip->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    setLampColorAndBrightness(getRgbColor(255, 255, 255), 20);
-    // start wifi manager
-    WiFi.mode(WIFI_STA);
-    WiFi.hostname(SETTING_LAMP_URL);
-    async_wlan_setup();
-    while(WiFi.status() != WL_CONNECTED) {
-        delay(1000);
-        Serial.println("Connecting to WiFi..");
-    }
-    lupdater = new LampUpdater(lfs);
-    db = new Doubleblink(lfs);
-    initTime();
-    initServer();
-    // Load values from persistent storage or use default
-    initModes();
-    initBrightness();
-    initColors();
-    initUserTimes();
-    initLampTimer();
-    updateStateAndTime();
-    db->updateBlinkState(state);
+    strip->begin();
+    strip->clear();
+    strip->show();
+
+    WiFi.mode(WIFI_OFF);
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
 
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     int a0 = analogRead(A0);
     last_a0 = a0 - (a0 % STEPS);
+
+    loadLampState();
+    renderLamp();
 }
 
 void loop() {
-    MDNS.update();
-    stateMachine();
-    runSpecialModes();
-    updateStateAndTime();
+    handlePotiBrightnessInput();
+    handleButton();
+    renderLamp();
 }
 
 /************************************************************************************************************
@@ -252,34 +248,40 @@ void animationStateMachine(String substate) {
 /*
 *************/
 void handlePotiBrightnessInput() {
-    // Values from 0-1023
     int a0 = analogRead(A0);
-    a0 = a0 - (a0 % STEPS);
-    if(last_a0 == a0) { return; }
-    last_a0 = a0;
-    int colorPotiBrightness = (int)(a0 / 1023.0 * 100.0);
-    String value = (String)colorPotiBrightness;
-    float percent = value.toFloat() / 100.0;
-    if(percent > 1.0) { percent = 1.0; }
-    if(state == STATE_WAKEUP) {
-        updateWakeupBrightness(value);
-        wakeup_brightness = (uint8_t)(255 * percent);
-    } else if(state == STATE_DAYTIME) {
-        updateDaytimeBrightness(value);
-        daytime_brightness = (uint8_t)(255 * percent);
-    } else if(state == STATE_SLEEPING) {
-        updateSleepBrightness(value);
-        sleep_brightness = (uint8_t)(255 * percent);
-    }
+    int percent = (int)((a0 / 1023.0) * 100.0);
+    if(percent < 0) { percent = 0; }
+    if(percent > 100) { percent = 100; }
+    if(abs(percent - lampBrightnessPercent) < 1) { return; }
+    lampBrightnessPercent = (uint8_t)percent;
+    saveLampState();
 }
 
 void handleButton() {
     int reading = digitalRead(BUTTON_PIN);
-    if(reading != lastButtonState) { lastDebounceTime = millis(); }
-    if((millis() - lastDebounceTime) > debounceDelay) {
-        if(reading != buttonState) { buttonState = reading; }
+    unsigned long now = millis();
+
+    if(reading == LOW && !buttonPressed) {
+        buttonPressed = true;
+        buttonPressStartedAt = now;
     }
-    lastButtonState = reading;
+
+    if(reading == HIGH && buttonPressed) {
+        unsigned long duration = now - buttonPressStartedAt;
+        if(duration <= 5) {
+            cycleMode();
+        } else {
+            lampOn = !lampOn;
+            saveLampState();
+        }
+        buttonPressed = false;
+        buttonPressStartedAt = 0;
+    }
+
+    if(reading != lastButtonState) {
+        lastButtonState = reading;
+        lastDebounceTime = now;
+    }
 }
 
 /************************************************************************************************************
@@ -376,9 +378,109 @@ void setLampBrightness(uint8_t brightness) {
 }
 
 void setLampColorAndBrightness(uint32_t color, uint8_t brightness) {
-    setLampBrightness(brightness);
+    uint8_t percent = brightness > 100 ? (brightness * 100) / 255 : brightness;
+    if(percent == 0) {
+        strip->clear();
+        strip->show();
+        return;
+    }
+    strip->setBrightness((percent * 255) / 100);
     strip->fill(color);
     strip->show();
+}
+
+void saveLampState() {
+    lfs->write_file(LAMP_BRIGHTNESS_FS, String(lampBrightnessPercent).c_str());
+    lfs->write_file(LAMP_MODE_FS, String(currentModeIndex).c_str());
+    lfs->write_file(LAMP_ON_FS, lampOn ? "1" : "0");
+}
+
+void loadLampState() {
+    String value = lfs->read_file(LAMP_BRIGHTNESS_FS);
+    if(value == "" || value == NULL) {
+        lampBrightnessPercent = 100;
+    } else {
+        lampBrightnessPercent = constrain(value.toInt(), 0, 100);
+    }
+
+    value = lfs->read_file(LAMP_MODE_FS);
+    if(value == "" || value == NULL) {
+        currentModeIndex = 0;
+    } else {
+        currentModeIndex = constrain(value.toInt(), 0, MODE_COUNT - 1);
+    }
+
+    value = lfs->read_file(LAMP_ON_FS);
+    lampOn = (value == "" || value == NULL || value == "1");
+}
+
+void cycleMode() {
+    currentModeIndex = (currentModeIndex + 1) % MODE_COUNT;
+    saveLampState();
+}
+
+void renderLamp() {
+    if(!lampOn) {
+        strip->clear();
+        strip->show();
+        return;
+    }
+
+    switch(currentModeIndex) {
+    case 0:
+        setLampColorAndBrightness(getRgbColor(255, 0, 0),
+                                  lampBrightnessPercent);
+        break;
+    case 1:
+        setLampColorAndBrightness(getRgbColor(255, 128, 0),
+                                  lampBrightnessPercent);
+        break;
+    case 2:
+        setLampColorAndBrightness(getRgbColor(255, 255, 0),
+                                  lampBrightnessPercent);
+        break;
+    case 3:
+        setLampColorAndBrightness(getRgbColor(180, 255, 100),
+                                  lampBrightnessPercent);
+        break;
+    case 4:
+        setLampColorAndBrightness(getRgbColor(0, 255, 0),
+                                  lampBrightnessPercent);
+        break;
+    case 5:
+        setLampColorAndBrightness(getRgbColor(0, 255, 255),
+                                  lampBrightnessPercent);
+        break;
+    case 6:
+        setLampColorAndBrightness(getRgbColor(0, 0, 255),
+                                  lampBrightnessPercent);
+        break;
+    case 7:
+        setLampColorAndBrightness(getRgbColor(128, 0, 255),
+                                  lampBrightnessPercent);
+        break;
+    case 8:
+        setLampColorAndBrightness(getRgbColor(255, 0, 255),
+                                  lampBrightnessPercent);
+        break;
+    case 9:
+        setLampColorAndBrightness(getRgbColor(255, 255, 255),
+                                  lampBrightnessPercent);
+        break;
+    case 10:
+        run_pulse();
+        break;
+    case 11:
+        run_circle();
+        break;
+    case 12:
+        run_rainbow();
+        break;
+    default:
+        setLampColorAndBrightness(getRgbColor(255, 0, 0),
+                                  lampBrightnessPercent);
+        break;
+    }
 }
 
 void updateStateAndTime() {
