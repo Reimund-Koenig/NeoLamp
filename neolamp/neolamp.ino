@@ -100,6 +100,7 @@ void loop() {
 *************/
 void run_mixed() {
     if(state_first_run) {
+        createRandomColor();
         mixed_mode_index = random(0, 3);
         mixed_next_switch_ms = millis() + random(5000, 15001);
         color_circle_mode_helper = 0;
@@ -110,6 +111,7 @@ void run_mixed() {
     }
 
     if(millis() >= mixed_next_switch_ms) {
+        createRandomColor();
         mixed_mode_index = random(0, 3);
         mixed_next_switch_ms = millis() + random(5000, 15001);
         color_circle_mode_helper = 0;
@@ -158,6 +160,7 @@ void run_circle() {
 
 void run_circle_filled() {
     if(state_first_run) {
+        createRandomColor();
         color_circle_filled_mode_helper = 0;
         state_first_run = false;
         Serial.println("run_circle_filled");
@@ -167,6 +170,7 @@ void run_circle_filled() {
 
 void run_rainbow() {
     if(state_first_run) {
+        createRandomColor();
         rainbow_mode_helper = 0;
         state_first_run = false;
         Serial.println("run_rainbow");
@@ -194,6 +198,8 @@ void stateMachine() {
         strip->show();
         return;
     }
+
+    colorBrightness = lampBrightnessPercent;
 
     switch(currentModeIndex) {
     case LAMP_MODE_MIX:
