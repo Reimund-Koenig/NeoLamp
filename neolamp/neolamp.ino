@@ -101,7 +101,7 @@ void loop() {
 void run_mixed() {
     if(state_first_run) {
         createRandomColor();
-        mixed_mode_index = random(0, 3);
+        mixed_mode_index = random(0, 4);
         mixed_next_switch_ms = millis() + random(5000, 15001);
         color_circle_mode_helper = 0;
         color_circle_filled_mode_helper = 0;
@@ -112,9 +112,9 @@ void run_mixed() {
 
     if(millis() >= mixed_next_switch_ms) {
         createRandomColor();
-        uint8_t next_mode = random(0, 3);
+        uint8_t next_mode = random(0, 4);
         while(next_mode == mixed_mode_index) {
-            next_mode = random(0, 3);
+            next_mode = random(0, 4);
         }
         mixed_mode_index = next_mode;
         mixed_next_switch_ms = millis() + random(5000, 15001);
@@ -126,13 +126,16 @@ void run_mixed() {
 
     switch(mixed_mode_index) {
     case 0:
-        if(colorCircle(100)) { color_circle_mode_helper = 0; }
+        if(colorCircle(150)) { color_circle_mode_helper = 0; }
         break;
     case 1:
-        if(colorCircleFilled(40)) { color_circle_filled_mode_helper = 0; }
+        if(colorCircleFilled(150)) { color_circle_filled_mode_helper = 0; }
         break;
     case 2:
         if(rainbowCircle(20)) { rainbow_mode_helper = 0; }
+        break;
+    case 3:
+        if(colorPulse(2)) { state_first_run = true; }
         break;
     default:
         setLampColorAndBrightness(getRgbColor(255, 0, 0),
@@ -150,7 +153,7 @@ void run_pulse() {
         Serial.println("run_pulse");
         state_first_run = false;
     }
-    if(colorPulse(17)) { state_first_run = true; }
+    if(colorPulse(2)) { state_first_run = true; }
 }
 
 void run_circle() {
@@ -209,6 +212,9 @@ void stateMachine() {
     switch(currentModeIndex) {
     case LAMP_MODE_MIX:
         animationStateMachine(STATE_ANIMATION_MIX);
+        return;
+    case LAMP_MODE_PULSE:
+        animationStateMachine(STATE_ANIMATION_PULSE);
         return;
     case LAMP_MODE_CIRCLE:
         animationStateMachine(STATE_ANIMATION_CIRCLE);
@@ -451,6 +457,9 @@ void renderLamp() {
     case LAMP_MODE_MIX:
         run_mixed();
         break;
+    case LAMP_MODE_PULSE:
+        run_pulse();
+        break;
     case LAMP_MODE_CIRCLE:
         run_circle();
         break;
@@ -538,16 +547,27 @@ void createRandomColor() {
 
 bool colorPulse(int wait) {
     if(helper.is_sleeping(substate_sleep)) { return false; }
-    wait = (int)(wait * (255.0 / colorBrightness));
+
+    uint8_t maxPulseBrightness = (colorBrightness > 0) ? colorBrightness : 1;
+    if(color_pulse_helper_brightness >= maxPulseBrightness) {
+        color_pulse_helper_lighten = false;
+    }
     if(color_pulse_helper_lighten) {
         color_pulse_helper_brightness++;
-        if(color_pulse_helper_brightness >= colorBrightness) {
+        if(color_pulse_helper_brightness >= maxPulseBrightness) {
             color_pulse_helper_lighten = false;
+            color_pulse_helper_brightness = maxPulseBrightness;
         }
     } else {
         color_pulse_helper_brightness--;
-        if(color_pulse_helper_brightness <= 2) { return true; }
+        if(color_pulse_helper_brightness <= 2) {
+            color_pulse_helper_brightness = 2;
+            color_pulse_helper_lighten = true;
+            return true;
+        }
     }
+
+    wait = (int)(wait * (255.0 / max(1, (int)maxPulseBrightness)));
     setLampColorAndBrightness(random_color, color_pulse_helper_brightness);
     helper.set_none_sleeping_delay(wait, &substate_sleep);
     return false;
