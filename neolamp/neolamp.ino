@@ -133,31 +133,20 @@ void run_mixed() {
     if(state_first_run) {
         mixed_mode_index = random(0, 3);
         mixed_next_switch_ms = millis() + random(5000, 15001);
-        mixed_hold_until_ms = millis() + 800;
-        mixed_hold_active = true;
         color_circle_mode_helper = 0;
         color_circle_filled_mode_helper = 0;
         rainbow_mode_helper = 0;
         state_first_run = false;
         Serial.println("run_mixed start");
-        return;
-    }
-
-    if(mixed_hold_active) {
-        if(millis() < mixed_hold_until_ms) { return; }
-        mixed_hold_active = false;
     }
 
     if(millis() >= mixed_next_switch_ms) {
         mixed_mode_index = random(0, 3);
         mixed_next_switch_ms = millis() + random(5000, 15001);
-        mixed_hold_until_ms = millis() + 800;
-        mixed_hold_active = true;
         color_circle_mode_helper = 0;
         color_circle_filled_mode_helper = 0;
         rainbow_mode_helper = 0;
         Serial.println("run_mixed switch");
-        return;
     }
 
     switch(mixed_mode_index) {
