@@ -135,7 +135,7 @@ void run_mixed() {
         if(rainbowCircle(20)) { rainbow_mode_helper = 0; }
         break;
     case 3:
-        if(colorPulse(2)) { state_first_run = true; }
+        if(colorPulse(5)) { state_first_run = true; }
         break;
     default:
         setLampColorAndBrightness(getRgbColor(255, 0, 0),
@@ -153,7 +153,7 @@ void run_pulse() {
         Serial.println("run_pulse");
         state_first_run = false;
     }
-    if(colorPulse(2)) { state_first_run = true; }
+    if(colorPulse(5)) { state_first_run = true; }
 }
 
 void run_circle() {
