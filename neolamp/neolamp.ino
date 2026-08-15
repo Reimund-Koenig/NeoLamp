@@ -152,10 +152,11 @@ void run_pulse() {
 void run_circle() {
     if(state_first_run) {
         createRandomColor();
+        color_circle_mode_helper = 0;
         state_first_run = false;
         Serial.println("run_circle");
     }
-    if(colorCircle(100)) { state_first_run = true; }
+    if(colorCircle(150)) { state_first_run = true; }
 }
 
 void run_circle_filled() {
@@ -165,7 +166,7 @@ void run_circle_filled() {
         state_first_run = false;
         Serial.println("run_circle_filled");
     }
-    if(colorCircleFilled(40)) { state_first_run = true; }
+    if(colorCircleFilled(150)) { state_first_run = true; }
 }
 
 void run_rainbow() {
@@ -551,12 +552,19 @@ bool colorPulse(int wait) {
 bool colorCircle(int wait) {
     if(helper.is_sleeping(substate_sleep)) { return false; }
     if(color_circle_mode_helper >= strip->numPixels()) {
+        strip->clear();
+        for(int i = 0; i < strip->numPixels(); i++) {
+            strip->setPixelColor(i, random_color);
+        }
+        strip->setBrightness((lampBrightnessPercent * 255) / 100);
+        strip->show();
         color_circle_mode_helper = 0;
         return true;
     }
     strip->clear();
     strip->setBrightness((lampBrightnessPercent * 255) / 100);
-    strip->setPixelColor(color_circle_mode_helper, random_color);
+    int pixelIndex = strip->numPixels() - 1 - color_circle_mode_helper;
+    strip->setPixelColor(pixelIndex, random_color);
     strip->show();
     color_circle_mode_helper++;
     helper.set_none_sleeping_delay(wait, &substate_sleep);
@@ -567,12 +575,16 @@ bool colorCircleFilled(int wait) {
     if(helper.is_sleeping(substate_sleep)) { return false; }
 
     if(color_circle_filled_mode_helper >= strip->numPixels()) {
+        for(int i = 0; i < strip->numPixels(); i++) {
+            strip->setPixelColor(i, random_color);
+        }
+        strip->show();
         color_circle_filled_mode_helper = 0;
         return true;
     }
 
-    strip->clear();
-    for(int i = 0; i <= color_circle_filled_mode_helper; i++) {
+    for(int i = strip->numPixels() - 1;
+        i >= strip->numPixels() - 1 - color_circle_filled_mode_helper; i--) {
         strip->setPixelColor(i, random_color);
     }
     setLampBrightness(colorBrightness);
