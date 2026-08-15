@@ -56,8 +56,6 @@ unsigned long mixed_next_switch_ms = 0;
 unsigned long mixed_hold_until_ms = 0;
 bool mixed_hold_active = false;
 
-String SETTING_LAMP_NAME = "";
-String SETTING_LAMP_URL = "";
 uint8_t SETTING_NEOPIXEL_PIN;
 uint8_t SETTING_NEOPIXEL_COUNT;
 
@@ -325,22 +323,7 @@ void handleButton() {
 /* HELPER
 /*
 *************/
-void saveSpecialSettingDoubleBlinkToMakeThemUpdateResistant() {
-    if(!SPECIAL_LAMP_WITH_DOUBLEBLINK) return;
-    lfs->write_file(SETTING_SPECIAL_LAMP_WITH_DOUBLEBLINK_FS, "on");
-}
-
 void initSettings() {
-    SETTING_LAMP_NAME = lfs->read_file(SETTING_NAME_FS);
-    if(SETTING_LAMP_NAME == "" || SETTING_LAMP_NAME == NULL) {
-        SETTING_LAMP_NAME = NAME;
-        lfs->write_file(SETTING_NAME_FS, SETTING_LAMP_NAME.c_str());
-    }
-    SETTING_LAMP_URL = lfs->read_file(SETTING_URL_FS);
-    if(SETTING_LAMP_URL == "" || SETTING_LAMP_URL == NULL) {
-        SETTING_LAMP_URL = URL;
-        lfs->write_file(SETTING_URL_FS, SETTING_LAMP_URL.c_str());
-    }
     String tmp = lfs->read_file(SETTING_NEOPIXEL_PIN_FS);
     if(tmp == "" || tmp == NULL) {
         SETTING_NEOPIXEL_PIN = NEOPIXEL_PIN;
@@ -357,7 +340,6 @@ void initSettings() {
     } else {
         SETTING_NEOPIXEL_COUNT = (uint8_t)tmp.toInt();
     }
-    saveSpecialSettingDoubleBlinkToMakeThemUpdateResistant();
 }
 
 void setLampError() { setLampColorAndBrightness(getRgbColor(0, 0, 128), 255); }
@@ -619,12 +601,6 @@ void createRandomColor() {
 
 /************************************************************************************************************
 /*
-/* Server Handler
-/*
-*************/
-
-/************************************************************************************************************
-/*
 /* Adafruit NeoPixel Standard Functions
 /*
 *************/
@@ -705,60 +681,3 @@ bool rainbowCircle(int wait) {
 /* HELPER  INITIALIZE
 /*
 *************/
-
-void initBrightness() {
-    // Wakeup
-    String value = lfs->read_file(WAKEUP_BRIGHTNESS_FS);
-    if(value == "" || value == NULL) { value = "1"; }
-    updateWakeupBrightness(value);
-
-    // Daytime
-    value = lfs->read_file(DAYTIME_BRIGHTNESS_FS);
-    if(value == "" || value == NULL) { value = "100"; }
-    updateDaytimeBrightness(value);
-
-    // Sleep
-    value = lfs->read_file(SLEEP_BRIGHTNESS_FS);
-    if(value == "" || value == NULL) { value = "4"; }
-    updateSleepBrightness(value);
-}
-
-void initColors() {
-    // Wakeup
-    String value = lfs->read_file(WAKEUP_COLOR_FS);
-    if(value == "" || value == NULL) {
-        value = "#90EE90"; // lightgreen
-        lfs->write_file(WAKEUP_COLOR_FS, value.c_str());
-    }
-
-    // Daytime
-    value = lfs->read_file(DAYTIME_COLOR_FS);
-    if(value == "" || value == NULL) {
-        value = "#00FFFF"; // cyan
-        lfs->write_file(DAYTIME_COLOR_FS, value.c_str());
-    }
-
-    // Sleep
-    value = lfs->read_file(SLEEP_COLOR_FS);
-    if(value == "" || value == NULL) {
-        value = "#FF8C00"; // dark orange
-        lfs->write_file(SLEEP_COLOR_FS, value.c_str());
-    }
-}
-
-void initModes() {
-    // Wakeup
-    String value = lfs->read_file(WAKEUP_MODE_FS);
-    if(value == "" || value == NULL) { value = STATE_ANIMATION_GREEN; }
-    updateWakeupState(value);
-
-    // Daytime
-    value = lfs->read_file(DAYTIME_MODE_FS);
-    if(value == "" || value == NULL) { value = STATE_ANIMATION_MIX; }
-    updateDaytimeState(value);
-
-    // Sleep
-    value = lfs->read_file(SLEEP_MODE_FS);
-    if(value == "" || value == NULL) { value = STATE_ANIMATION_RED; }
-    updateSleepState(value);
-}

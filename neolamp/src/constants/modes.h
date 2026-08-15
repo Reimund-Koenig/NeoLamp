@@ -1,10 +1,6 @@
 #ifndef NEOLAMP_MODES_H
 #define NEOLAMP_MODES_H
 
-#define STATE_SLEEPING 0
-#define STATE_WAKEUP 1
-#define STATE_DAYTIME 2
-
 enum LampMode {
     LAMP_MODE_RED = 0,
     LAMP_MODE_ORANGE,

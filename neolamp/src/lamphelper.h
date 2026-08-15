@@ -1,6 +1,5 @@
 #ifndef LAMPHELPER
 #define LAMPHELPER
-#include "clocktime.h"
 #include <Arduino.h>
 
 class LampHelper {
