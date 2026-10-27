@@ -37,5 +37,6 @@
     "SSID",
     "substate",
     "timeinfo"
-  ]
+  ],
+  "cmake.sourceDirectory": "C:/workspace/Arduino/NeoLamp/neolamp/libraries/ESPAsyncWebServer"
 }
